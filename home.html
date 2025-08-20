@@ -262,6 +262,95 @@
       // تعيين الزر النشط الافتراضي
       document.querySelector('[data-target="input"]').classList.add('active');
     });
+
+// إصلاح موقع أزرار التنقل على الهاتف
+document.addEventListener('DOMContentLoaded', function() {
+  function fixMobileNavPosition() {
+    const mobileNav = document.getElementById('mobileNav');
+    if (mobileNav && window.innerWidth <= 767) {
+      // إزالة أي أنماط inline قد تكون مطبقة
+      mobileNav.removeAttribute('style');
+      
+      // التأكد من الخصائص الصحيحة
+      mobileNav.style.cssText = `
+        display: flex !important;
+        position: fixed !important;
+        bottom: 20px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        z-index: 1000 !important;
+        align-items: center !important;
+        justify-content: space-around !important;
+        width: calc(100% - 40px) !important;
+        max-width: 350px !important;
+        height: 70px !important;
+        padding: 0.5rem !important;
+        margin: 0 !important;
+        background: rgba(30, 33, 40, 0.95) !important;
+        backdrop-filter: blur(20px) !important;
+        border: 1px solid #4b5563 !important;
+        border-radius: 25px !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
+      `;
+    }
+  }
+
+  // تطبيق الإصلاح عند التحميل
+  fixMobileNavPosition();
+  
+  // تطبيق الإصلاح عند تغيير حجم الشاشة
+  window.addEventListener('resize', fixMobileNavPosition);
+  
+  // تطبيق الإصلاح بعد تأخير قصير للتأكد
+  setTimeout(fixMobileNavPosition, 100);
+  setTimeout(fixMobileNavPosition, 500);
+  setTimeout(fixMobileNavPosition, 1000);
+});
+
+// مراقبة أي تغييرات على العنصر
+if (window.MutationObserver) {
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+        const mobileNav = document.getElementById('mobileNav');
+        if (mobileNav && window.innerWidth <= 767) {
+          // إعادة تطبيق الأنماط الصحيحة
+          setTimeout(() => {
+            mobileNav.style.cssText = `
+              display: flex !important;
+              position: fixed !important;
+              bottom: 20px !important;
+              left: 50% !important;
+              transform: translateX(-50%) !important;
+              z-index: 1000 !important;
+              align-items: center !important;
+              justify-content: space-around !important;
+              width: calc(100% - 40px) !important;
+              max-width: 350px !important;
+              height: 70px !important;
+              padding: 0.5rem !important;
+              margin: 0 !important;
+              background: rgba(30, 33, 40, 0.95) !important;
+              backdrop-filter: blur(20px) !important;
+              border: 1px solid #4b5563 !important;
+              border-radius: 25px !important;
+              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
+            `;
+          }, 10);
+        }
+      }
+    });
+  });
+  
+  // مراقبة التغييرات على عنصر التنقل
+  const mobileNav = document.getElementById('mobileNav');
+  if (mobileNav) {
+    observer.observe(mobileNav, {
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    });
+  }
+}
   </script>
 </body>
 </html>

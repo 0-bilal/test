@@ -103,9 +103,24 @@ body {
 .modern-login-page {
   background: var(--gradient-bg);
   color: var(--text-primary);
-  min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+}
+
+/* Full Height for Desktop */
+@media (min-width: 768px) {
+  .modern-login-page {
+    height: 100vh;
+    overflow: hidden; /* منع السكرول على الكمبيوتر */
+  }
+}
+
+/* Allow scrolling on mobile */
+@media (max-width: 767px) {
+  .modern-login-page {
+    min-height: 100vh;
+    overflow-y: auto;
+  }
 }
 
 /* Background Animation */
@@ -219,17 +234,6 @@ body {
   font-weight: 500;
 }
 
-.security-badge {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-radius: var(--radius-lg);
-  color: var(--text-success);
-}
-
 .security-icon {
   font-size: var(--font-size-lg);
 }
@@ -250,41 +254,53 @@ body {
 
 /* Login Container */
 .login-container {
-  min-height: calc(100vh - var(--header-height) - var(--footer-h));
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-xl);
+  padding: var(--space-lg);
   position: relative;
   z-index: 10;
 }
 
+/* Desktop Layout - Full Height */
+@media (min-width: 768px) {
+  .login-container {
+    height: calc(100vh - var(--header-height) - var(--footer-h));
+    padding: var(--space-xl);
+  }
+}
+
+/* Mobile Layout */
+@media (max-width: 767px) {
+  .login-container {
+    min-height: calc(100vh - var(--header-height) - var(--footer-h));
+    padding: var(--space-lg);
+  }
+}
+
 .login-wrapper {
   width: 100%;
-  max-width: 900px;
   display: grid;
   gap: var(--space-2xl);
   align-items: center;
 }
 
-/* Desktop Layout */
+/* Desktop Layout - Side by Side */
 @media (min-width: 768px) {
   .login-wrapper {
-    grid-template-columns: 1fr 400px;
+    max-width: 1000px;
+    height: 100%; /* استخدام الارتفاع الكامل */
+    grid-template-columns: 1fr 450px;
+    align-items: stretch; /* توزيع الارتفاع بالتساوي */
   }
 }
 
-/* Mobile Layout - Login First */
+/* Mobile Layout - Login First, Features Below */
 @media (max-width: 767px) {
-  .login-container {
-    padding: var(--space-lg);
-  }
-  
   .login-wrapper {
     grid-template-columns: 1fr;
     max-width: 400px;
     gap: var(--space-xl);
-    /* على الهاتف: تسجيل الدخول أولاً، ثم المميزات */
   }
   
   .login-card {
@@ -292,7 +308,7 @@ body {
   }
   
   .features-section {
-    order: 2; /* المميزات ثانياً */
+    order: 2; /* المميزات ثانياً تحت تسجيل الدخول */
   }
 }
 
@@ -301,23 +317,25 @@ body {
   background: var(--gradient-card);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-3xl);
-  padding: var(--space-3xl);
+  padding: var(--space-2xl);
   box-shadow: var(--shadow-xl), var(--shadow-glow);
   backdrop-filter: blur(20px);
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.login-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--gradient-brand);
+/* Desktop - Full Height Card */
+@media (min-width: 768px) {
+  .login-card {
+    height: 100%; /* استخدام الارتفاع الكامل */
+    justify-content: center; /* توسيط المحتوى عمودياً */
+    padding: var(--space-3xl);
+  }
 }
 
+/* Mobile Card */
 @media (max-width: 767px) {
   .login-card {
     padding: var(--space-2xl);
@@ -358,11 +376,37 @@ body {
   font-weight: 500;
 }
 
-/* Login Form */
+/* Login Form Improvements */
 .login-form {
   display: flex;
   flex-direction: column;
   gap: var(--space-xl);
+}
+
+/* Desktop - Center form content */
+@media (min-width: 768px) {
+  .login-header {
+    margin-bottom: var(--space-2xl);
+  }
+  
+  .login-form {
+    gap: var(--space-2xl);
+  }
+  
+  .login-footer {
+    margin-top: var(--space-2xl);
+  }
+}
+
+/* Mobile form spacing */
+@media (max-width: 767px) {
+  .login-header {
+    margin-bottom: var(--space-xl);
+  }
+  
+  .login-footer {
+    margin-top: var(--space-lg);
+  }
 }
 
 .input-group {
@@ -549,9 +593,18 @@ body {
   gap: var(--space-lg);
 }
 
+/* Desktop - Full Height Features */
+@media (min-width: 768px) {
+  .features-section {
+    height: 100%; /* استخدام الارتفاع الكامل */
+    justify-content: center; /* توسيط المميزات عمودياً */
+  }
+}
+
+/* Mobile - Features Below Login */
 @media (max-width: 767px) {
   .features-section {
-    order: -1; /* Show features above login form on mobile */
+    margin-top: var(--space-lg); /* مسافة من تسجيل الدخول */
   }
 }
 
@@ -612,6 +665,27 @@ body {
   padding: var(--space-lg);
   position: relative;
   z-index: 50;
+}
+
+/* Desktop Footer */
+@media (min-width: 768px) {
+  .modern-footer {
+    position: fixed; /* ثابت في أسفل الشاشة */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--footer-h);
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* Mobile Footer */
+@media (max-width: 767px) {
+  .modern-footer {
+    position: static; /* طبيعي في التدفق */
+    margin-top: var(--space-xl);
+  }
 }
 
 .footer-content {
@@ -748,6 +822,7 @@ body {
   animation: slideInLeft 0.8s ease-out 0.2s both;
 }
 
+/* Mobile - Features come after login */
 @media (max-width: 767px) {
   .features-section {
     animation: fadeInUp 0.8s ease-out 0.4s both; /* تأخير أكثر لأنها تأتي بعد تسجيل الدخول */
@@ -759,9 +834,16 @@ body {
   animation: fadeInUp 0.6s ease-out forwards;
 }
 
-.feature-item:nth-child(1) { animation-delay: 0.3s; }
-.feature-item:nth-child(2) { animation-delay: 0.5s; }
-.feature-item:nth-child(3) { animation-delay: 0.7s; }
+.feature-item:nth-child(1) { animation-delay: 0.6s; } /* تأخير أكثر على الهاتف */
+.feature-item:nth-child(2) { animation-delay: 0.8s; }
+.feature-item:nth-child(3) { animation-delay: 1.0s; }
+
+/* Desktop animation delays */
+@media (min-width: 768px) {
+  .feature-item:nth-child(1) { animation-delay: 0.3s; }
+  .feature-item:nth-child(2) { animation-delay: 0.5s; }
+  .feature-item:nth-child(3) { animation-delay: 0.7s; }
+}
 
 /* Focus Management */
 .login-input:focus,
@@ -893,4 +975,14 @@ body {
 
 .input-wrapper.success .input-decoration {
   background: var(--text-success);
+}
+
+.version-badge {
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-accent);
 }

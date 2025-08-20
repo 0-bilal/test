@@ -888,93 +888,99 @@ body {
   font-size: var(--font-size-lg);
 }
 
-/* Mobile Navigation - Updated for Perfect Centering */
+/* Mobile Navigation - Single Clear Rule */
 .mobile-nav {
   display: none;
 }
 
+/* Only for mobile devices */
 @media (max-width: 767px) {
   .mobile-nav {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 100;
+    display: flex !important;
+    position: fixed !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 1000 !important;
 
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
+    align-items: center !important;
+    justify-content: space-around !important;
     
-    width: calc(100% - 40px);
-    max-width: 350px;
-    height: var(--mobile-nav-height);
-    padding: var(--space-sm);
+    width: calc(100% - 40px) !important;
+    max-width: 350px !important;
+    height: var(--mobile-nav-height) !important;
+    padding: var(--space-sm) !important;
+    margin: 0 !important;
 
-    /* Modern Glass Design */
-    background: rgba(30, 33, 40, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--border-secondary);
-    border-radius: 25px;
+    /* Styling */
+    background: rgba(30, 33, 40, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid var(--border-secondary) !important;
+    border-radius: 25px !important;
 
     box-shadow: 
       0 8px 32px rgba(0, 0, 0, 0.4),
-      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
     
-    transition: all 0.3s ease;
+    transition: all 0.3s ease !important;
   }
   
-  /* Ensure proper spacing on very small screens */
+  /* Very small screens */
   @media (max-width: 350px) {
     .mobile-nav {
-      width: calc(100% - 20px);
-      max-width: none;
+      width: calc(100% - 20px) !important;
+      max-width: none !important;
     }
   }
 }
 
+/* Mobile Navigation Button Styles - Updated */
 .nav-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-md);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-lg);
-  color: var(--text-tertiary);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 70px;
-  outline: none;
-  flex: 1; /* يأخذ مساحة متساوية */
-  max-width: 100px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: var(--space-xs) !important;
+  padding: var(--space-sm) var(--space-md) !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: var(--radius-lg) !important;
+  color: var(--text-tertiary) !important;
+  font-size: var(--font-size-xs) !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  min-width: 70px !important;
+  outline: none !important;
+  flex: 1 !important;
+  max-width: 100px !important;
+  text-decoration: none !important;
 }
 
 .nav-btn:hover,
 .nav-btn.active {
-  color: var(--text-accent);
-  background: rgba(59, 130, 246, 0.1);
-  transform: translateY(-2px);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: var(--text-accent) !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+  transform: translateY(-2px) !important;
+  border: 1px solid rgba(59, 130, 246, 0.2) !important;
 }
 
 .nav-btn:focus {
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
 }
 
 .nav-icon {
-  font-size: var(--font-size-lg);
-  margin-bottom: 2px;
+  font-size: var(--font-size-lg) !important;
+  margin-bottom: 2px !important;
+  display: block !important;
 }
 
 .nav-label {
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: var(--font-size-xs) !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  display: block !important;
 }
 
 /* Modern Footer */

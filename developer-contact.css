@@ -370,12 +370,7 @@
   border-radius: 12px;
 }
 
-/* على الديسكتوب: عادي */
-.header-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+
 
 /* موبايل: اجعلهم على سطر واحد، زر المطوّر على يمين الشارة */
 @media (max-width: 600px) {
@@ -487,4 +482,34 @@
   display: inline-flex; align-items: center;
   font-weight: 800; padding: 6px 10px; border-radius: 12px;
   border: 1px solid var(--border, rgba(255,255,255,.18));
+}
+
+
+/* كمبيوتر: زر وشارة الإصدار بجانب بعض */
+.is-desktop .header-actions {
+  display: flex;
+  flex-direction: row;   /* صف واحد */
+  align-items: center;
+  gap: 8px;
+  direction: rtl;        /* واجهة عربية: الزر يمين، الإصدار يسار */
+}
+
+/* ترتيب العناصر */
+.is-desktop #contactDeveloperBtn { order: 1; }
+.is-desktop .version-badge      { order: 2; }
+
+/* على الكمبيوتر نظهر النص الكامل */
+.is-desktop #contactDeveloperBtn .contact-btn-label {
+  display: inline;
+}
+
+#contactDeveloperBtn {
+  height: auto;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-left: 10px;   /* مساوي للـ version-badge */
+  padding-right: 10px;
+  line-height: 1.4;     /* قريب من النص الافتراضي */
+  display: inline-flex;
+  align-items: center;  /* لضبط الأيقونة/النص في الوسط */
 }

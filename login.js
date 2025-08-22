@@ -80,19 +80,3 @@ userIdInput.addEventListener("keydown", (e) => {
   }
 });
 
-
-if (data.ok) {
-  localStorage.setItem("qb_session", JSON.stringify({
-    user_id: data.user.user_id,
-    name: data.user.name,
-    role: data.user.role,
-    ts: Date.now()
-  }));
-
-  // إرسال الإشعار مباشرة (إن كان الملف مضمّنًا في صفحة الدخول)
-  if (window.notifyActiveUserIfLoggedIn) {
-    window.notifyActiveUserIfLoggedIn();
-  }
-
-  setTimeout(() => { location.href = REDIRECT_TO; }, 500);
-}

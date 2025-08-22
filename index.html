@@ -9,15 +9,17 @@
   <script defer src="login.js"></script>
 </head>
 
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
 <body class="modern-login-page">
   <!-- Modern Header -->
   <header class="modern-header">
     <div class="header-content">
       <div class="brand-section">
         <h1 class="brand-title">QB-EmdNexa</h1>
-        <div class="brand-tagline">بوابة الدخول الآمنة</div>
       </div>
-       <div class="version-badge">v1.5.x</div>
+       <div class="version-badge">v2.2 Nexus</div>
       </div>
     </div>
     <div class="header-gradient"></div>
@@ -74,24 +76,24 @@
       <!-- Features Section -->
       <section class="features-section">
         <div class="feature-item">
-          <div class="feature-icon">⚡</div>
+          <div class="feature-icon">🌍</div>
           <div class="feature-text">
-            <div class="feature-title">سرعة في الحساب</div>
+            <div class="feature-title">في أي وقت، من أي مكان</div>
             <div class="feature-desc">نتائج فورية ودقيقة</div>
           </div>
         </div>
         <div class="feature-item">
-          <div class="feature-icon">📊</div>
+          <div class="feature-icon">⚡</div>
           <div class="feature-text">
-            <div class="feature-title">تقارير مفصلة</div>
-            <div class="feature-desc">عرض شامل للبيانات</div>
+            <div class="feature-title">سرعة أدق</div>
+            <div class="feature-desc">تجربة أسهل</div>
           </div>
         </div>
         <div class="feature-item">
-          <div class="feature-icon">🔒</div>
+          <div class="feature-icon">🌟</div>
           <div class="feature-text">
-            <div class="feature-title">أمان عالي</div>
-            <div class="feature-desc">حماية بياناتك أولويتنا</div>
+            <div class="feature-title">خطوتك الذكية تبدأ من هنا</div>
+            <div class="feature-desc">نظامك جاهز دائمًا</div>
           </div>
         </div>
       </section>
@@ -159,6 +161,22 @@
         }
       });
     });
+
+
+  (function() {
+    // كشف “جهاز لمس” بشكل موثوق
+    var isTouch = window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
+    // بديل احتياطي (أقدم المتصفحات)
+    if (!isTouch) {
+      isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    }
+
+    document.documentElement.classList.add(isTouch ? 'is-touch' : 'is-desktop');
+  })();
+
+
+
   </script>
 </body>
 </html>

@@ -60,7 +60,7 @@
   height: 48px;
   background: var(--bg-tertiary);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-secondary);
+  border: 5px solid var(--border-secondary);
 }
 
 .modal-title {
@@ -202,13 +202,15 @@
   padding: var(--space-md);
   background: var(--bg-success);
   color: white;
-  border-radius: var(--radius-lg);
+    border: 1px solid var(--border-secondary);
   margin-bottom: var(--space-lg);
   animation: slideInDown 0.3s ease;
+
 }
 
 .save-success.show {
   display: flex;
+
 }
 
 @keyframes slideInDown {
@@ -229,7 +231,7 @@
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
   background: var(--bg-success);
-  border: 1px solid var(--bg-success);
+  border: 1px solid var(--border-secondary);
   border-radius: var(--radius-lg);
   color: white;
   font-size: var(--font-size-xs);
@@ -241,8 +243,8 @@
 }
 
 .save-data-btn:hover {
-  background: #059669;
-  border-color: #059669;
+  background: #059668ce;
+  border-color: #059668;
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
@@ -273,8 +275,11 @@
   }
   
   .save-data-btn {
-    padding: var(--space-xs) var(--space-sm);
-    font-size: 10px;
+  height: auto;
+  padding: var(--space-sm) var(--space-md);
+  padding-left: 10px; padding-right: 10px; 
+  line-height: 1.5;
+  display: inline-flex; align-items: center;
   }
   
   .save-data-btn span:last-child {
@@ -498,13 +503,15 @@
   padding: var(--space-md);
   background: var(--bg-success);
   color: white;
-  border-radius: var(--radius-lg);
+  border: px solid var(--border-secondary);
   margin-bottom: var(--space-lg);
   animation: slideInDown 0.3s ease;
+
 }
 
 .save-success.show {
   display: flex;
+
 }
 
 @keyframes slideInDown {
@@ -520,12 +527,14 @@
 
 /* Save Data Button in Header */
 .save-data-btn {
-  display: inline-flex;
+  display: inline-flex; align-items: center;
   align-items: center;
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
+  padding-left: 10px; padding-right: 10px; 
+  line-height: 1.5;
   background: var(--bg-success);
-  border: 1px solid var(--bg-success);
+  border: 1px solid var(--border-secondary);
   border-radius: var(--radius-lg);
   color: white;
   font-size: var(--font-size-xs);
@@ -534,11 +543,12 @@
   transition: all 0.2s ease;
   outline: none;
   text-decoration: none;
+
 }
 
 .save-data-btn:hover {
-  background: #059669;
-  border-color: #059669;
+  background: #059668ce;
+  border-color: #059668;
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
@@ -569,8 +579,11 @@
   }
   
   .save-data-btn {
-    padding: var(--space-xs) var(--space-sm);
-    font-size: 10px;
+  padding: var(--space-sm) var(--space-md);
+  padding-left: 10px; padding-right: 10px; 
+  line-height: 1.4;
+  display: inline-flex; align-items: center;
+      border: 1px solid var(--border-secondary);
   }
   
   .save-data-btn span:last-child {

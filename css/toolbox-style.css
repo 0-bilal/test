@@ -1,4 +1,4 @@
-/* ملف CSS لصندوق الأدوات - toolbox-style.css */
+/* ملف CSS لصندوق الأدوات - toolbox-style.css محسن للهواتف */
 
 /* إعدادات أساسية */
 * {
@@ -67,16 +67,17 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 2000;
     display: none;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     opacity: 0;
     transition: opacity var(--transition-slow);
-    padding: var(--space-lg);
+    padding: var(--space-sm);
+    overflow-y: auto;
 }
 
 .toolbox-overlay.active {
@@ -91,12 +92,12 @@
     border-radius: var(--radius-2xl);
     width: 100%;
     max-width: 600px;
-    max-height: 90vh;
-    overflow-y: auto;
+    margin: var(--space-sm) 0;
     box-shadow: var(--shadow-xl), var(--shadow-glow);
-    transform: scale(0.9) translateY(20px);
+    transform: scale(0.95) translateY(20px);
     transition: all var(--transition-slow);
     position: relative;
+    min-height: auto;
 }
 
 .toolbox-overlay.active .toolbox-container {
@@ -110,33 +111,18 @@
 }
 
 .toolbox-container::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 .toolbox-container::-webkit-scrollbar-track {
     background: var(--bg-tertiary);
     border-radius: 10px;
-    margin: 10px 0;
 }
 
 .toolbox-container::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg, var(--border-accent) 0%, #8b5cf6 100%);
     border-radius: 10px;
     border: 1px solid var(--bg-card);
-    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-}
-
-.toolbox-container::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
-}
-
-.toolbox-container::-webkit-scrollbar-thumb:active {
-    background: linear-gradient(135deg, #1d4ed8 0%, #6d28d9 100%);
-}
-
-.toolbox-container::-webkit-scrollbar-corner {
-    background: var(--bg-tertiary);
 }
 
 /* رأس صندوق الأدوات */
@@ -144,7 +130,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-xl);
+    padding: var(--space-lg);
     border-bottom: 1px solid var(--border-primary);
     background: var(--bg-card);
     border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
@@ -157,43 +143,47 @@
     display: flex;
     align-items: center;
     gap: var(--space-md);
+    flex: 1;
 }
 
 .toolbox-icon {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-xl);
     background: var(--gradient-brand);
     border-radius: var(--radius-lg);
-    padding: var(--space-md);
-    width: 60px;
-    height: 60px;
+    padding: var(--space-sm);
+    width: 45px;
+    height: 45px;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: var(--shadow-md);
+    flex-shrink: 0;
 }
 
 .toolbox-title h2 {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-xl);
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
+    white-space: nowrap;
 }
 
 .close-btn {
     background: var(--bg-input);
     border: 1px solid var(--border-secondary);
     color: var(--text-tertiary);
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-lg);
     cursor: pointer;
     padding: var(--space-sm);
     border-radius: var(--radius-lg);
     transition: all var(--transition-fast);
     line-height: 1;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .close-btn:hover {
@@ -210,10 +200,10 @@
 
 /* محتوى صندوق الأدوات */
 .toolbox-content {
-    padding: var(--space-xl);
+    padding: var(--space-lg);
     display: flex;
     flex-direction: column;
-    gap: var(--space-xl);
+    gap: var(--space-lg);
 }
 
 /* قسم المحفظة */
@@ -259,13 +249,13 @@
 }
 
 .wallet-icon {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-xl);
     background: var(--bg-success);
     color: white;
     border-radius: var(--radius-lg);
-    padding: var(--space-md);
-    width: 50px;
-    height: 50px;
+    padding: var(--space-sm);
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -275,25 +265,33 @@
 
 .wallet-text {
     flex: 1;
+    min-width: 0;
 }
 
 .wallet-title {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-base);
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 4px;
 }
 
 .wallet-desc {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
     color: var(--text-tertiary);
     line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
 
 .wallet-arrow {
     color: var(--text-tertiary);
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-lg);
     transition: all var(--transition-normal);
+    flex-shrink: 0;
 }
 
 .wallet-section:hover .wallet-arrow {
@@ -306,7 +304,7 @@
     background: var(--bg-input);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-xl);
-    padding: var(--space-xl);
+    padding: var(--space-lg);
     position: relative;
 }
 
@@ -314,27 +312,28 @@
     display: flex;
     align-items: center;
     gap: var(--space-md);
-    margin-bottom: var(--space-xl);
-    padding-bottom: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
     border-bottom: 1px solid var(--border-primary);
 }
 
 .calculator-icon {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-xl);
     background: var(--gradient-button);
     color: white;
     border-radius: var(--radius-lg);
-    padding: var(--space-md);
-    width: 50px;
-    height: 50px;
+    padding: var(--space-sm);
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
 }
 
 .calculator-title {
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-lg);
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
@@ -344,13 +343,13 @@
 .calculator-form {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: var(--space-md);
 }
 
 .form-grid {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: var(--space-md);
 }
 
 .form-group {
@@ -384,6 +383,7 @@
     align-items: center;
     gap: var(--space-sm);
     margin-bottom: var(--space-xs);
+    line-height: 1.3;
 }
 
 .required-indicator {
@@ -399,10 +399,11 @@
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-lg);
     color: var(--text-primary);
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-sm);
     transition: all var(--transition-normal);
     outline: none;
     font-family: inherit;
+    min-height: 44px; /* للأجهزة اللمسية */
 }
 
 .form-input:focus {
@@ -444,6 +445,7 @@
     text-align: center;
     position: relative;
     overflow: hidden;
+    margin: var(--space-md) 0;
 }
 
 .percentage-result::before {
@@ -488,61 +490,6 @@
     font-weight: 600;
 }
 
-.calculation-details {
-    margin-top: var(--space-md);
-    padding-top: var(--space-md);
-    border-top: 1px solid var(--border-primary);
-}
-
-.calculation-formula {
-    font-size: var(--font-size-xs);
-    color: var(--text-tertiary);
-    font-family: 'Courier New', monospace;
-    line-height: 1.5;
-    background: var(--bg-secondary);
-    padding: var(--space-sm);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-secondary);
-}
-
-/* معلومات إضافية */
-.calculation-info {
-    background: var(--bg-card);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-lg);
-    padding: var(--space-lg);
-    margin-top: var(--space-lg);
-}
-
-.info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: var(--space-md);
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-sm);
-    background: var(--bg-input);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-secondary);
-}
-
-.info-label {
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-
-.info-value {
-    font-size: var(--font-size-sm);
-    color: var(--text-primary);
-    font-weight: 600;
-    font-feature-settings: "tnum" 1, "lnum" 1;
-}
-
 /* رسائل الحالة */
 .status-message {
     padding: var(--space-md);
@@ -553,6 +500,8 @@
     gap: var(--space-sm);
     font-weight: 500;
     animation: slideInDown 0.3s ease;
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
 }
 
 .status-message.show {
@@ -591,12 +540,13 @@
 /* أزرار الإجراءات */
 .action-buttons {
     display: flex;
+    flex-direction: column;
     gap: var(--space-md);
-    margin-top: var(--space-xl);
+    margin-top: var(--space-lg);
 }
 
 .btn {
-    flex: 1;
+    width: 100%;
     padding: var(--space-lg);
     border: none;
     border-radius: var(--radius-xl);
@@ -612,6 +562,7 @@
     position: relative;
     overflow: hidden;
     font-family: inherit;
+    min-height: 48px; /* للأجهزة اللمسية */
 }
 
 .btn::before {
@@ -708,143 +659,10 @@
     100% { transform: rotate(360deg); }
 }
 
-/* تجاوبية للشاشات المتوسطة */
-@media (max-width: 768px) {
-    .toolbox-container {
-        max-width: 95%;
-        max-height: 95vh;
-    }
-    
-    .toolbox-header,
-    .toolbox-content,
-    .insurance-calculator {
-        padding: var(--space-lg);
-    }
-    
-    .toolbox-icon {
-        width: 50px;
-        height: 50px;
-        font-size: var(--font-size-xl);
-    }
-    
-    .toolbox-title h2 {
-        font-size: var(--font-size-xl);
-    }
-    
-    .info-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* تجاوبية للشاشات الصغيرة */
-@media (max-width: 640px) {
-    .toolbox-overlay {
-        padding: var(--space-md);
-    }
-    
-    .toolbox-container {
-        width: 100%;
-        max-height: 100vh;
-        border-radius: var(--radius-xl);
-    }
-    
-    .toolbox-header {
-        padding: var(--space-lg);
-        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    }
-    
-    .toolbox-content {
-        padding: var(--space-lg);
-    }
-    
-    .insurance-calculator {
-        padding: var(--space-lg);
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-    }
-    
-    .wallet-section {
-        padding: var(--space-md);
-    }
-    
-    .wallet-icon {
-        width: 45px;
-        height: 45px;
-        font-size: var(--font-size-xl);
-    }
-    
-    .percentage-number {
-        font-size: var(--font-size-2xl);
-    }
-    
-    .toolbox-container::-webkit-scrollbar {
-        width: 6px;
-    }
-}
-
-/* تجاوبية للشاشات الصغيرة جداً */
-@media (max-width: 480px) {
-    .toolbox-overlay {
-        padding: var(--space-sm);
-    }
-    
-    .form-label {
-        font-size: var(--font-size-xs);
-    }
-    
-    .form-input {
-        padding: var(--space-sm) var(--space-md);
-        font-size: var(--font-size-sm);
-    }
-    
-    .btn {
-        padding: var(--space-md);
-        font-size: var(--font-size-sm);
-    }
-    
-    .wallet-title {
-        font-size: var(--font-size-base);
-    }
-    
-    .wallet-desc {
-        font-size: var(--font-size-xs);
-    }
-}
-
-/* دعم الحركة المقللة */
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* دعم التباين العالي */
-@media (prefers-contrast: high) {
-    :root {
-        --bg-primary: #000000;
-        --bg-card: #1a1a1a;
-        --text-primary: #ffffff;
-        --border-primary: #666666;
-        --border-accent: #00aaff;
-    }
-}
-
-/* وضع الطباعة */
-@media print {
-    .toolbox-overlay {
-        display: none !important;
-    }
-}
-
+/* قسم الأدوات الجديدة */
 .NFS-section {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-md);
     padding: var(--space-lg);
     background: var(--bg-tertiary);
@@ -884,44 +702,225 @@
 }
 
 .NFS-icon {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-xl);
     background: var(--bg-success);
     color: white;
     border-radius: var(--radius-lg);
-    padding: var(--space-md);
-    width: 50px;
-    height: 50px;
+    padding: var(--space-sm);
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     box-shadow: var(--shadow-sm);
+    margin-top: 2px;
 }
 
 .NFS-text {
     flex: 1;
+    min-width: 0;
 }
 
 .NFS-title {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-base);
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    line-height: 1.3;
 }
 
 .NFS-desc {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
     color: var(--text-tertiary);
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
-.NFS-arrow {
-    color: var(--text-tertiary);
-    font-size: var(--font-size-xl);
-    transition: all var(--transition-normal);
+/* تجاوبية للشاشات الصغيرة جداً */
+@media (max-width: 480px) {
+    .toolbox-overlay {
+        padding: var(--space-xs);
+        align-items: stretch;
+    }
+    
+    .toolbox-container {
+        margin: 0;
+        min-height: 100vh;
+        border-radius: 0;
+        max-width: none;
+    }
+    
+    .toolbox-header {
+        padding: var(--space-md);
+        border-radius: 0;
+    }
+    
+    .toolbox-content {
+        padding: var(--space-md);
+    }
+    
+    .insurance-calculator {
+        padding: var(--space-md);
+    }
+    
+    .toolbox-icon {
+        width: 40px;
+        height: 40px;
+        font-size: var(--font-size-lg);
+    }
+    
+    .toolbox-title h2 {
+        font-size: var(--font-size-lg);
+    }
+    
+    .close-btn {
+        width: 32px;
+        height: 32px;
+        font-size: var(--font-size-base);
+    }
+    
+    .wallet-section,
+    .NFS-section {
+        padding: var(--space-md);
+    }
+    
+    .wallet-icon,
+    .NFS-icon,
+    .calculator-icon {
+        width: 36px;
+        height: 36px;
+        font-size: var(--font-size-lg);
+    }
+    
+    .percentage-number {
+        font-size: var(--font-size-2xl);
+    }
+    
+    .percentage-unit {
+        font-size: var(--font-size-lg);
+    }
+    
+    .form-input {
+        padding: var(--space-sm) var(--space-md);
+        font-size: var(--font-size-sm);
+    }
+    
+    .btn {
+        padding: var(--space-md);
+        font-size: var(--font-size-sm);
+        min-height: 44px;
+    }
+    
+    .action-buttons {
+        gap: var(--space-sm);
+    }
+    
+    .wallet-desc,
+    .NFS-desc {
+        font-size: 0.7rem;
+        line-height: 1.4;
+    }
+    
+    .form-help {
+        font-size: 0.7rem;
+    }
+    
+    .status-message {
+        font-size: var(--font-size-xs);
+        padding: var(--space-sm);
+    }
 }
 
-.NFS-section:hover .NFS-arrow {
-    color: var(--text-success);
-    transform: translateX(-4px);
+/* تحسينات إضافية للشاشات الصغيرة جداً */
+@media (max-width: 360px) {
+    .toolbox-title {
+        gap: var(--space-sm);
+    }
+    
+    .toolbox-title h2 {
+        font-size: var(--font-size-base);
+    }
+    
+    .calculator-title {
+        font-size: var(--font-size-base);
+    }
+    
+    .wallet-title,
+    .NFS-title {
+        font-size: var(--font-size-sm);
+    }
+    
+    .percentage-result {
+        padding: var(--space-md);
+    }
+    
+    .percentage-number {
+        font-size: var(--font-size-xl);
+    }
+    
+    .percentage-unit {
+        font-size: var(--font-size-base);
+    }
+}
+
+/* دعم الحركة المقللة */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* دعم التباين العالي */
+@media (prefers-contrast: high) {
+    :root {
+        --bg-primary: #000000;
+        --bg-card: #1a1a1a;
+        --text-primary: #ffffff;
+        --border-primary: #666666;
+        --border-accent: #00aaff;
+    }
+}
+
+/* وضع الطباعة */
+@media print {
+    .toolbox-overlay {
+        display: none !important;
+    }
+}
+
+/* تحسينات للشاشات العريضة على الأجهزة اللوحية */
+@media (min-width: 481px) and (max-width: 768px) {
+    .toolbox-container {
+        max-width: 90%;
+    }
+    
+    .action-buttons {
+        flex-direction: row;
+    }
+    
+    .btn {
+        flex: 1;
+    }
+}
+
+/* تحسينات للشاشات المتوسطة */
+@media (min-width: 769px) {
+    .toolbox-overlay {
+        align-items: center;
+        padding: var(--space-lg);
+    }
+    
+    .toolbox-container {
+        margin: auto;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .action-buttons {
+        flex-direction: row;
+    }
 }

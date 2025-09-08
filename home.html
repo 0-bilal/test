@@ -3,12 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
   <title>QB-Nexa</title>
-  
-  <link rel="stylesheet" href="css/modern-dark-style.css"/>
-  <link rel="stylesheet" href="css/developer-contact.css" />
-  <link rel="stylesheet" href="css/som.css"/>
-  <link rel="stylesheet" href="css/wallet.css"/>
 
   <link rel="icon" type="image/x-icon" href="ico/favicon.ico">
 
@@ -16,20 +12,52 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
+  <script src="js/version.js" defer></script>
+  <script src="js/version-check.js" defer></script>
+  <script defer src="js/guard.js"></script>
+  <script defer src="js/script.js"></script>
+  <script defer src="js/activeUserNotify.js"></script>
+  <script defer src="js/qb-fingerprint.js"></script>
+  <script defer src="js/developer-contact.js"></script>
+  <script defer src="js/som.js"></script>
+  <script defer src="js/wallet.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function boot(){
+  var V = (window.APP_VERSION || 'v3.0 Nova');
+  function bust(u){ return u + (u.indexOf('?')>-1?'&':'?') + 'v=' + encodeURIComponent(V); }
+
+  var css = ['css/modern-dark-style.css','css/developer-contact.css','css/som.css','css/wallet.css'];
+  css.forEach(function(href){
+    var l = document.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = bust(href);
+    document.head.appendChild(l);
+  });
+});
+</script>
+
+
 </head>
-<script src="js/version.js" defer></script>
- <script defer src="js/guard.js"></script>
 
 <body class="modern-dark-theme">
   <header class="modern-header">
     <div class="header-content">
       <div class="brand-section">
-        <h1 class="brand-title">QB-Nexa</h1>
+       <h1 class="brand-title">QB-Nexa</h1>
       </div>
 
+
+
+      
+
+  <div class="header-actions">
+    <button id="saveDataBtn" class="save-data-btn" type="button">
+        <span class="save-data-btn-icon">🧰</span>
+      </button>
+
     <div class="header-actions">
- 
- <button id="saveDataBtn" class="save-data-btn" type="button">
+    <button id="saveDataBtn" class="save-data-btn" type="button">
         <span class="save-data-btn-icon">💾</span>
         <span>حفظ البيانات</span>
       </button>
@@ -62,17 +90,11 @@
         />
       </div>
 
-    
-
       <div class="modal-actions">
         <button type="button" class="modal-btn modal-btn-secondary" id="cancelSave">
-          <span class="modal-btn-icon"></span>
-          إلغاء
-        </button>
+          <span class="modal-btn-icon"></span>إلغاء</button>
         <button type="submit" class="modal-btn modal-btn-primary" id="confirmSave">
-          <span class="modal-btn-icon"></span>
-          حفظ العملية
-        </button>
+          <span class="modal-btn-icon"></span>حفظ العملية</button>
       </div>
     </form>
   </div>
@@ -90,11 +112,9 @@
       </button>
 
       
-           <div class="version-badge"></div>
-    </div>
-
-    
-    <div class="header-gradient"></div>
+         <div class="version-badge"></div>
+      <div class="header-gradient"></div>
+  </div>
   </header>
 
 
@@ -262,9 +282,7 @@
       <div class="message-content">
         <textarea id="clientMessage" class="modern-textarea" readonly placeholder="ستظهر رسالة العميل هنا..."></textarea>
         <button id="copyMessage" class="modern-btn primary-btn">
-          <span class="btn-icon">📋</span>
-          نسخ الرسالة
-        </button>
+          <span class="btn-icon">📋</span>نسخ الرسالة</button>
       </div>
     </section>
   </main>
@@ -287,18 +305,18 @@
   <footer class="modern-footer">
     <div class="footer-content">
       <div class="developer-info">
-        <div class="dev-badge">تطوير : بلال الخواجة</div>
-        <div class="dev-details">مبني على إصدار الإكسل الأصلية | 23 أغسطس 2025</div>
+        <div class="dev-main">
+          <span class="dev-badge">تطوير : بلال الخواجة</span>
+        </div>
+        <div class="dev-details">
+          <span class="dev-date"></span>
+          <span class="dev-separator">•</span>
+          <span class="dev-base">مبني على إصدار الإكسل الأصلية</span>
+        </div>
       </div>
     </div>
   </footer>
 
-   <script src="js/script.js"></script>
-   <script defer src="js/activeUserNotify.js"></script>
-   <script src="js/qb-fingerprint.js" defer></script>
-   <script src="js/developer-contact.js"></script>
-     <script src="js/som.js"></script>
-   <script src="js/wallet.js"></script>
 
   <script>
 
@@ -405,5 +423,5 @@ if (window.MutationObserver) {
 }
 
   </script>
-</body>
+ </body>
 </html>

@@ -88,7 +88,6 @@
 .dev-details h4 { font-size: var(--font-size-base); font-weight: 700; color: var(--text-primary); margin: 0 0 2px; }
 .dev-details p  { font-size: var(--font-size-sm); color: var(--text-tertiary); margin: 0; }
 
-/* ------- Form ------- */
 .contact-form { display: flex; flex-direction: column; gap: var(--space-md); }
 .form-section { display: flex; flex-direction: column; gap: var(--space-sm); }
 .form-label { font-size: var(--font-size-sm); font-weight: 600; color: var(--text-secondary); }

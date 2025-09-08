@@ -1,4 +1,3 @@
-/* أنماط زر المحفظة */
 .wallet-container {
   position: relative;
   display: inline-block;
@@ -43,7 +42,6 @@
   justify-content: center;
 }
 
-/* النافذة المنبثقة للمحفظة */
 .wallet-modal-overlay {
   display: none;
   position: fixed;
@@ -86,7 +84,6 @@
   transform: scale(1) translateY(0);
 }
 
-/* رأس النافذة */
 .wallet-modal-header {
   display: flex;
   align-items: center;
@@ -126,7 +123,6 @@
   gap: var(--space-sm);
 }
 
-/* زر إعادة التحميل */
 .wallet-refresh-btn {
   display: flex;
   align-items: center;
@@ -162,7 +158,6 @@
   transition: transform 0.2s ease;
 }
 
-/* زر الإغلاق */
 .wallet-modal-close {
   display: flex;
   align-items: center;
@@ -183,7 +178,6 @@
   color: var(--text-primary);
 }
 
-/* محتوى النافذة */
 .wallet-modal-content {
   flex: 1;
   position: relative;
@@ -191,7 +185,6 @@
   min-height: 300px;
 }
 
-/* شريط التحميل */
 .wallet-loading-container {
   position: absolute;
   top: 0;
@@ -262,7 +255,6 @@
   color: var(--text-accent);
 }
 
-/* محتوى المحفظة */
 .wallet-content {
   position: absolute;
   top: 0;
@@ -281,14 +273,12 @@
   visibility: visible;
 }
 
-/* قائمة العمليات المحفوظة */
 .saved-operations-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
 }
 
-/* بند العملية المحفوظة */
 .saved-operation-item {
   display: flex;
   align-items: flex-start;
@@ -314,7 +304,6 @@
   opacity: 0.6;
 }
 
-/* معلومات العملية */
 .operation-info {
   flex: 1;
   min-width: 0;
@@ -365,7 +354,6 @@
   color: var(--text-accent);
 }
 
-/* أزرار الإجراءات */
 .operation-actions {
   display: flex;
   flex-direction: column;
@@ -409,7 +397,6 @@
   box-shadow: var(--shadow-md);
 }
 
-/* حالة القائمة الفارغة */
 .empty-state {
   display: none;
   flex-direction: column;
@@ -450,7 +437,6 @@
   text-align: center;
 }
 
-/* Scrollbar للمحتوى */
 .wallet-content::-webkit-scrollbar {
   width: 8px;
 }
@@ -469,7 +455,6 @@
   background: var(--border-accent);
 }
 
-/* نافذة تأكيد الحذف */
 .delete-modal .modal-icon {
   background: var(--bg-error);
   color: white;
@@ -505,7 +490,6 @@
   box-shadow: var(--shadow-lg);
 }
 
-/* التصميم المتجاوب */
 @media (max-width: 768px) {
   .wallet-modal {
     max-width: 95vw;
@@ -580,7 +564,6 @@
   }
 }
 
-/* تحسينات إمكانية الوصول */
 .wallet-btn:focus,
 .wallet-refresh-btn:focus,
 .wallet-modal-close:focus {
@@ -596,7 +579,6 @@
   outline-offset: 2px;
 }
 
-/* تأثيرات التحميل */
 .saved-operation-item.loading::after {
   content: '';
   position: absolute;

@@ -1,0 +1,927 @@
+/* ملف CSS لصندوق الأدوات - toolbox-style.css */
+
+/* إعدادات أساسية */
+* {
+    box-sizing: border-box;
+}
+
+/* متغيرات CSS للألوان والأبعاد */
+:root {
+    --bg-primary: #0a0b0f;
+    --bg-secondary: #12141a;
+    --bg-tertiary: #1a1d26;
+    --bg-card: #1e2128;
+    --bg-card-hover: #252832;
+    --bg-input: #2a2d38;
+    --bg-button: #3b82f6;
+    --bg-success: #10b981;
+    --bg-warning: #f59e0b;
+    --bg-error: #ef4444;
+    --text-primary: #ffffff;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --text-accent: #60a5fa;
+    --text-success: #34d399;
+    --text-warning: #fbbf24;
+    --text-error: #f87171;
+    --border-primary: #374151;
+    --border-secondary: #4b5563;
+    --border-accent: #3b82f6;
+    --border-success: #059669;
+    --gradient-brand: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    --gradient-card: linear-gradient(135deg, #1e2128 0%, #252832 100%);
+    --gradient-button: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+    --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.15);
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.5rem;
+    --radius-3xl: 2rem;
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.2s ease;
+    --transition-slow: 0.3s ease;
+}
+
+/* الواجهة المنبثقة الرئيسية */
+.toolbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition-slow);
+    padding: var(--space-lg);
+}
+
+.toolbox-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* الحاوي الرئيسي */
+.toolbox-container {
+    background: var(--gradient-card);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-2xl);
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-xl), var(--shadow-glow);
+    transform: scale(0.9) translateY(20px);
+    transition: all var(--transition-slow);
+    position: relative;
+}
+
+.toolbox-overlay.active .toolbox-container {
+    transform: scale(1) translateY(0);
+}
+
+/* تخصيص شريط التمرير */
+.toolbox-container {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-accent) var(--bg-tertiary);
+}
+
+.toolbox-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.toolbox-container::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    margin: 10px 0;
+}
+
+.toolbox-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--border-accent) 0%, #8b5cf6 100%);
+    border-radius: 10px;
+    border: 1px solid var(--bg-card);
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+.toolbox-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+}
+
+.toolbox-container::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(135deg, #1d4ed8 0%, #6d28d9 100%);
+}
+
+.toolbox-container::-webkit-scrollbar-corner {
+    background: var(--bg-tertiary);
+}
+
+/* رأس صندوق الأدوات */
+.toolbox-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-xl);
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-card);
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.toolbox-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.toolbox-icon {
+    font-size: var(--font-size-2xl);
+    background: var(--gradient-brand);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+}
+
+.toolbox-title h2 {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.close-btn {
+    background: var(--bg-input);
+    border: 1px solid var(--border-secondary);
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xl);
+    cursor: pointer;
+    padding: var(--space-sm);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+    line-height: 1;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    background: var(--bg-error);
+    color: white;
+    border-color: var(--bg-error);
+    transform: scale(1.05);
+}
+
+.close-btn:focus {
+    outline: 2px solid var(--border-accent);
+    outline-offset: 2px;
+}
+
+/* محتوى صندوق الأدوات */
+.toolbox-content {
+    padding: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+/* قسم المحفظة */
+.wallet-section {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-xl);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.wallet-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.wallet-section:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-success);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.wallet-section:hover::before {
+    left: 100%;
+}
+
+.wallet-section:focus {
+    outline: 2px solid var(--border-accent);
+    outline-offset: 2px;
+}
+
+.wallet-icon {
+    font-size: var(--font-size-2xl);
+    background: var(--bg-success);
+    color: white;
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.wallet-text {
+    flex: 1;
+}
+
+.wallet-title {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.wallet-desc {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+    line-height: 1.4;
+}
+
+.wallet-arrow {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xl);
+    transition: all var(--transition-normal);
+}
+
+.wallet-section:hover .wallet-arrow {
+    color: var(--text-success);
+    transform: translateX(-4px);
+}
+
+/* قسم حاسبة التأمين */
+.insurance-calculator {
+    background: var(--bg-input);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    position: relative;
+}
+
+.calculator-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.calculator-icon {
+    font-size: var(--font-size-2xl);
+    background: var(--gradient-button);
+    color: white;
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+}
+
+.calculator-title {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* نموذج الحاسبة */
+.calculator-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    animation: fadeInUp 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+.form-group:nth-child(1) { animation-delay: 0.1s; }
+.form-group:nth-child(2) { animation-delay: 0.2s; }
+.form-group:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xs);
+}
+
+.required-indicator {
+    color: var(--text-error);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+}
+
+.form-input {
+    width: 100%;
+    padding: var(--space-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    color: var(--text-primary);
+    font-size: var(--font-size-base);
+    transition: all var(--transition-normal);
+    outline: none;
+    font-family: inherit;
+}
+
+.form-input:focus {
+    border-color: var(--border-accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: var(--bg-secondary);
+    transform: translateY(-1px);
+}
+
+.form-input:read-only {
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.form-input::placeholder {
+    color: var(--text-tertiary);
+    font-weight: 400;
+}
+
+.form-input:invalid {
+    border-color: var(--text-error);
+}
+
+.form-help {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    line-height: 1.4;
+    margin-top: var(--space-xs);
+}
+
+/* نتيجة النسبة المئوية */
+.percentage-result {
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-accent);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.percentage-result::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: var(--gradient-brand);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0.1;
+}
+
+.percentage-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-sm);
+    font-weight: 500;
+}
+
+.percentage-value {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
+}
+
+.percentage-number {
+    font-size: var(--font-size-3xl);
+    font-weight: 900;
+    color: var(--text-accent);
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.percentage-unit {
+    font-size: var(--font-size-xl);
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.calculation-details {
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-primary);
+}
+
+.calculation-formula {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    font-family: 'Courier New', monospace;
+    line-height: 1.5;
+    background: var(--bg-secondary);
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-secondary);
+}
+
+/* معلومات إضافية */
+.calculation-info {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    margin-top: var(--space-lg);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--space-md);
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm);
+    background: var(--bg-input);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-secondary);
+}
+
+.info-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.info-value {
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    font-weight: 600;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* رسائل الحالة */
+.status-message {
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+    margin-top: var(--space-md);
+    display: none;
+    align-items: center;
+    gap: var(--space-sm);
+    font-weight: 500;
+    animation: slideInDown 0.3s ease;
+}
+
+.status-message.show {
+    display: flex;
+}
+
+.status-message.success {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid var(--border-success);
+    color: var(--text-success);
+}
+
+.status-message.error {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid var(--text-error);
+    color: var(--text-error);
+}
+
+.status-message.warning {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid var(--bg-warning);
+    color: var(--text-warning);
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* أزرار الإجراءات */
+.action-buttons {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+}
+
+.btn {
+    flex: 1;
+    padding: var(--space-lg);
+    border: none;
+    border-radius: var(--radius-xl);
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    position: relative;
+    overflow: hidden;
+    font-family: inherit;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn-primary {
+    background: var(--gradient-button);
+    color: white;
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-primary:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-secondary);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+}
+
+.btn-secondary:focus {
+    outline: 2px solid var(--border-accent);
+    outline-offset: 2px;
+}
+
+.btn-icon {
+    font-size: var(--font-size-lg);
+    line-height: 1;
+}
+
+.btn-text {
+    font-weight: 700;
+}
+
+/* حالات التحميل */
+.btn.loading {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn.loading .btn-text,
+.btn.loading .btn-icon {
+    opacity: 0;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* تجاوبية للشاشات المتوسطة */
+@media (max-width: 768px) {
+    .toolbox-container {
+        max-width: 95%;
+        max-height: 95vh;
+    }
+    
+    .toolbox-header,
+    .toolbox-content,
+    .insurance-calculator {
+        padding: var(--space-lg);
+    }
+    
+    .toolbox-icon {
+        width: 50px;
+        height: 50px;
+        font-size: var(--font-size-xl);
+    }
+    
+    .toolbox-title h2 {
+        font-size: var(--font-size-xl);
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* تجاوبية للشاشات الصغيرة */
+@media (max-width: 640px) {
+    .toolbox-overlay {
+        padding: var(--space-md);
+    }
+    
+    .toolbox-container {
+        width: 100%;
+        max-height: 100vh;
+        border-radius: var(--radius-xl);
+    }
+    
+    .toolbox-header {
+        padding: var(--space-lg);
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+    
+    .toolbox-content {
+        padding: var(--space-lg);
+    }
+    
+    .insurance-calculator {
+        padding: var(--space-lg);
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .wallet-section {
+        padding: var(--space-md);
+    }
+    
+    .wallet-icon {
+        width: 45px;
+        height: 45px;
+        font-size: var(--font-size-xl);
+    }
+    
+    .percentage-number {
+        font-size: var(--font-size-2xl);
+    }
+    
+    .toolbox-container::-webkit-scrollbar {
+        width: 6px;
+    }
+}
+
+/* تجاوبية للشاشات الصغيرة جداً */
+@media (max-width: 480px) {
+    .toolbox-overlay {
+        padding: var(--space-sm);
+    }
+    
+    .form-label {
+        font-size: var(--font-size-xs);
+    }
+    
+    .form-input {
+        padding: var(--space-sm) var(--space-md);
+        font-size: var(--font-size-sm);
+    }
+    
+    .btn {
+        padding: var(--space-md);
+        font-size: var(--font-size-sm);
+    }
+    
+    .wallet-title {
+        font-size: var(--font-size-base);
+    }
+    
+    .wallet-desc {
+        font-size: var(--font-size-xs);
+    }
+}
+
+/* دعم الحركة المقللة */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* دعم التباين العالي */
+@media (prefers-contrast: high) {
+    :root {
+        --bg-primary: #000000;
+        --bg-card: #1a1a1a;
+        --text-primary: #ffffff;
+        --border-primary: #666666;
+        --border-accent: #00aaff;
+    }
+}
+
+/* وضع الطباعة */
+@media print {
+    .toolbox-overlay {
+        display: none !important;
+    }
+}
+
+.NFS-section {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-xl);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.NFS-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.NFS-section:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-success);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.NFS-section:hover::before {
+    left: 100%;
+}
+
+.NFS-section:focus {
+    outline: 2px solid var(--border-accent);
+    outline-offset: 2px;
+}
+
+.NFS-icon {
+    font-size: var(--font-size-2xl);
+    background: var(--bg-success);
+    color: white;
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.NFS-text {
+    flex: 1;
+}
+
+.NFS-title {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.NFS-desc {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+    line-height: 1.4;
+}
+
+.NFS-arrow {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xl);
+    transition: all var(--transition-normal);
+}
+
+.NFS-section:hover .NFS-arrow {
+    color: var(--text-success);
+    transform: translateX(-4px);
+}

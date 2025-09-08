@@ -1,16 +1,9 @@
-/*************************************************
- * wallet.js — Modal Manager + Lazy Injection (FAST + GAS fetch)
- * - يحافظ على الكود الأساسي والسلوك
- * - يسترجع العمليات من GAS ويفكك data_compact ويعرضها
- **************************************************/
 
-// ====== إعدادات التكامل مع GAS ======
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbywXfqFC0fgZoBcjgBM2VUTnQSKZuY7CqdVeflqFvC9HoIpE8cNN0arAMY3deZaM_AL/exec"; // ضع رابط /exec
 
 const ANIM_SPEED = 0.9;
 const WALLET_HTML_URL = "wallet.html";
 
-// ====== حاوية الحقن ======
 function ensureMountContainer() {
   let mount = document.getElementById('wallet-mount') || document.querySelector('.wallet-mount');
   if (mount) return mount;
@@ -28,7 +21,6 @@ async function ensureWalletInjected() {
   mount.insertAdjacentHTML("beforeend", html);
 }
 
-// ====== أدوات عامة ======
 function safeSession() {
   try {
     const s = JSON.parse(localStorage.getItem("qb_session") || "{}");
@@ -49,11 +41,10 @@ function parseCompactData(compact) {
   return out;
 }
 
-// ====== بدائل المفاتيح للعرض ======
 const FIELD_ALIASES = {
-  carPrice:       ['PRICE','PR','CB'],         // سعر السيارة
-  bankPrice:      ['BP','PR','XB','CB'],       // سعر البنك/المبلغ المموّل
-  monthlyPayment: ['MP','NP'],                 // القسط الشهري
+  carPrice:       ['PRICE','PR','CB'],         
+  bankPrice:      ['BP','PR','XB','CB'],
+  monthlyPayment: ['MP','NP'],
 };
 function pickAlias(data, keys){
   for (const k of keys) if (data[k] !== undefined && data[k] !== '') return data[k];
@@ -67,7 +58,6 @@ function summarizeForUI(data) {
   };
 }
 
-// ====== خريطة تعبئة (عدّلها كما تريد) ======
 const FILL_MAP = {
   PT:    'vatType',
   PRICE: 'carPrice',
@@ -84,7 +74,6 @@ const FILL_MAP = {
   Y:     'years'
 };
 
-// تنسيق أرقام دون فقد الكسور (يسمح بنقطة عشرية)
 function normalizeNumberLike(val) {
   if (val == null) return '';
   const s = String(val).replace(/[^\d.]/g, '');
@@ -99,7 +88,6 @@ function displayNumber(val){
   return isFinite(n) ? n.toLocaleString('ar-EG') : String(val);
 }
 
-// ====== المدير ======
 class WalletModalManager {
   constructor() {
     this.walletBtn = document.getElementById('walletBtn');
@@ -234,7 +222,6 @@ class WalletModalManager {
     updateProgress();
   }
 
-  // =============== جلب من GAS ===============
   async loadWalletContent() {
     try {
       const session = safeSession();
@@ -320,8 +307,8 @@ class WalletModalManager {
           <div class="operation-date">${operation.date}</div>
           <div class="operation-summary">
             <div class="summary-item"><div class="summary-label">سعر السيارة</div><div class="summary-value">${carPrice || '0'} ريال</div></div>
-            <div class="summary-item"><div class="summary-label">سعر البنك</div><div class="summary-value">${bankPrice || '0'} ريال</div></div>
-            <div class="summary-item"><div class="summary-label">القسط الشهري</div><div class="summary-value">${monthlyPayment || '0'} ريال</div></div>
+            <div class="summary-item"><div class="summary-label">هامش الربح</div><div class="summary-value">${bankPrice || '0'} %</div></div>
+            <div class="summary-item"><div class="summary-label">صافي الربح</div><div class="summary-value">${monthlyPayment || '0'} ريال</div></div>
            
           </div>
         </div>
@@ -356,19 +343,16 @@ class WalletModalManager {
     });
   }
 
-  // === تعبئة الصفحة الرئيسية ===
   fillFormFromOperation(operation) {
     const summary = operation.data || {};
     const raw = operation._raw || {};
 
-    // 1) الحقول القياسية أولاً
     this._fillKeyToTargets({
       carPrice:       summary.carPrice,
       bankPrice:      summary.bankPrice,
       monthlyPayment: summary.monthlyPayment,
     });
 
-    // 2) FILL_MAP
     for (const [srcKey, targetField] of Object.entries(FILL_MAP)) {
       try {
         if (raw[srcKey] !== undefined) this._fillOne(targetField, raw[srcKey]);
@@ -377,20 +361,16 @@ class WalletModalManager {
       }
     }
 
-    // 3) تعبئة ذكية احتياطية
     for (const [k, v] of Object.entries(raw)) {
       try { this._fillOne(k, v); } catch (e) { /* تجاهل */ }
     }
   }
 
-  // حقل واحد
   _fillOne(targetKey, value) {
     try {
       if (value == null) return;
       const v = String(value).trim();
 
-      // — دعم خاص لـ PT (القائمة المنسدلة priceType) —
-      // التخزين كان: withTax => NOVAT   |  withoutTax => VAT
       if (targetKey === 'vatType' || targetKey === 'PT') {
         const sel = document.getElementById('priceType');
         if (sel) {
@@ -400,10 +380,9 @@ class WalletModalManager {
           sel.dispatchEvent(new Event('input',  { bubbles: true }));
           sel.dispatchEvent(new Event('change', { bubbles: true }));
         }
-        return; // لا نُكمل بمنطق النصوص
+        return;
       }
 
-      // — بقية الحقول —
       let el =
         document.getElementById(targetKey) ||
         document.querySelector(`[name="${targetKey}"]`) ||
@@ -421,7 +400,6 @@ class WalletModalManager {
   }
 
   loadOperation(id) {
-    // طابق الـ id كنص لتفادي 2 !== "2"
     const idStr = String(id);
     const operation = (this.operationsCache || []).find(op => String(op.id) === idStr);
     if (!operation) {
@@ -432,14 +410,13 @@ class WalletModalManager {
     const item = this.operationsList?.querySelector(`[data-id="${id}"]`);
     if (item) item.classList.add('loading');
 
-    setTimeout(() => { // Arrow function لحفظ this
+    setTimeout(() => { 
       try {
-        // أرسل حدثًا عامًا
+
         window.dispatchEvent(new CustomEvent('wallet:load', { detail: {
           id: operation.id, name: operation.name, summary: operation.data, raw: operation._raw
         }}));
 
-        // عبّئ الصفحة الرئيسية
         this.fillFormFromOperation(operation);
 
         this.closeModal();
@@ -453,7 +430,6 @@ class WalletModalManager {
     }, Math.max(200, Math.round(600 * ANIM_SPEED)));
   }
 
-  // حذف محلي
   showDeleteConfirmation(id, name) {
     this.currentDeleteId = id;
     if (this.deleteOperationName) this.deleteOperationName.textContent = name || '';
@@ -465,17 +441,48 @@ class WalletModalManager {
     this.currentDeleteId = null;
     document.body.style.overflow = this.isModalOpen ? 'hidden' : '';
   }
-  deleteOperation() {
-    if (!this.currentDeleteId) return;
-    const idx = this.operationsCache.findIndex(o => o.id === this.currentDeleteId);
-    const op = idx > -1 ? this.operationsCache[idx] : null;
-    if (idx > -1) this.operationsCache.splice(idx, 1);
-    this.closeDeleteModal();
-    this.renderFromCache();
-    this.showNotification(`تم حذف ${op ? op.name : 'العملية'} (محليًا)`, 'success');
-  }
+async deleteOperation() {
+  if (!this.currentDeleteId) return;
 
-  // مساعدات عرض
+  const rowId = this.currentDeleteId;
+  const opIndex = this.operationsCache.findIndex(o => String(o.id) === String(rowId));
+  const op = opIndex > -1 ? this.operationsCache[opIndex] : null;
+
+  this.confirmDeleteBtn?.setAttribute('disabled', 'true');
+
+  try {
+    const session = safeSession();
+    const payload = { action: "delete_operation", id: rowId, user_id: session?.user_id || "" };
+
+    const res = await fetch(GAS_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+
+    let json;
+    try { json = await res.json(); }
+    
+    catch { json = { ok: false, error: "NON_JSON_RESPONSE" }; }
+
+    if (json.ok) {
+
+      if (opIndex > -1) this.operationsCache.splice(opIndex, 1);
+      await this.loadWalletContent();
+      this.showNotification(`تم حذف ${op ? op.name : 'العملية'} من الشيت`, 'success');
+    } else {
+      this.showNotification(`تعذّر الحذف: ${json.error || 'خطأ غير معروف'}`, 'error');
+    }
+  } catch (e) {
+    console.error('[Wallet] delete failed:', e);
+    this.showNotification('فشل الاتصال بالخادم', 'error');
+  } finally {
+
+    this.closeDeleteModal();
+    this.confirmDeleteBtn?.removeAttribute('disabled');
+  }
+}
+
   escapeHTML(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -483,7 +490,6 @@ class WalletModalManager {
     return div.innerHTML;
   }
 
-  // === كانت مفقودة: تعبئة مجموعة مفاتيح ===
   _fillKeyToTargets(obj) {
     if (!obj || typeof obj !== 'object') return;
     for (const [k, v] of Object.entries(obj)) {
@@ -494,7 +500,6 @@ class WalletModalManager {
     }
   }
 
-  // === كانت مفقودة: الإشعارات ===
   showNotification(message, type = 'success') {
     try {
       const n = document.createElement('div');
@@ -506,9 +511,9 @@ class WalletModalManager {
         </div>
       `;
       document.body.appendChild(n);
-      // إظهار
+
       requestAnimationFrame(() => n.classList.add('show'));
-      // إخفاء
+
       setTimeout(() => {
         n.classList.remove('show');
         setTimeout(() => n.remove(), Math.max(80, Math.round(260 * ANIM_SPEED)));
@@ -519,7 +524,6 @@ class WalletModalManager {
   }
 }
 
-// تشغيل المدير
 document.addEventListener('DOMContentLoaded', async () => {
   if (document.getElementById('walletModal')) {
     window.walletModalManager = new WalletModalManager();

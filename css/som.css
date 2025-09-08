@@ -1,6 +1,4 @@
-/* أنماط النافذة المنبثقة */
 
-/* Modal Overlay */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -23,7 +21,6 @@
   opacity: 1;
 }
 
-/* Modal Content */
 .modal {
   background: var(--gradient-card);
   border: 1px solid var(--border-primary);
@@ -41,7 +38,6 @@
   transform: scale(1) translateY(0);
 }
 
-/* Modal Header */
 .modal-header {
   display: flex;
   align-items: center;
@@ -95,7 +91,6 @@
   color: var(--text-primary);
 }
 
-/* Modal Form */
 .modal-form {
   display: flex;
   flex-direction: column;
@@ -136,7 +131,6 @@
   color: var(--text-tertiary);
 }
 
-/* Modal Actions */
 .modal-actions {
   display: flex;
   gap: var(--space-md);
@@ -194,7 +188,6 @@
   font-size: var(--font-size-lg);
 }
 
-/* Success Message */
 .save-success {
   display: none;
   align-items: center;
@@ -224,7 +217,6 @@
   }
 }
 
-/* Save Data Button in Header */
 .save-data-btn {
   display: inline-flex;
   align-items: center;
@@ -259,7 +251,6 @@
   align-items: center;
 }
 
-/* Responsive Design */
 @media (max-width: 640px) {
   .modal {
     width: 95%;
@@ -298,10 +289,6 @@
   }
 }
 
-
-
-/* css som home */
-
 .modal-overlay {
   display: none;
   position: fixed;
@@ -324,7 +311,6 @@
   opacity: 1;
 }
 
-/* Modal Content */
 .modal {
   background: var(--gradient-card);
   border: 1px solid var(--border-primary);
@@ -342,7 +328,6 @@
   transform: scale(1) translateY(0);
 }
 
-/* Modal Header */
 .modal-header {
   display: flex;
   align-items: center;
@@ -396,7 +381,6 @@
   color: var(--text-primary);
 }
 
-/* Modal Form */
 .modal-form {
   display: flex;
   flex-direction: column;
@@ -437,7 +421,6 @@
   color: var(--text-tertiary);
 }
 
-/* Modal Actions */
 .modal-actions {
   display: flex;
   gap: var(--space-md);
@@ -495,7 +478,6 @@
   font-size: var(--font-size-lg);
 }
 
-/* Success Message */
 .save-success {
   display: none;
   align-items: center;
@@ -525,7 +507,6 @@
   }
 }
 
-/* Save Data Button in Header */
 .save-data-btn {
   display: inline-flex; align-items: center;
   align-items: center;
@@ -563,7 +544,6 @@
   align-items: center;
 }
 
-/* Responsive Design */
 @media (max-width: 640px) {
   .modal {
     width: 95%;
@@ -601,3 +581,4 @@
     left: var(--space-md);
   }
 }
+

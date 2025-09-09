@@ -21,14 +21,15 @@
   <script defer src="js/developer-contact.js"></script>
   <script defer src="js/som.js"></script>
   <script defer src="js/wallet.js"></script>
+  <script defer src="js/deduction-calculator.js"></script>
 
 
 <script>
 document.addEventListener('DOMContentLoaded', function boot(){
-  var V = (window.APP_VERSION || 'v3.2 Nova');
+  var V = (window.APP_VERSION || 'v3.3 Nova');
   function bust(u){ return u + (u.indexOf('?')>-1?'&':'?') + 'v=' + encodeURIComponent(V); }
 
-var css = ['css/modern-dark-style.css','css/developer-contact.css','css/som.css','css/wallet.css','css/toolbox-style.css'];
+var css = ['css/modern-dark-style.css','css/developer-contact.css','css/som.css','css/wallet.css','css/toolbox-style.css','developer-contact.css'];
   css.forEach(function(href){
     var l = document.createElement('link');
     l.rel = 'stylesheet';
@@ -83,6 +84,10 @@ var css = ['css/modern-dark-style.css','css/developer-contact.css','css/som.css'
           maxlength="50"
         />
       </div>
+
+  <div class="modal-help" id="operationHelp">
+    ℹ️ العمليات المسجّلة يمكن استردادها من صندوق الأدوات &gt; المحفظة
+  </div>
 
       <div class="modal-actions">
         <button type="button" class="modal-btn modal-btn-secondary" id="cancelSave">

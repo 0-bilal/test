@@ -1,50 +1,56 @@
 document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAtnvWk0nAE22e_uaDiKZ0g4gtqQSRPGnFy0tDmcJBMWldUMOgvZXuavpuororwtoI/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWndSQOMIE2g17jcTafjJ2etHyLhSknjFl_CqBLxm5M1nm-oRmri-eAi4SyTX_Nsmu/exec';
 
+    // ✅ إرسال اسم الفرع بالعربي مباشرةً لتفادي مشكلة الترجمة في السيرفر
     const branchEmployees = {
-    "Muzahmiyah": [
-        { ar: "رمان", en: "Rumaan" },
-        { ar: "محمد", en: "Mohamed" }
-    ],
-    "Dawadimi": [
-        { ar: "شاهين", en: "Shahin" },
-        { ar: "دورجا", en: "Dwrja" },
-        { ar: "نسيم", en: "Nasim" },
-        { ar: "بلال", en: "Bilal" }
-    ]
-};
+        "المزاحمية": [
+            { ar: "رمان",  en: "Rumaan"  },
+            { ar: "محمد",  en: "Mohamed" }
+        ],
+        "الدوادمي": [
+            { ar: "شاهين", en: "Shahin"  },
+            { ar: "دورجا", en: "Dwrja"   },
+            { ar: "نسيم",  en: "Nasim"   },
+            { ar: "بلال",  en: "Bilal"   }
+        ]
+    };
 
-    let selectedEmployee = localStorage.getItem('qb_staff_name')   || "";
-    let selectedBranch   = localStorage.getItem('qb_staff_branch') || "";
-    let html5QrCode = null;
-    let scannerRunning = false;
-    let employeeReady = false;
+    // قاموس عرض الفروع (القيمة لزر الراديو → الاسم العربي)
+    const BRANCH_DISPLAY = {
+        "Muzahmiyah": "المزاحمية",
+        "Dawadimi":   "الدوادمي"
+    };
+
+    let selectedEmployee    = localStorage.getItem('qb_staff_name')   || "";
+    let selectedBranchAr    = localStorage.getItem('qb_staff_branch') || ""; // الآن يُخزَّن بالعربي
+    let html5QrCode         = null;
+    let employeeReady       = false;
 
     const els = {
-        branchCard:         document.getElementById('branchCard'),
-        employeeCard:       document.getElementById('employeeCard'),
-        empGrid:            document.getElementById('employeeGrid'),
-        scannerCard:        document.getElementById('scannerCard'),
-        scannerIdle:        document.getElementById('scannerIdle'),
-        scannerPermission:  document.getElementById('scannerPermission'),
-        scannerSection:     document.getElementById('scannerSection'),
-        savedInfo:          document.getElementById('savedInfo'),
-        displayUser:        document.getElementById('displayUser'),
-        displayBranch:      document.getElementById('displayBranch'),
-        resetBtn:           document.getElementById('resetBtn'),
-        retryCamera:        document.getElementById('retryCamera'),
-        modal:              document.getElementById('customModal'),
-        modalTitle:         document.getElementById('modalTitle'),
-        modalMsg:           document.getElementById('modalMessage'),
-        modalClose:         document.getElementById('modalClose'),
-        modalLoader:        document.getElementById('modalLoader'),
-        modalIcon:          document.getElementById('modalIcon'),
-        resetModal:         document.getElementById('resetModal'),
-        resetCodeInput:     document.getElementById('resetCodeInput'),
-        confirmReset:       document.getElementById('confirmReset'),
-        cancelReset:        document.getElementById('cancelReset'),
+        branchCard:        document.getElementById('branchCard'),
+        employeeCard:      document.getElementById('employeeCard'),
+        empGrid:           document.getElementById('employeeGrid'),
+        scannerCard:       document.getElementById('scannerCard'),
+        scannerIdle:       document.getElementById('scannerIdle'),
+        scannerPermission: document.getElementById('scannerPermission'),
+        scannerSection:    document.getElementById('scannerSection'),
+        savedInfo:         document.getElementById('savedInfo'),
+        displayUser:       document.getElementById('displayUser'),
+        displayBranch:     document.getElementById('displayBranch'),
+        resetBtn:          document.getElementById('resetBtn'),
+        retryCamera:       document.getElementById('retryCamera'),
+        modal:             document.getElementById('customModal'),
+        modalTitle:        document.getElementById('modalTitle'),
+        modalMsg:          document.getElementById('modalMessage'),
+        modalClose:        document.getElementById('modalClose'),
+        modalLoader:       document.getElementById('modalLoader'),
+        modalIcon:         document.getElementById('modalIcon'),
+        resetModal:        document.getElementById('resetModal'),
+        resetCodeInput:    document.getElementById('resetCodeInput'),
+        confirmReset:      document.getElementById('confirmReset'),
+        cancelReset:       document.getElementById('cancelReset'),
     };
 
     // ===================================================
@@ -72,19 +78,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // التحقق من الجلسة المحفوظة
     // ===================================================
     const checkSavedSession = () => {
-        if (selectedEmployee && selectedBranch) {
-            // إخفاء بطاقة الفرع والموظف، إظهار الجلسة المحفوظة
+        if (selectedEmployee && selectedBranchAr) {
             els.branchCard.classList.add('hidden');
             els.employeeCard.classList.add('hidden');
             els.savedInfo.classList.remove('hidden');
 
             els.displayUser.innerText   = selectedEmployee;
-            els.displayBranch.innerText = selectedBranch === "Dawadimi" ? "الدوادمي" : "المزاحمية";
+            els.displayBranch.innerText = selectedBranchAr; // يُعرض مباشرةً بالعربي
 
             employeeReady = true;
             startScanner();
         } else {
-            // الحالة الافتراضية: الماسح في وضع الانتظار
             showScannerIdle();
         }
     };
@@ -93,46 +97,36 @@ document.addEventListener('DOMContentLoaded', () => {
     // اختيار الفرع
     // ===================================================
     document.querySelectorAll('input[name="branch"]').forEach(radio => {
-    radio.addEventListener('change', (e) => {
-        selectedBranch = e.target.value;
+        radio.addEventListener('change', (e) => {
+            const branchEn = e.target.value; // قيمة الراديو: Muzahmiyah أو Dawadimi
+            selectedBranchAr = BRANCH_DISPLAY[branchEn] || branchEn; // ✅ نحوّله للعربي فوراً
 
-        // بناء شبكة الموظفين
-        els.empGrid.innerHTML = "";
-        els.empGrid.classList.remove('employee-placeholder-grid');
-        els.empGrid.classList.add('active-grid');
+            // بناء شبكة الموظفين
+            els.empGrid.innerHTML = "";
+            els.empGrid.classList.remove('employee-placeholder-grid');
+            els.empGrid.classList.add('active-grid');
 
-        // ابحث عن هذا الجزء داخل document.querySelectorAll('input[name="branch"]')
-branchEmployees[selectedBranch].forEach(emp => {
-    const btn = document.createElement('button');
-    btn.type      = 'button';
-    btn.className = 'emp-btn';
-    
-    // هنا ندمج الاسم العربي والإنجليزي
-    // النتيجة ستكون مثلاً: رمان | Rumaan
-    const displayName = `${emp.ar} | ${emp.en}`;
-    
-    btn.innerHTML = `<i data-lucide="user"></i>${displayName}`;
-    
-    // عند الضغط، نرسل الاسم العربي (أو الإنجليزي حسب رغبتك في التخزين)
-    btn.onclick   = () => selectEmployee(emp.ar, btn); 
-    
-    els.empGrid.appendChild(btn);
-});
+            branchEmployees[selectedBranchAr].forEach(emp => {
+                const btn = document.createElement('button');
+                btn.type      = 'button';
+                btn.className = 'emp-btn';
+                btn.innerHTML = `<i data-lucide="user"></i>${emp.ar} | ${emp.en}`;
+                btn.onclick   = () => selectEmployee(emp.ar, btn);
+                els.empGrid.appendChild(btn);
+            });
 
-        lucide.createIcons();
+            lucide.createIcons();
 
-        // تصفير حالة الموظف
-        employeeReady = false;
-        selectedEmployee = "";
+            employeeReady    = false;
+            selectedEmployee = "";
 
-        // التعديل هنا: إيقاف الماسح فقط إذا كان يعمل بالفعل لتجنب الخطأ
-        if (html5QrCode && html5QrCode.getState() > 1) {
-            html5QrCode.stop().catch(() => {});
-        }
-        
-        showScannerIdle();
+            if (html5QrCode && html5QrCode.getState() > 1) {
+                html5QrCode.stop().catch(() => {});
+            }
+
+            showScannerIdle();
+        });
     });
-});
 
     // ===================================================
     // اختيار الموظف
@@ -149,59 +143,47 @@ branchEmployees[selectedBranch].forEach(emp => {
     // تشغيل الماسح
     // ===================================================
     function startScanner() {
-    if (!employeeReady) {
-        showScannerIdle();
-        return;
-    }
+        if (!employeeReady) {
+            showScannerIdle();
+            return;
+        }
 
-    // التحقق مما إذا كان الكائن موجوداً والماسح في حالة تشغيل أو انتظار (حالة 2 أو 3)
-    if (html5QrCode && html5QrCode.getState() > 1) {
-        html5QrCode.stop()
-            .then(() => {
-                initCamera();
-            })
-            .catch(err => {
-                console.warn("فشل الإيقاف، سيتم البدء من جديد:", err);
-                initCamera();
-            });
-    } else {
-        initCamera();
+        if (html5QrCode && html5QrCode.getState() > 1) {
+            html5QrCode.stop()
+                .then(initCamera)
+                .catch(() => initCamera());
+        } else {
+            initCamera();
+        }
     }
-}
 
     function initCamera() {
-    // إذا كانت الكاميرا تعمل بالفعل، لا تفعل شيئاً
-    if (html5QrCode && html5QrCode.getState() === 2) return;
+        if (html5QrCode && html5QrCode.getState() === 2) return;
 
-    showScannerActive();
-    
-    if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("reader");
+        showScannerActive();
+
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader");
+        }
+
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            (decodedText) => {
+                if (html5QrCode.getState() > 1) {
+                    html5QrCode.stop().catch(() => {});
+                }
+                sendAttendance(decodedText);
+            }
+        ).catch(() => {
+            showScannerPermission();
+        });
     }
 
-    html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        (decodedText) => {
-            // التحقق من الحالة قبل الإيقاف عند النجاح
-            if (html5QrCode.getState() > 1) {
-                html5QrCode.stop().catch(() => {});
-            }
-            sendAttendance(decodedText);
-        }
-    ).catch(() => {
-        showScannerPermission();
-    });
-}
-
-    // زر إعادة المحاولة لإذن الكاميرا
     if (els.retryCamera) {
         els.retryCamera.onclick = () => {
-            if (employeeReady) {
-                initCamera();
-            } else {
-                showScannerIdle();
-            }
+            if (employeeReady) initCamera();
+            else showScannerIdle();
         };
     }
 
@@ -209,41 +191,40 @@ branchEmployees[selectedBranch].forEach(emp => {
     // إرسال الحضور
     // ===================================================
     async function sendAttendance(qrData) {
-    showModal('loading', 'جاري التحقق...', 'يتم تسجيل حضورك وضبط البيانات...');
+        showModal('loading', 'جاري التحقق...', 'يتم تسجيل حضورك وضبط البيانات...');
 
-    let userIP = "Unknown";
-    try {
-        // جلب الـ IP العام لجهاز الموظف
-        const res = await fetch('https://api.ipify.org?format=json');
-        const data = await res.json();
-        userIP = data.ip;
-    } catch (e) {
-        console.error("Could not fetch IP", e);
+        let userIP = "Unknown";
+        try {
+            const res  = await fetch('https://api.ipify.org?format=json');
+            const data = await res.json();
+            userIP = data.ip;
+        } catch (e) {
+            console.error("Could not fetch IP", e);
+        }
+
+        const payload = {
+            action:       'ATTENDANCE',
+            employeeName: selectedEmployee,
+            branch:       selectedBranchAr,   // ✅ يُرسَل بالعربي مباشرةً
+            qrPayload:    qrData,
+            ip:           userIP,
+            fingerprint:  getFingerprint()
+        };
+
+        fetch(SCRIPT_URL, {
+            method:  'POST',
+            mode:    'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body:    JSON.stringify(payload)
+        }).then(() => {
+            localStorage.setItem('qb_staff_name',   selectedEmployee);
+            localStorage.setItem('qb_staff_branch', selectedBranchAr); // ✅ حفظ بالعربي
+            showModal('success', 'تم التسجيل', `شكراً ${selectedEmployee}، تم تسجيل حضورك بنجاح.`);
+            setTimeout(() => location.reload(), 3000);
+        }).catch(() => {
+            showModal('error', 'خطأ في الاتصال', 'تعذر إرسال البيانات، يرجى المحاولة مرة أخرى.');
+        });
     }
-
-    const payload = {
-        action:       'ATTENDANCE',
-        employeeName: selectedEmployee,
-        branch:       selectedBranch,
-        qrPayload:    qrData,
-        ip:           userIP, // إرسال الـ IP إلى السيرفر
-        fingerprint:  getFingerprint()
-    };
-
-    fetch(SCRIPT_URL, {
-        method:  'POST',
-        mode:    'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body:    JSON.stringify(payload)
-    }).then(() => {
-        localStorage.setItem('qb_staff_name',   selectedEmployee);
-        localStorage.setItem('qb_staff_branch', selectedBranch);
-        showModal('success', 'تم التسجيل', `شكراً ${selectedEmployee}، تم تسجيل حضورك بنجاح.`);
-        setTimeout(() => location.reload(), 3000);
-    }).catch(err => {
-        showModal('error', 'خطأ في الاتصال', 'تعذر إرسال البيانات، يرجى المحاولة مرة أخرى.');
-    });
-}
 
     // ===================================================
     // إعادة التعيين
@@ -263,21 +244,28 @@ branchEmployees[selectedBranch].forEach(emp => {
 
     if (els.confirmReset) {
         els.confirmReset.onclick = () => {
-    const code = els.resetCodeInput.value.trim();
-    if (!code) return;
+            const code = els.resetCodeInput.value.trim();
+            if (!code) return;
 
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors', // ضروري جداً لتجنب خطأ CORS
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'VERIFY_RESET', code: code })
-    }).then(() => {
-        // بما أننا استخدمنا no-cors، سنقوم بمسح البيانات المحلية والاعتماد على أن السيرفر سيغير الكود
-        localStorage.removeItem('qb_staff_name');
-        localStorage.removeItem('qb_staff_branch');
-        location.reload();
-    });
-};
+            // تعطيل الزر لمنع الضغط المزدوج
+            els.confirmReset.disabled = true;
+
+            fetch(SCRIPT_URL, {
+                method:  'POST',
+                mode:    'no-cors',
+                headers: { 'Content-Type': 'text/plain' },
+                body:    JSON.stringify({ action: 'VERIFY_RESET', code: code })
+            }).then(() => {
+                // ✅ بما أن no-cors لا يُعيد استجابة، نثق بالسيرفر ونمسح محلياً
+                // السيرفر يُغير الكود فور الاستلام (قبل الرد)
+                localStorage.removeItem('qb_staff_name');
+                localStorage.removeItem('qb_staff_branch');
+                location.reload();
+            }).catch(() => {
+                els.confirmReset.disabled = false;
+                alert('تعذر الاتصال بالسيرفر. يُرجى المحاولة مرة أخرى.');
+            });
+        };
     }
 
     // ===================================================

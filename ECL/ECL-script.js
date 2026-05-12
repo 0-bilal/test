@@ -81,15 +81,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function resetImageState() {
-        compressedImageBase64 = null;
-        els.preview.src = '';
-        els.container.classList.add('hidden');
-        els.drop.classList.remove('hidden');
-        els.drop.style.display = '';
-        ECLCamera.reset();
-        els.submitBtn.disabled = false;
-        els.submitBtn.style.opacity = '1';
-    }
+    compressedImageBase64 = null;
+    els.preview.src = '';
+    els.container.classList.add('hidden'); // إخفاء المعاينة
+    els.drop.classList.remove('hidden'); // إظهار منطقة الرفع
+    // ✅ تم حذف سطر style.display المسبب للمشاكل
+    ECLCamera.reset();
+    els.submitBtn.disabled = false;
+    els.submitBtn.style.opacity = '1';
+}
 
     // ===================================================
     //  اختيار موظفي الفرع

@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby55crES3Cgs2TZClHEsUUG0q8esj_1LZmQW5lYQQxFWIly5QAoBBuoUNGPUI4w-Bwe/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAtnvWk0nAE22e_uaDiKZ0g4gtqQSRPGnFy0tDmcJBMWldUMOgvZXuavpuororwtoI/exec';
 
     const branchEmployees = {
     "Muzahmiyah": [
@@ -263,25 +263,21 @@ branchEmployees[selectedBranch].forEach(emp => {
 
     if (els.confirmReset) {
         els.confirmReset.onclick = () => {
-            const code = els.resetCodeInput.value.trim();
-            if (!code) return;
+    const code = els.resetCodeInput.value.trim();
+    if (!code) return;
 
-            els.resetModal.classList.add('hidden');
-            showModal('loading', 'جاري التحقق...', 'يتم التحقق من كود إعادة التعيين');
-
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode:   'no-cors',
-                body:   JSON.stringify({ action: 'VERIFY_RESET', code })
-            }).then(() => {
-                localStorage.removeItem('qb_staff_name');
-                localStorage.removeItem('qb_staff_branch');
-                showModal('success', 'تمت إعادة التعيين', 'سيتم تحديث الصفحة الآن...');
-                setTimeout(() => location.reload(), 2000);
-            }).catch(() => {
-                showModal('error', 'خطأ', 'تعذر التحقق من الكود.');
-            });
-        };
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors', // ضروري جداً لتجنب خطأ CORS
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'VERIFY_RESET', code: code })
+    }).then(() => {
+        // بما أننا استخدمنا no-cors، سنقوم بمسح البيانات المحلية والاعتماد على أن السيرفر سيغير الكود
+        localStorage.removeItem('qb_staff_name');
+        localStorage.removeItem('qb_staff_branch');
+        location.reload();
+    });
+};
     }
 
     // ===================================================

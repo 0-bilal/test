@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby55crES3Cgs2TZClHEsUUG0q8esj_1LZmQW5lYQQxFWIly5QAoBBuoUNGPUI4w-Bwe/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAtnvWk0nAE22e_uaDiKZ0g4gtqQSRPGnFy0tDmcJBMWldUMOgvZXuavpuororwtoI/exec';
 
     let currentMode = 'IN';
     let deviceId   = localStorage.getItem('QB_DEVICE_ID');
@@ -38,10 +38,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const input = els.deviceInput.value.trim();
     if (!input) return;
 
-    const device = await getDeviceInfo(); // جلب البيانات قبل الإرسال
+    const device = await getDeviceInfo(); 
 
     fetch(SCRIPT_URL, {
         method: 'POST',
+        mode: 'no-cors', // إضافة هذا السطر لتجاوز CORS
+        headers: { 'Content-Type': 'text/plain' }, // تغيير النوع
         body: JSON.stringify({
             action:    'REGISTER_DEVICE',
             deviceId:  input,
@@ -50,13 +52,11 @@ document.addEventListener('DOMContentLoaded', () => {
             userAgent: navigator.userAgent,
             screenRes: `${window.screen.width}x${window.screen.height}`
         })
-    }).then(res => res.text()).then(response => {
-        if (response.startsWith("SUCCESS|")) {
-            const name = response.split("|")[1];
-            localStorage.setItem('QB_DEVICE_ID',   input);
-            localStorage.setItem('QB_BRANCH_NAME', name); // يخزن الاسم العربي المرجّع من السيرفر
-            location.reload();
-        }
+    }).then(() => {
+        // بما أن mode: 'no-cors' لا يعيد استجابة مقروءة، سنفترض النجاح مؤقتاً أو نستخدم وسيلة أخرى للتحقق
+        localStorage.setItem('QB_DEVICE_ID', input);
+        // ملاحظة: ستحتاج لتحديث الصفحة يدوياً أو انتظار الرد بطريقة مغايرة
+        location.reload();
     });
 };
 

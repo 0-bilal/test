@@ -130,103 +130,79 @@ const ECLCamera = (() => {
             const style = document.createElement('style');
             style.id = 'eclCamStyle';
             style.textContent = `
-                /* ── Overlay ── */
-                #eclCamOverlay {
-                    position: fixed; inset: 0; z-index: 9999;
-                    background: #000;
-                    display: flex; flex-direction: column;
-                    align-items: center; justify-content: center;
-                    font-family: 'Segoe UI', Arial, sans-serif;
-                    direction: rtl;
-                }
-                #eclCamOverlay.ecl-cam--hidden  { display: none; }
-                #eclCamOverlay.ecl-cam--visible  { display: flex; }
+                /* ── Overlay المحسن ── */
+#eclCamOverlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #f3f4f6; /* لون خلفية الموقع */
+    display: flex; flex-direction: column;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    direction: rtl;
+}
 
-                /* ── Header ── */
-                .ecl-cam__header {
-                    width: 100%; padding: 12px 16px;
-                    background: rgba(0,0,0,0.7);
-                    display: flex; align-items: center; justify-content: space-between;
-                    position: absolute; top: 0; left: 0; right: 0; z-index: 2;
-                }
-                .ecl-cam__title {
-                    color: #fff; font-size: 15px; font-weight: 700;
-                    display: flex; flex-direction: column;
-                }
-                .ecl-cam__title small { font-size: 11px; opacity: 0.6; font-weight: 400; }
+/* ── Header يعكس الهوية ── */
+.ecl-cam__header {
+    width: 100%; padding: 20px 16px;
+    background: linear-gradient(135deg, #c62828 0%, #8e0000 100%); /* نفس تدرج الهيدر الرئيسي */
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 4px 15px rgba(198, 40, 40, 0.2);
+    border-radius: 0 0 20px 20px;
+    z-index: 10;
+}
+.ecl-cam__title { color: #fff; font-size: 16px; font-weight: 700; }
+.ecl-cam__title small { display: block; font-size: 10px; opacity: 0.8; letter-spacing: 1px; }
 
-                /* ── Live info bar (watermark preview) ── */
-                .ecl-cam__info-bar {
-                    position: absolute; bottom: 90px; left: 0; right: 0; z-index: 2;
-                    background: rgba(0,0,0,0.55);
-                    padding: 8px 14px;
-                    display: flex; flex-direction: column; gap: 3px;
-                }
-                .ecl-cam__info-bar span {
-                    color: #fff; font-size: 12px; font-weight: 600;
-                    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-                }
+/* ── منطقة العرض (Video Container) ── */
+.ecl-cam__viewport {
+    flex: 1; position: relative; overflow: hidden;
+    margin: 15px; border-radius: 20px;
+    border: 3px solid #fff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    background: #000;
+}
+#eclCamVideo, #eclCamCanvas {
+    width: 100%; height: 100%; object-fit: cover;
+}
 
-                /* ── Video / Canvas ── */
-                #eclCamVideo, #eclCamCanvas {
-                    width: 100%; height: 100%;
-                    object-fit: cover;
-                    position: absolute; inset: 0;
-                }
+/* ── شريط معلومات الـ Watermark (Preview) ── */
+.ecl-cam__info-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+    padding: 12px; border-top: 1px solid rgba(255,255,255,0.2);
+}
+.ecl-cam__info-bar span {
+    color: #fff; font-size: 11px; display: block; margin-bottom: 2px;
+}
 
-                /* ── Controls ── */
-                .ecl-cam__controls {
-                    position: absolute; bottom: 0; left: 0; right: 0; z-index: 3;
-                    padding: 16px 20px 28px;
-                    background: rgba(0,0,0,0.7);
-                    display: flex; align-items: center; justify-content: center; gap: 16px;
-                }
+/* ── شريط التحكم السفلي ── */
+.ecl-cam__controls {
+    padding: 20px; background: #fff;
+    border-radius: 25px 25px 0 0;
+    display: flex; align-items: center; justify-content: space-around;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+}
 
-                /* زر الالتقاط الدائري الكبير */
-                #eclCaptureBtn {
-                    width: 70px; height: 70px; border-radius: 50%;
-                    background: #fff; border: 4px solid rgba(255,255,255,0.4);
-                    box-shadow: 0 0 0 4px rgba(255,255,255,0.15);
-                    cursor: pointer; font-size: 28px;
-                    display: flex; align-items: center; justify-content: center;
-                    transition: transform 0.15s, box-shadow 0.15s;
-                    flex-shrink: 0;
-                }
-                #eclCaptureBtn:active { transform: scale(0.92); }
-                #eclCaptureBtn.ecl-cam--retake {
-                    background: #f44336; font-size: 20px;
-                }
+/* زر الالتقاط المصمم بعناية */
+#eclCaptureBtn {
+    width: 75px; height: 75px; border-radius: 50%;
+    background: #fff; border: 6px solid #f3f4f6;
+    box-shadow: 0 0 0 4px #c62828; /* تحديد باللون الأحمر */
+    cursor: pointer; transition: 0.3s;
+}
+#eclCaptureBtn:active { transform: scale(0.9); }
 
-                /* زر استخدام الصورة */
-                #eclConfirmBtn {
-                    background: #4caf50; color: #fff;
-                    border: none; border-radius: 50px;
-                    padding: 14px 28px; font-size: 15px; font-weight: 700;
-                    cursor: pointer; display: none;
-                    transition: background 0.2s;
-                }
-                #eclConfirmBtn:hover { background: #388e3c; }
+/* زر التأكيد (يشبه submit-btn) */
+#eclConfirmBtn {
+    background: #c62828; color: #fff;
+    border: none; border-radius: 12px;
+    padding: 12px 25px; font-weight: 700;
+    box-shadow: 0 4px 12px rgba(198, 40, 40, 0.2);
+}
 
-                /* زر الإغلاق */
-                #eclCloseBtn {
-                    position: absolute; top: 10px; left: 14px; z-index: 4;
-                    background: rgba(255,255,255,0.15); color: #fff;
-                    border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;
-                    width: 36px; height: 36px; font-size: 18px;
-                    cursor: pointer; display: flex; align-items: center; justify-content: center;
-                    transition: background 0.2s;
-                }
-                #eclCloseBtn:hover { background: rgba(255,0,0,0.5); }
-
-                /* Countdown */
-                #eclCountdown {
-                    position: absolute; inset: 0; z-index: 5;
-                    display: flex; align-items: center; justify-content: center;
-                    font-size: 120px; font-weight: 900; color: #fff;
-                    text-shadow: 0 4px 20px rgba(0,0,0,0.8);
-                    pointer-events: none; opacity: 0;
-                    transition: opacity 0.2s;
-                }
+/* زر الإغلاق الأنيق */
+#eclCloseBtn {
+    background: rgba(255,255,255,0.2); color: #fff;
+    border: none; border-radius: 10px; width: 35px; height: 35px;
+}
 
                 /* Utility */
                 .ecl-cam--hidden { display: none !important; }
@@ -239,31 +215,32 @@ const ECLCamera = (() => {
         _overlay.id = 'eclCamOverlay';
         _overlay.classList.add('ecl-cam--hidden');
         _overlay.innerHTML = `
-            <div class="ecl-cam__header">
-                <div class="ecl-cam__title">
-                    <span>📷 كاميرا التوثيق</span>
-                    <small>Live Camera — Equipment Cleaning Log</small>
-                </div>
-            </div>
+    <div class="ecl-cam__header">
+        <div class="ecl-cam__title">
+            <span>📷 كاميرا التوثيق الذكية</span>
+            <small>QB-SENTINEL LIVE SYSTEM</small>
+        </div>
+        <button id="eclCloseBtn">✕</button>
+    </div>
 
-            <button id="eclCloseBtn" title="إغلاق">✕</button>
+    <div class="ecl-cam__viewport">
+        <video id="eclCamVideo" autoplay playsinline muted></video>
+        <canvas id="eclCamCanvas" class="ecl-cam--hidden"></canvas>
+        
+        <div id="eclCountdown" class="ecl-cam--hidden"></div>
 
-            <video id="eclCamVideo" autoplay playsinline muted></video>
-            <canvas id="eclCamCanvas" class="ecl-cam--hidden"></canvas>
+        <div class="ecl-cam__info-bar" id="eclInfoBar">
+            <span id="eclInfoTime"></span>
+            <span id="eclInfoEmployee"></span>
+            <span id="eclInfoEquipment"></span>
+        </div>
+    </div>
 
-            <div id="eclCountdown" class="ecl-cam--hidden"></div>
-
-            <div class="ecl-cam__info-bar" id="eclInfoBar">
-                <span id="eclInfoTime">──</span>
-                <span id="eclInfoEmployee">──</span>
-                <span id="eclInfoEquipment">──</span>
-            </div>
-
-            <div class="ecl-cam__controls">
-                <button id="eclCaptureBtn" title="التقاط">📸</button>
-                <button id="eclConfirmBtn">${TEXT.confirm.ar} / ${TEXT.confirm.en}</button>
-            </div>
-        `;
+    <div class="ecl-cam__controls">
+        <div style="width: 100px;"></div> <button id="eclCaptureBtn" title="التقاط"></button>
+        <button id="eclConfirmBtn" class="hidden">استخدام الصورة</button>
+    </div>
+`;
         document.body.appendChild(_overlay);
 
         // ─── مراجع العناصر ────────────────────────────────

@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyH6gYfXT_8oucOc2Y_eceQpbzO78h9zejNuYw2oYlD1NO9LRXXoOg7Dv0s2g_BkqkN/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby55crES3Cgs2TZClHEsUUG0q8esj_1LZmQW5lYQQxFWIly5QAoBBuoUNGPUI4w-Bwe/exec';
 
     let currentMode = 'IN';
     let deviceId   = localStorage.getItem('QB_DEVICE_ID');

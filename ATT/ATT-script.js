@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0ClQdqWFm9j7rA52Xzyv8x-E4Qer8D68fQ34Wpww28RuG-pgfwwmhhQIQg2diwg/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby55crES3Cgs2TZClHEsUUG0q8esj_1LZmQW5lYQQxFWIly5QAoBBuoUNGPUI4w-Bwe/exec';
 
     const branchEmployees = {
     "Muzahmiyah": [
@@ -209,24 +209,24 @@ branchEmployees[selectedBranch].forEach(emp => {
     // إرسال الحضور
     // ===================================================
     async function sendAttendance(qrData) {
-    showModal('loading', 'جاري التحقق...', 'يتم تسجيل حضورك...');
+    showModal('loading', 'جاري التحقق...', 'يتم تسجيل حضورك وضبط البيانات...');
 
-    let empIP = "0.0.0.0";
+    let userIP = "Unknown";
     try {
+        // جلب الـ IP العام لجهاز الموظف
         const res = await fetch('https://api.ipify.org?format=json');
         const data = await res.json();
-        empIP = data.ip;
-    } catch (e) {}
-
-    // تحويل اسم الفرع للعربي للعرض والتخزين
-    const branchAr = selectedBranch === "Dawadimi" ? "الدوادمي" : "المزاحمية";
+        userIP = data.ip;
+    } catch (e) {
+        console.error("Could not fetch IP", e);
+    }
 
     const payload = {
         action:       'ATTENDANCE',
         employeeName: selectedEmployee,
-        branch:       branchAr, // إرسال الاسم بالعربي
+        branch:       selectedBranch,
         qrPayload:    qrData,
-        ip:           empIP,    // إرسال IP الموظف
+        ip:           userIP, // إرسال الـ IP إلى السيرفر
         fingerprint:  getFingerprint()
     };
 
@@ -240,6 +240,8 @@ branchEmployees[selectedBranch].forEach(emp => {
         localStorage.setItem('qb_staff_branch', selectedBranch);
         showModal('success', 'تم التسجيل', `شكراً ${selectedEmployee}، تم تسجيل حضورك بنجاح.`);
         setTimeout(() => location.reload(), 3000);
+    }).catch(err => {
+        showModal('error', 'خطأ في الاتصال', 'تعذر إرسال البيانات، يرجى المحاولة مرة أخرى.');
     });
 }
 

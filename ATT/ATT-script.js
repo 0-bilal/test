@@ -6,7 +6,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw0JQxN7CrHsUsNYXmsRsQ6S-kFfxoIfz6dfwvcitTQYzCdI38z3ZthmGnaFx4FQiNMQg/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvFlgBJI8mBcJ6AH-N-nP629j7d4UgpPblrfyI1C8JIjgY9ZOlVQjP0jR2OgL1JOf9LQ/exec';
 
     // ─── بيانات الموظفين ───────────────────────────────────────
     const branchEmployees = {

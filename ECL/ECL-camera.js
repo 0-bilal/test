@@ -1,11 +1,3 @@
-/**
- * ============================================================
- * ECL-camera.js — وحدة الكاميرا المباشرة عبر WebRTC
- * QB-Sentinel | Equipment Cleaning Log
- * المطوّر: بلال الخواجة
- * ============================================================
- */
-
 const ECLCamera = (() => {
 
     // ─── الحالة الداخلية ───────────────────────────────────
@@ -132,8 +124,8 @@ const ECLCamera = (() => {
         _overlay.innerHTML = `
             <div class="ecl-cam__header">
                 <div class="ecl-cam__title">
-                    <span>كاميرا التوثيق الذكية</span>
-                    <small>QB-SENTINEL LIVE SYSTEM</small>
+                    <span>كاميرا الوثيق </span>
+                    <small>QB-ECL CAMERA</small>
                 </div>
                 <button id="eclCloseBtn"><i data-lucide="x"></i></button>
             </div>
@@ -180,9 +172,9 @@ const ECLCamera = (() => {
     }
 
     function _updateInfoBar() {
-        document.getElementById('eclInfoTime').innerText = 'الوقت: ' + new Date().toLocaleString('ar-SA');
-        document.getElementById('eclInfoEmployee').innerText = 'الموظف: ' + _config.employeeName;
-        document.getElementById('eclInfoEquipment').innerText = 'المعدة: ' + _config.equipmentName;
+        document.getElementById('eclInfoTime').innerText = 'الوقت: ' + new Date().toLocaleString('er-ER');
+        
+        
     }
 
     async function _startCamera() {
@@ -235,9 +227,9 @@ const ECLCamera = (() => {
         ctx.fillStyle = "white";
         ctx.font = "bold 24px Arial";
         ctx.textAlign = "right";
-        ctx.fillText(new Date().toLocaleString('ar-SA'), w - 20, h - 70);
-        ctx.fillText("الموظف: " + _config.employeeName, w - 20, h - 40);
-        ctx.fillText("المعدة: " + _config.equipmentName, w - 20, h - 10);
+        ctx.fillText(new Date().toLocaleString('er-ER'), w - 20, h - 70);
+        
+       
     }
 
     function _setCaptureMode() {

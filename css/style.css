@@ -56,6 +56,227 @@ body {
 
 .label-heading { font-weight: 700; font-size: 15px; display: block; margin-bottom: 15px; }
 
+/* =============================
+   Collapsible Section Groups
+============================== */
+.section-group {
+    margin-top: 15px;
+    border-radius: var(--radius);
+    background: white;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+}
+
+.section-group:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+/* رأس القسم (زر الطي/الفتح) */
+.section-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 12px; /* تقليل البادينج */
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s ease;
+    gap: 6px; /* تقليل الـ gap */
+    min-width: 0; /* مهم جداً لمنع overflow */
+}
+
+.section-header:hover {
+    background: #fafafa;
+}
+
+.section-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0; /* يمنع الـ overflow */
+    overflow: hidden;
+}
+
+/* أيقونة القسم */
+.section-icon-wrap {
+    width: 36px;  /* تصغير قليل */
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; /* مهم: يمنع تصغير الأيقونة */
+}
+
+.section-icon-wrap i {
+    width: 20px;
+    height: 20px;
+}
+
+/* عنوان القسم */
+.section-title-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.section-title-ar {
+    font-size: 14px; /* تصغير طفيف للهاتف */
+    font-weight: 700;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.section-title-en {
+    font-size: 9px;
+    color: var(--text-light);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* الجانب الأيسر: العداد + السهم */
+.section-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0; /* مهم: لا يتقلص */
+}
+
+.section-count {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary);
+    background: var(--accent);
+    border: 1px solid rgba(198,40,40,0.2);
+    border-radius: 20px;
+    padding: 2px 8px;
+    min-width: 24px;
+    text-align: center;
+}
+
+.section-chevron {
+    width: 18px;
+    height: 18px;
+    color: var(--text-light);
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+/* حالة المغلق: السهم يتحول للأسفل */
+.section-group:not(.open) .section-chevron {
+    transform: rotate(180deg);
+}
+
+/* جسم القسم القابل للطي */
+.section-body {
+    overflow: hidden;
+    max-height: 2000px; /* قيمة كبيرة كافية */
+    transition: max-height 0.35s ease, padding 0.35s ease;
+    padding: 0 12px 12px;
+}
+
+/* حالة المغلق */
+.section-group:not(.open) .section-body {
+    max-height: 0;
+    padding-bottom: 0;
+}
+
+/* حالة المغلق: إزالة border-bottom من الهيدر */
+.section-group:not(.open) .section-header {
+    border-bottom-color: transparent;
+}
+
+/* =============================
+   Reports Grid (داخل الأقسام)
+============================== */
+.reports-grid {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.report-card {
+    background: #fafafa;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    transition: all 0.25s ease;
+}
+
+.report-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 6px 16px rgba(198, 40, 40, 0.08);
+}
+
+.report-card:active {
+    transform: scale(0.98);
+}
+
+.report-card-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--accent);
+    color: var(--primary);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 14px;
+    flex-shrink: 0;
+}
+
+.report-card-icon i {
+    width: 22px;
+    height: 22px;
+}
+
+.report-card-body {
+    flex-grow: 1;
+}
+
+.report-card-body h3 {
+    margin: 0 0 2px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1.4;
+}
+
+.report-card-body p {
+    margin: 0;
+    font-size: 11px;
+    color: var(--text-light);
+    letter-spacing: 0.5px;
+}
+
+.report-card-arrow {
+    color: var(--border);
+    transition: 0.25s;
+    flex-shrink: 0;
+}
+
+.report-card:hover .report-card-arrow {
+    color: var(--primary);
+    transform: translateX(-4px);
+}
+
 /* Branch Selector Grid */
 .branch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .branch-grid input { display: none; }
@@ -139,6 +360,7 @@ body {
 .submit-btn:active { transform: scale(0.97); }
 .hidden { display: none; }
 
+/* Modal */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.7); z-index: 1000;
@@ -163,6 +385,7 @@ body {
 .error-icon { color: #f44336; width: 60px; height: 60px; margin-bottom: 15px; }
 .hidden { display: none !important; }
 
+/* Select */
 .custom-select {
     width: 100%;
     padding: 12px;
@@ -174,25 +397,22 @@ body {
     outline: none;
     transition: 0.3s;
 }
-
 .custom-select:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 3px var(--accent);
 }
-
 .custom-select:disabled {
     background-color: #f9fafb;
     cursor: not-allowed;
     opacity: 0.7;
 }
 
-/* Developer Footer Styling */
+/* Developer Footer */
 .developer-footer {
-    margin-top: 40px;
-    padding: 20px;
+    margin-top: 30px;
+    padding: 0 0 40px;
     display: flex;
     justify-content: center;
-    padding-bottom: 40px;
 }
 
 .dev-card {
@@ -208,9 +428,7 @@ body {
     transition: transform 0.3s ease;
 }
 
-.dev-card:hover {
-    transform: translateY(-5px);
-}
+.dev-card:hover { transform: translateY(-5px); }
 
 .dev-card::before {
     content: '';
@@ -284,70 +502,9 @@ body {
     color: var(--primary);
 }
 
-.dev-icon, .client-icon {
-    width: 18px;
-    height: 18px;
-}
+.dev-icon, .client-icon { width: 18px; height: 18px; }
 
-/* تنسيقات شبكة التقارير */
-.reports-grid {
-    display: grid;
-    gap: 15px;
-    margin-top: 20px;
-    padding-bottom: 20px;
-}
-
-.report-card {
-    background: white;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    padding: 20px;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-}
-
-.report-card:hover {
-    transform: translateY(-3px);
-    border-color: var(--primary);
-    box-shadow: 0 10px 20px rgba(198, 40, 40, 0.1);
-}
-
-.report-card-icon {
-    width: 50px;
-    height: 50px;
-    background: var(--accent);
-    color: var(--primary);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: 15px;
-}
-
-.report-card-icon i {
-    width: 28px;
-    height: 28px;
-}
-
-.report-card-body {
-    flex-grow: 1;
-}
-
-.report-card-body h3 {
-    margin: 0;
-    font-size: 16px;
-    color: var(--text-dark);
-}
-
-.report-card-body p {
-    margin: 2px 0 8px;
-    font-size: 12px;
-    color: var(--text-light);
-}
-
+/* Report Tag */
 .report-tag {
     font-size: 10px;
     background: #f3f4f6;
@@ -355,16 +512,8 @@ body {
     border-radius: 4px;
     font-weight: bold;
     color: var(--primary-dark);
-}
-
-.report-card-arrow {
-    color: var(--border);
-    transition: 0.3s;
-}
-
-.report-card:hover .report-card-arrow {
-    color: var(--primary);
-    transform: translateX(-5px);
+    display: inline-block;
+    margin-top: 8px;
 }
 
 /* Back Navigation */
@@ -377,19 +526,107 @@ body {
 }
 .back-btn:hover { color: var(--primary); border-color: var(--primary); background: var(--accent); transform: translateX(-5px); }
 
-/* تنسيق زر تحديث النظام */
 .header-actions-top {
     position: absolute;
     top: 15px;
     left: 15px;
+    right: 15px;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
     z-index: 10;
 }
 
-.refresh-btn {
+
+
+
+/* Tags */
+.tags-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 5px;
+    align-items: center;
+}
+
+.tag-beta {
+    font-size: 9px;
+    background: var(--accent);
+    color: var(--primary);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 800;
+    border: 1px solid var(--primary);
+    display: inline-flex;
+    align-items: center;
+    text-transform: uppercase;
+}
+
+.tag-beta::before {
+    content: "";
+    width: 4px;
+    height: 4px;
+    background-color: var(--primary);
+    border-radius: 50%;
+    margin-left: 4px;
+    animation: pulse 1.5s infinite;
+}
+
+.tag-dev {
+    font-size: 9px;
+    background: #f8fafc;
+    color: #64748b;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 800;
+    border: 1px solid #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.tag-dev::before { content: "⚙"; font-size: 10px; animation: rotate 2s linear infinite; }
+
+.tag-new {
+    font-size: 9px;
+    background: #f0fdf4;
+    color: #16a34a;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 800;
+    border: 1px solid #bbf7d0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-transform: uppercase;
+}
+.tag-new::before { content: "★"; font-size: 10px; }
+
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* الحاوية الرئيسية */
+.header-actions-top {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    right: 15px;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* التنسيق المشترك للزرين لضمان تطابق الحجم */
+.refresh-btn, 
+.notification-btn {
+    pointer-events: auto;
     background: rgba(255, 255, 255, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: white;
-    padding: 8px;
+    /* تحديد حجم ثابت وموحد */
+    width: 42px;
+    height: 42px;
+    padding: 0; /* إلغاء البادينج ليعتمد الحجم على الأبعاد الثابتة */
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -398,13 +635,42 @@ body {
     justify-content: center;
 }
 
-.refresh-btn:hover {
+/* دفع زر التحديث لليسار */
+.refresh-btn {
+    margin-right: auto;
+}
+
+/* زر الإشعارات - موقعه وتنسيق النقطة */
+.notification-btn {
+    position: relative;
+}
+
+/* توحيد حجم الأيقونات داخل الأزرار */
+.refresh-btn i, 
+.notification-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+/* تأثيرات الهوفر */
+.refresh-btn:hover, 
+.notification-btn:hover {
     background: white;
     color: var(--primary);
+}
+
+.refresh-btn:hover {
     transform: rotate(180deg);
 }
 
-.refresh-btn i {
-    width: 18px;
-    height: 18px;
+/* نقطة التنبيه لزر الإشعارات */
+.notification-dot {
+    position: absolute;
+    top: 4px; /* موازنة الموقع داخل الدائرة */
+    right: 4px;
+    width: 7px;
+    height: 7px;
+    background-color: #ffeb3b;
+    border: 1px solid var(--primary);
+    border-radius: 50%;
 }

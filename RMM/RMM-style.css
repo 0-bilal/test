@@ -613,7 +613,7 @@
 .ing-input {
     direction: ltr;
     text-align: right;
-
+    -moz-appearance: textfield;
 }
 
 .ing-input::-webkit-outer-spin-button,

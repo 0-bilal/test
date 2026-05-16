@@ -66,8 +66,15 @@ document.querySelectorAll('.mfg-toggle input[type="checkbox"]').forEach(chk => {
         if (this.checked) {
             opEl.classList.add('is-active');
             body.classList.add('is-open');
-            // Focus qty field after animation
-            setTimeout(() => input && input.focus(), 420);
+            // After accordion animation, scroll the first input into view above keyboard
+            setTimeout(() => {
+                const firstInput = body.querySelector('input');
+                if (firstInput) {
+                    firstInput.focus({ preventScroll: true });
+                    // Scroll the op block into view so it's visible above the keyboard
+                    opEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 430);
         } else {
             opEl.classList.remove('is-active');
             body.classList.remove('is-open');
@@ -82,15 +89,94 @@ document.querySelectorAll('.mfg-toggle input[type="checkbox"]').forEach(chk => {
 });
 
 /* =============================================
+   DOUGH INGREDIENTS — ingredient inputs config
+   ============================================= */
+
+const DOUGH_INGREDIENTS = [
+    { id: 'ing-egg',       ar: 'بيض',           unit: 'حبة', isCount: true  },
+    { id: 'ing-sugar',     ar: 'سكر',           unit: 'g',   isCount: false },
+    { id: 'ing-vanilla',   ar: 'فانيليا باودر', unit: 'g',   isCount: false },
+    { id: 'ing-baking',    ar: 'بيكنج باودر',   unit: 'g',   isCount: false },
+    { id: 'ing-sweetener', ar: 'محلي',          unit: 'g',   isCount: false },
+    { id: 'ing-butter',    ar: 'زبدة',          unit: 'g',   isCount: false },
+    { id: 'ing-flour',     ar: 'طحين',          unit: 'g',   isCount: false },
+    { id: 'ing-milk',      ar: 'حليب',          unit: 'g',   isCount: false },
+];
+
+function getDoughIngredientsFilled() {
+    return DOUGH_INGREDIENTS.map(ing => {
+        const el  = document.getElementById(ing.id);
+        const val = parseFloat(el?.value) || 0;
+        return { ...ing, val };
+    }).filter(i => i.val > 0);
+}
+
+function formatIngVal(ing) {
+    if (ing.isCount) return `${ing.val} ${ing.unit}`;
+    const n = ing.val;
+    if (n >= 1000) {
+        const kg = (n / 1000).toFixed(n % 1000 === 0 ? 0 : 2);
+        return `kg ${kg} (${n}g)`;
+    }
+    return `${n} ${ing.unit}`;
+}
+
+function refreshDoughResult() {
+    const totalInput = document.getElementById('qty-dough');
+    const res        = document.getElementById('res-dough');
+    const txt        = document.getElementById('res-dough-text');
+    const totalVal   = parseInt(totalInput?.value) || 0;
+    const filledIngs = getDoughIngredientsFilled();
+
+    if (totalVal > 0 && res && txt) {
+        let msg = `إجمالي ${formatGrams(totalVal)} من عجين ميني بان كيك`;
+        if (filledIngs.length > 0) {
+            msg += ' — ' + filledIngs.map(i => `${i.ar}: ${formatIngVal(i)}`).join(' | ');
+        }
+        txt.textContent = msg;
+        res.classList.remove('hidden');
+    } else if (res) {
+        res.classList.add('hidden');
+    }
+}
+
+// Ingredient inputs — registered at parse time (no DOMContentLoaded needed, script is at bottom)
+function bindIngredientInputs() {
+    document.querySelectorAll('.ing-input').forEach(input => {
+        input.addEventListener('input', () => {
+            refreshDoughResult();
+            refreshSummary();
+        });
+        // Scroll focused row into view above keyboard on mobile
+        input.addEventListener('focus', function () {
+            setTimeout(() => {
+                this.closest('.ing-row')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+        });
+    });
+}
+
+/* =============================================
    QUANTITY INPUT — live result feedback
+   (handles ONLY the main total qty-dough input and the berry/red/black inputs)
    ============================================= */
 
 document.querySelectorAll('.qty-input').forEach(input => {
+    // Skip ingredient inputs — they have their own handler via bindIngredientInputs()
+    if (input.classList.contains('ing-input')) return;
+
     input.addEventListener('input', function () {
         const opKey = this.dataset.op;
-        const val   = parseInt(this.value);
-        const res   = document.getElementById(`res-${opKey}`);
-        const txt   = document.getElementById(`res-${opKey}-text`);
+
+        if (opKey === 'dough') {
+            refreshDoughResult();
+            refreshSummary();
+            return;
+        }
+
+        const val = parseInt(this.value);
+        const res = document.getElementById(`res-${opKey}`);
+        const txt = document.getElementById(`res-${opKey}-text`);
 
         if (val > 0 && txt && res) {
             txt.textContent = OPERATIONS[opKey].resultTpl(val);
@@ -216,22 +302,29 @@ document.getElementById('mfgForm').addEventListener('submit', function (e) {
         return;
     }
 
-    // Validate quantities
+    // Validate quantities + collect ingredients for dough
     const missingQty = activeOps.find(o => o.qty < 1);
     if (missingQty) {
         const opName = OPERATIONS[missingQty.opKey].ar;
-        showModal('error', 'كمية مفقودة', `يرجى إدخال الكمية (بالجرام) لعملية:\n${opName}`);
+        showModal('error', 'كمية مفقودة', `يرجى إدخال الكمية الإجمالية لعملية:\n${opName}`);
         return;
     }
 
-    showModal('loading', 'جارٍ الإرسال...', 'يتم رفع بيانات التصنيع إلى السجل');
-
-    // Build summary for success message
-    const lines = activeOps.map(({ opKey, qty }) =>
-        `• ${OPERATIONS[opKey].ar}: ${formatGrams(qty)}`
-    ).join('\n');
+    // Build submit lines
+    const lines = activeOps.map(({ opKey, qty }) => {
+        let line = `• ${OPERATIONS[opKey].ar}: ${formatGrams(qty)}`;
+        if (opKey === 'dough') {
+            const ings = getDoughIngredientsFilled();
+            if (ings.length > 0) {
+                line += '\n  المكونات: ' + ings.map(i => `${i.ar} ${formatIngVal(i)}`).join('، ');
+            }
+        }
+        return line;
+    }).join('\n');
 
     const nowStr = new Date().toLocaleString('ar-SA', { dateStyle: 'short', timeStyle: 'short' });
+
+    showModal('loading', 'جارٍ الإرسال...', 'يتم رفع بيانات التصنيع إلى السجل');
 
     setTimeout(() => {
         showModal(
@@ -257,4 +350,5 @@ if (refreshBtn) {
 
 document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
+    bindIngredientInputs();
 });

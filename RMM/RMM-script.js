@@ -129,11 +129,7 @@ function refreshDoughResult() {
     const filledIngs = getDoughIngredientsFilled();
 
     if (totalVal > 0 && res && txt) {
-        let msg = `إجمالي ${formatGrams(totalVal)} من عجين ميني بان كيك`;
-        if (filledIngs.length > 0) {
-            msg += ' — ' + filledIngs.map(i => `${i.ar}: ${formatIngVal(i)}`).join(' | ');
-        }
-        txt.textContent = msg;
+        txt.textContent = `تم تسجيل تصنيع ${formatGrams(totalVal)} من عجين ميني بان كيك`;
         res.classList.remove('hidden');
     } else if (res) {
         res.classList.add('hidden');

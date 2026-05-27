@@ -34,7 +34,7 @@ body {
     box-shadow: 0 10px 25px rgba(198, 40, 40, 0.2);
 }
 
-.logo { width: 50px; height: auto; position: relative; z-index: 2; margin-bottom: 10px; }
+
 .main-header h1 { font-size: 20px; margin: 0; position: relative; z-index: 2; }
 .en-sub-header { font-size: 10px; letter-spacing: 2px; opacity: 0.8; margin-top: 4px; }
 
@@ -121,16 +121,6 @@ body {
 }
 .success-icon { color: #4caf50; width: 60px; height: 60px; margin-bottom: 15px; }
 .error-icon { color: #f44336; width: 60px; height: 60px; margin-bottom: 15px; }
-
-/* Back Navigation */
-.back-nav { max-width: 500px; margin: 10px auto; padding: 0 5px; }
-.back-btn {
-    display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
-    color: var(--text-light); font-size: 0.9rem; padding: 8px 12px;
-    border-radius: var(--radius); transition: all 0.3s ease;
-    background: white; border: 1px solid var(--border);
-}
-.back-btn:hover { color: var(--primary); border-color: var(--primary); background: var(--accent); transform: translateX(-5px); }
 
 /* Developer Footer */
 .developer-footer { margin-top: 50px; padding: 20px 10px; border-top: 1px solid var(--border); }

@@ -85,6 +85,24 @@
             </div>
         </div>
 
+         <!-- بطاقة الجلسة الحالية -->
+        <div id="savedInfo" class="card hidden">
+            <label class="label-heading">معلومات الموظف / Employee Information</label>
+            <div class="user-badge">
+                <div class="badge-icon">
+                    <i data-lucide="user-check"></i>
+                </div>
+                <div class="badge-details">
+                    <span id="displayUser" class="badge-name"></span>
+                    <small id="displayBranch" class="badge-branch"></small>
+                </div>
+            </div>
+            <button type="button" id="resetBtn" class="reset-link">
+                <i data-lucide="refresh-cw"></i>
+                تغيير / Change
+            </button>
+        </div>
+
         <div class="card" id="employeeCard">
             <label class="label-heading">تم التنظيف بواسطة / Cleaned By <span class="required">*</span></label>
             <div id="employeeGrid" class="branch-grid">
@@ -101,23 +119,7 @@
             </div>
         </div>
 
-        <!-- بطاقة الجلسة الحالية -->
-        <div id="savedInfo" class="card hidden">
-            <label class="label-heading">الجلسة الحالية / Current Session</label>
-            <div class="user-badge">
-                <div class="badge-icon">
-                    <i data-lucide="user-check"></i>
-                </div>
-                <div class="badge-details">
-                    <span id="displayUser" class="badge-name"></span>
-                    <small id="displayBranch" class="badge-branch"></small>
-                </div>
-            </div>
-            <button type="button" id="resetBtn" class="reset-link">
-                <i data-lucide="refresh-cw"></i>
-                تغيير / Change
-            </button>
-        </div>
+       
 
         <div class="card" id="equipmentCard">
     <label class="label-heading">الجهاز التي تم تنظيفه / Equipment <span class="required">*</span></label>

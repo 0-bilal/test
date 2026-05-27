@@ -56,6 +56,31 @@ body {
 
 .label-heading { font-weight: 700; font-size: 15px; display: block; margin-bottom: 15px; }
 
+
+.dev-info-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 13px;
+    color: var(--text-mid);
+}
+
+.dev-info-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+.dev-info-row i { width: 16px; height: 16px; color: var(--primary); flex-shrink: 0; }
+
+.dev-info-label {
+    font-size: 10px;
+    color: var(--text-light);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 1px;
+}
+
 /* =============================
    Collapsible Section Groups
 ============================== */
@@ -503,6 +528,38 @@ body {
 }
 
 .dev-icon, .client-icon { width: 18px; height: 18px; }
+
+/* ── زر "حول النظام" في فوتر المطور ── */
+.about-system-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 14px;
+    padding: 11px 16px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(198,40,40,0.25);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.about-system-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(198,40,40,0.35);
+}
+
+.about-system-btn:active { transform: scale(0.97); }
+
+.about-system-btn i { width: 16px; height: 16px; }
+
+.about-system-btn .about-arrow {
+    margin-right: auto;
+    opacity: 0.7;
+}
 
 /* Report Tag */
 .report-tag {

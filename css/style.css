@@ -22,6 +22,16 @@ body {
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+
+
+.logo-QB {
+    width: 28px; /* اضبط العرض بما يناسب تصميمك */
+    height: 28px; /* اضبط الارتفاع بما يناسب تصميمك */
+    object-fit: contain; /* للحفاظ على أبعاد الصورة دون تشويه */
+    display: block; /* لضمان توسيطها بشكل جيد داخل الزر */
+}
+
+
 /* ═══════════════════════════════════════════════════
    Header Architecture — Enhanced
 ═══════════════════════════════════════════════════ */
@@ -1192,4 +1202,10 @@ body {
 .session-fade-out {
     animation: sessionFadeOut 0.2s ease forwards;
     pointer-events: none;
+}
+
+a.report-tag {
+    text-decoration: none; /* لإزالة الخط السفلي من الرابط */
+    display: inline-block; /* لجعل المساحة قابلة للضغط بشكل صحيح */
+    cursor: pointer; /* لتغيير شكل الماوس عند المرور عليه */
 }

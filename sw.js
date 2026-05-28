@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'qb-sentinel-cache-v1.14.1'; // يجب تغييره عند كل تحديث رئيسي
+const CACHE_NAME = 'qb-sentinel-cache-v1.14.2'; // يجب تغييره عند كل تحديث رئيسي
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();

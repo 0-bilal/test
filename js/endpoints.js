@@ -32,6 +32,7 @@
     RMM:       'https://script.google.com/macros/s/AKfycbx8Y6u3MyZ647BXc0tyUb76mbcg72a4JuyFVeo548dl8utW1UKm8k0kK6rzIIC81or8/exec',
     ECL:       'https://script.google.com/macros/s/AKfycbxqxwJ5CBwjPSX-8CZSLVOSz5k7eOyd95mPOHGXXWo_Q_Gb7PgJUVizv_vTqIVqJ7CcIA/exec',
     FIL:       'https://script.google.com/macros/s/AKfycbyNsR7s7fmTsyEUarjdpoYSbO52M0cfniWjIh65EwuyUexaI15WM4yezdZ4ZgBaEYVIsg/exec',
+    RSL:       'https://script.google.com/macros/s/AKfycbzacdBP4dX9OjD4Pv5iypqwIqCsm6gmJzaBasB1Xtpy6A7BrsTGCBdx-rIlZIXn3ehJSA/exec',
     GENERATOR: 'https://script.google.com/macros/s/AKfycbwGpMtn5R96F1e9qbGonE_neD8X3k7_9epv2Xiflu7Aq3EKqjUDGnmuh93tDyUTamFc/exec',
   };
 
@@ -65,6 +66,7 @@
     RMM:       getEndpoint('RMM'),
     ECL:       getEndpoint('ECL'),
     FIL:       getEndpoint('FIL'),
+    RSL:       getEndpoint('RSL'),
     GENERATOR: getEndpoint('GENERATOR'),
   };
 

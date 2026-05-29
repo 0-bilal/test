@@ -7,7 +7,7 @@
  */
 document.addEventListener('DOMContentLoaded', () => {
 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxp3azw2izwMptP4mnXiHP60bJW8RqA6vbNRdaF7oROolvdMgjpnx5l-JoC2AgaF_2yA/exec';
+    const SCRIPT_URL = window.QB_ENDPOINTS.CPV;
 
     // ── تهيئة الجلسة ─────────────────────────────────────────────────────
     QBSession.initPage();
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error("Submission Error:", error);
-            showModal('error', 'فشل في الإرسال', 'حدث خطأ أثناء التواصل مع السيرفر. تأكد من إعدادات النشر.');
+            showModal('error', 'فشل في الإرسال', 'حدث خطأ.');
         } finally {
             els.submitBtn.disabled = false;
             els.submitBtn.style.opacity = "1";

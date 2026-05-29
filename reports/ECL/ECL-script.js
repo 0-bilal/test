@@ -7,7 +7,7 @@
  *   · window.showModal()  (من js/common.js)
  */
 document.addEventListener('DOMContentLoaded', () => {
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqxwJ5CBwjPSX-8CZSLVOSz5k7eOyd95mPOHGXXWo_Q_Gb7PgJUVizv_vTqIVqJ7CcIA/exec';
+    const SCRIPT_URL = window.QB_ENDPOINTS.ECL;
 
     // ── مساعد: ملء شبكة الموظفين من فرع معيّن ───────────────────────────
     function fillEmployeeGrid(branchKey) {

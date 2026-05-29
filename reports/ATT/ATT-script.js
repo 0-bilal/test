@@ -8,7 +8,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGpMtn5R96F1e9qbGonE_neD8X3k7_9epv2Xiflu7Aq3EKqjUDGnmuh93tDyUTamFc/exec';
+    const SCRIPT_URL = window.QB_ENDPOINTS.ATT;
 
     // ─── الحالة ────────────────────────────────────────────────
     let selectedEmployee  = localStorage.getItem('qb_staff_name')   || "";

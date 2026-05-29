@@ -7,7 +7,7 @@
  */
 document.addEventListener('DOMContentLoaded', () => {
 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyFPschAXnLhXweuYS_LAQwPQZje3Cj2MbXLWa8q5ZE6JSDdYP0h4ytam8gAJqaT-r4wA/exec';
+    const SCRIPT_URL = window.QB_ENDPOINTS.EDR;
 
     // ── تهيئة الجلسة ─────────────────────────────────────────────────────
     QBSession.initPage();

@@ -1,6 +1,6 @@
 const FILNotifications = (() => {
 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNsR7s7fmTsyEUarjdpoYSbO52M0cfniWjIh65EwuyUexaI15WM4yezdZ4ZgBaEYVIsg/exec';
+    const SCRIPT_URL = window.QB_ENDPOINTS.FIL;
 
     let notifications = [];
     let panelOpen     = false;

@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshBtn = document.getElementById('refreshApp');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
-            window.showModal('loading', 'تحديث النظام', 'جاري جلب أحدث نسخة من التقارير والملفات...');
+            window.showModal('loading', 'تحديث النظام', 'جارٍ التحديث، يرجى الانتظار...');
 
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(registrations => {

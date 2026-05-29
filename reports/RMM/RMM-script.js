@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => QBSession.initPage());
    CONFIGURATION
    ============================================= */
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8Y6u3MyZ647BXc0tyUb76mbcg72a4JuyFVeo548dl8utW1UKm8k0kK6rzIIC81or8/exec';
+const SCRIPT_URL = window.QB_ENDPOINTS.RMM;
 
 const OPERATIONS = {
     dough: {
@@ -383,6 +383,6 @@ document.getElementById('mfgForm').addEventListener('submit', function (e) {
         }
     })
     .catch(err => {
-        showModal('error', 'فشل الاتصال', `تعذر الاتصال بالخادم:\n${err.message}`);
+        showModal('error', 'فشل الاتصال', `تعذر :\n${err.message}`);
     });
 });

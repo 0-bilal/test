@@ -6,7 +6,7 @@
  *   · window.showModal()   (من js/common.js)
  */
 document.addEventListener('DOMContentLoaded', () => {
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNsR7s7fmTsyEUarjdpoYSbO52M0cfniWjIh65EwuyUexaI15WM4yezdZ4ZgBaEYVIsg/exec';
+    const SCRIPT_URL = window.QB_ENDPOINTS.FIL;
 
     // ── تهيئة الجلسة ─────────────────────────────────────────────────────
     QBSession.initPage();

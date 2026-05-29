@@ -46,7 +46,7 @@ body {
     box-shadow: 0 10px 25px rgba(198, 40, 40, 0.2);
 }
 
-.logo { width: 50px; height: auto; position: relative; z-index: 2; margin-bottom: 10px; }
+
 .main-header h1 { font-size: 20px; margin: 0; position: relative; z-index: 2; }
 .en-sub-header { font-size: 10px; letter-spacing: 2px; opacity: 0.8; margin-top: 4px; }
 

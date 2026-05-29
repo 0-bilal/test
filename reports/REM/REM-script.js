@@ -3,7 +3,7 @@
 
 
 
-const SHEET_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbx-Wtt6Bwjd4thIxzCRa1ijepyfJKYjxLyAsOei9jvXr3xqhQre8MWZo6i-zAfdwi4t2w/exec';
+const SHEET_WEBAPP_URL = window.QB_ENDPOINTS.REM;
 
 
 let currentDate = new Date();

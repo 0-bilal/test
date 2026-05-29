@@ -9,8 +9,8 @@
  */
 document.addEventListener('DOMContentLoaded', () => {
 
-    // ── رابط Google Apps Script (سيُضاف لاحقاً) ─────────────────────────
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkCSRSC_Ox49l4RNoxoyDAOlG4mO3TsqNY-1mivzw4i5HhW30WPJsGkw466T1G2qKkfg/exec';
+    // ── رابط الخدمة — مصدره js/endpoints.js فقط ─────────────────────────
+    const SCRIPT_URL = window.QB_ENDPOINTS.MVR;
 
     // ── تهيئة الجلسة ─────────────────────────────────────────────────────
     QBSession.initPage();
@@ -114,26 +114,52 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // ── إرسال البيانات ─────────────────────────────────────────────
-        showModal('loading', 'جاري التحضير للرفع', 'يتم الآن تهيئة اتصال آمن مع السيرفر...', true);
+        // ── إرسال البيانات (Proxy الآمن عبر Apps Script) ──────────────
+        // المتصفح لا يتصل بـ googleapis مطلقاً — كل شيء يمر عبر السيرفر
+        // ─────────────────────────────────────────────────────────────
+        showModal('loading', 'جاري التحضير للرفع', 'يتم التحقق...', true);
         submitBtn.disabled = true;
         submitBtn.style.opacity = '0.7';
 
         try {
             const blob = MVRCamera.getBlob();
-            const fileName = `MVR_${branchRadio.value}_${Date.now()}.mp4`;
 
-            // المرحلة 1: الحصول على رابط رفع Resumable من Drive API عبر Apps Script
+            // اسم الفيديو: مراجعة الفرع الشهري - [اسم الفرع] - [YYYY-MM-DD]
+            const _now      = new Date();
+            const _dateStr  = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}-${String(_now.getDate()).padStart(2,'0')}`;
+            const _branch   = QB.translateBranch(branchRadio.value);
+            const fileName  = `مراجعة الفرع الشهري - ${_branch} - ${_dateStr}.mp4`;
+
+            // حجم كل قطعة: 5MB بايناري = ~6.7MB base64 (ضمن حدود Apps Script)
+            const CHUNK_SIZE = 5 * 1024 * 1024;
+
+            /**
+             * تحويل ArrayBuffer → base64 بأمان بدون stack overflow
+             * يعالج البيانات بكتل 64KB لتجنب مشكلة String.fromCharCode الكبيرة
+             */
+            function bufferToBase64(buffer) {
+                const bytes  = new Uint8Array(buffer);
+                let binary   = '';
+                const BLOCK  = 65536;
+                for (let i = 0; i < bytes.length; i += BLOCK) {
+                    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + BLOCK));
+                }
+                return btoa(binary);
+            }
+
+            // المرحلة 1: تهيئة جلسة الرفع في Apps Script
+            // Apps Script ينشئ جلسة Resumable مع Drive ويحفظ رابطها بأمان
             const initResponse = await fetch(SCRIPT_URL, {
                 method: 'POST',
                 mode: 'cors',
                 body: new URLSearchParams({
                     payload: JSON.stringify({
-                        action: 'getUploadUrl',
+                        action: 'initUpload',
                         fileName: fileName,
-                    mimeType: blob.type,
-                    empId: empId,
-                    employeeName: employeeName
+                        mimeType: blob.type,
+                        fileSize: blob.size,
+                        empId: empId,
+                        employeeName: employeeName
                     })
                 })
             });
@@ -141,58 +167,79 @@ document.addEventListener('DOMContentLoaded', () => {
             const initResult = await initResponse.json();
             if (initResult.result !== 'success') throw new Error(initResult.message);
 
-            const uploadUrl = initResult.uploadUrl;
+            const sessionId   = initResult.sessionId;
+            const totalChunks = Math.ceil(blob.size / CHUNK_SIZE);
+
             showModal('loading', 'جاري رفع الفيديو', 'يرجى عدم إغلاق الصفحة حتى اكتمال شريط التقدم...', true);
 
-            // المرحلة 2: الرفع الفعلي باستخدام XMLHttpRequest لمراقبة التقدم
-            const xhr = new XMLHttpRequest();
-            xhr.open('PUT', uploadUrl, true);
-            
-            // Explicitly set the Content-Type to match the blob and the session initialization
-            xhr.setRequestHeader('Content-Type', blob.type);
-            
-            xhr.upload.onprogress = (event) => {
-                if (event.lengthComputable) {
-                    const percentComplete = Math.round((event.loaded / event.total) * 100);
-                    updateModalProgress(percentComplete);
-                }
-            };
+            // المرحلة 2: إرسال الفيديو في قطع عبر Apps Script → Drive
+            let fileId = null;
 
-            xhr.onload = async () => {
-                if (xhr.status === 200 || xhr.status === 201) {
-                    const fileData = JSON.parse(xhr.responseText);
-                    
-                    // المرحلة 3: تسجيل البيانات في جدول Google Sheets
-                    const finalResponse = await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'cors',
-                        body: new URLSearchParams({
-                            payload: JSON.stringify({
-                                action: 'finishReport',
-                                empId: empId,
-                                employeeName: employeeName,
-                                branch: QB.translateBranch(branchRadio.value),
-                                fileId: fileData.id
-                            })
+            for (let i = 0; i < totalChunks; i++) {
+                const rangeStart = i * CHUNK_SIZE;
+                const rangeEnd   = Math.min(rangeStart + CHUNK_SIZE, blob.size) - 1;
+
+                const arrayBuffer = await blob.slice(rangeStart, rangeEnd + 1).arrayBuffer();
+                const base64Chunk = bufferToBase64(arrayBuffer);
+
+                // شريط التقدم: 0% → 90% أثناء الرفع، نحتفظ بـ 10% للمرحلة 3
+                updateModalProgress(Math.round(((i + 1) / totalChunks) * 90));
+
+                const chunkResponse = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    body: new URLSearchParams({
+                        payload: JSON.stringify({
+                            action: 'uploadChunk',
+                            sessionId: sessionId,
+                            base64Chunk: base64Chunk,
+                            rangeStart: rangeStart,
+                            rangeEnd: rangeEnd,
+                            fileSize: blob.size,
+                            empId: empId,
+                            employeeName: employeeName
                         })
-                    });
+                    })
+                });
 
-                    const finalResult = await finalResponse.json();
-                    if (finalResult.result === 'success') {
-                        QBSession.save(empId, branchRadio.value);
-                        showModal('success', 'تم الإرسال بنجاح', `تم تسجيل مراجعة الفرع بنجاح.`);
-                        form.reset();
-                        MVRCamera.reset();
-                    } else {
-                        throw new Error(finalResult.message);
-                    }
-                } else {
-                    showModal('error', 'فشل الرفع', 'تعذر رفع ملف الفيديو. تأكد من ثبات الإنترنت.');
+                const chunkResult = await chunkResponse.json();
+
+                if (chunkResult.result === 'complete') {
+                    fileId = chunkResult.fileId;
+                    break;
+                } else if (chunkResult.result !== 'success') {
+                    throw new Error(chunkResult.message || 'فشل رفع إحدى القطع.');
                 }
-            };
+            }
 
-            xhr.onerror = () => showModal('error', 'خطأ اتصال', 'حدث خطأ أثناء محاولة الرفع.');
-            xhr.send(blob);
+            if (!fileId) throw new Error('لم يكتمل رفع الفيديو. يرجى المحاولة مجدداً.');
+
+            // المرحلة 3: تسجيل البيانات في Google Sheets
+            updateModalProgress(95);
+            const finalResponse = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'cors',
+                body: new URLSearchParams({
+                    payload: JSON.stringify({
+                        action: 'finishReport',
+                        empId: empId,
+                        employeeName: employeeName,
+                        branch: QB.translateBranch(branchRadio.value),
+                        fileId: fileId
+                    })
+                })
+            });
+
+            const finalResult = await finalResponse.json();
+            if (finalResult.result === 'success') {
+                updateModalProgress(100);
+                QBSession.save(empId, branchRadio.value);
+                showModal('success', 'تم الإرسال بنجاح', 'تم تسجيل مراجعة الفرع بنجاح.');
+                form.reset();
+                MVRCamera.reset();
+            } else {
+                throw new Error(finalResult.message);
+            }
 
         } catch (error) {
             console.error('MVR Submission Error:', error);

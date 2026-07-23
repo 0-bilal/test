@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="er" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DUO Menu</title>
+
+  <!-- ══ PWA ══ -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#be1e2d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DUO Menu">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144.png">
+  <link rel="icon" type="image/svg+xml" href="icons/logo.ico">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+  <!-- ══ Fonts & Icons ══ -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="screen">
+
+  <!-- ══════════════════════════════════════════
+       RIGHT — MENU PANEL (579px)
+  ══════════════════════════════════════════ -->
+  <div class="menu-panel">
+
+    <!-- Header -->
+    <div class="menu-header">
+      <div class="header-top">
+        <div class="logo-wrap" id="logo-wrap">
+          <img id="logo-img" src="" alt="logo" style="display:none">
+          <div id="logo-placeholder" class="logo-placeholder">
+            <i class="fa-solid fa-burger"></i>
+          </div>
+        </div>
+        <div class="header-text">
+          <div id="rest-name-ar" class="restaurant-name-ar">برجر هاوس</div>
+          <div id="rest-name-en" class="restaurant-name-en">Burger House</div>
+          <div id="rest-tagline"  class="restaurant-tagline">نكهة لا تُنسى في كل قضمة</div>
+        </div>
+        <!-- رقم الهاتف + زر الخصم — يسار الهيدر -->
+        <div class="header-actions">
+          <button class="header-discount-btn" id="store-notif-btn" onclick="showReviewOverlay()">
+            <i class="fa-solid fa-tags"></i>
+            <span class="hdb-pct">10%</span>
+            <span class="hdb-label">خصم</span>
+          </button>
+          <div class="header-phone" id="header-phone-row">
+            <i class="fa-solid fa-phone"></i>
+            <span id="fab-phone-value">----</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="red-strip"></div>
+
+    <!-- Category anchor tabs -->
+    <div id="category-tabs" class="category-tabs">
+      <!-- Rendered by main.js -->
+    </div>
+
+    <!-- All items in one scrollable area -->
+    <div id="menu-items-area" class="menu-items-area">
+      <!-- Rendered by main.js -->
+    </div>
+
+    <!-- Status bar -->
+    <div class="scroll-status-bar">
+      <div class="scroll-item-indicator">
+        <i class="fa-solid fa-circle-play"></i>
+        <span>عرض</span>
+        <strong id="scroll-cur">1</strong>
+        <span>من</span>
+        <strong id="scroll-total">1</strong>
+      </div>
+      <div class="scroll-timer-track">
+        <div id="scroll-timer-fill" class="scroll-timer-fill"></div>
+      </div>
+      <div id="scroll-cat-label" class="scroll-cat-label">—</div>
+    </div>
+
+    <!-- Footer -->
+    <div class="menu-footer">
+      <div class="tax-note">
+        <i class="fa-solid fa-circle-info"></i>
+        <span id="tax-note-text">الأسعار شاملة ضريبة القيمة المضافة 15%</span>
+      </div>
+      <div id="wifi-section" class="wifi-info" style="display:none">
+        <i class="fa-solid fa-wifi"></i>
+        <span id="wifi-name" class="wifi-name">—</span>
+      </div>
+      <div class="qb-credit">
+        <span class="qb-brand">QB</span>
+        <span class="qb-sep">|</span>
+        <span class="qb-text">تطوير بلال الخواجة</span>
+        <span class="qb-sep" id="battery-sep" style="display:none">|</span>
+        <div id="battery-widget" class="battery-widget" style="display:none">
+          <i id="battery-bolt" class="fa-solid fa-bolt" style="display:none"></i>
+          <span id="battery-pct" class="battery-pct-text"></span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /menu-panel -->
+
+  <div class="panel-divider"></div>
+
+  <!-- ══════════════════════════════════════════
+       LEFT — SLIDE PANEL (620px)
+  ══════════════════════════════════════════ -->
+  <div class="slide-panel">
+
+    <!-- Slideshow -->
+    <div id="slides-wrapper" class="slides-wrapper">
+      <!-- Rendered by main.js -->
+    </div>
+
+    <!-- Product Detail Overlay -->
+    <div id="product-overlay" class="product-overlay">
+
+      <!-- طبقتا الصورة للـ crossfade السلس -->
+      <img id="product-overlay-img"  class="product-overlay-bg-img" src="" alt="">
+      <img id="product-overlay-img2" class="product-overlay-bg-img product-overlay-bg-img-2" src="" alt="" style="display:none;opacity:0">
+      <div id="product-overlay-img-ph" class="product-overlay-placeholder">
+        <i class="fa-solid fa-burger"></i>
+      </div>
+
+      <!-- طبقة التدرّج الداكن -->
+      <div class="product-overlay-gradient"></div>
+
+      <!-- زر الإغلاق -->
+      <button class="product-overlay-close" onclick="hideProductOverlay()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <!-- معلومات المنتج — أسفل الشاشة -->
+      <div class="product-overlay-info">
+
+        <!-- السعرات الحرارية -->
+        <div id="product-overlay-cal" class="product-overlay-cal-badge" style="display:none">
+          <i class="fa-solid fa-fire-flame-curved"></i>
+          <span id="product-overlay-cal-num"></span>
+          <span>سعرة حرارية</span>
+        </div>
+
+        <div id="product-overlay-name-ar" class="product-overlay-name-ar"></div>
+        <div id="product-overlay-name-en" class="product-overlay-name-en"></div>
+        <!-- الأنواع / الخيارات (مثلاً: كولا، كولا دايت، كولا زيرو) -->
+        <div id="product-overlay-variants" class="product-overlay-variants" style="display:none"></div>
+        <div id="product-overlay-desc" class="product-overlay-desc"></div>
+
+        <!-- السعر -->
+        <div id="product-overlay-price-wrap" class="product-overlay-price-wrap" style="display:none">
+          <span id="product-overlay-price-num" class="product-overlay-price-num"></span>
+          <span class="product-overlay-price-cur">ريال</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ Review / Discount Overlay ══ -->
+    <div id="review-overlay" class="review-overlay">
+
+      <button class="review-close" onclick="hideReviewOverlay()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <!-- خلفية ضبابية -->
+      <div class="review-glow"></div>
+
+      <!-- محتوى الـ overlay — عمود واحد -->
+      <div class="review-body">
+
+        <div class="review-gmaps-icon">
+          <i class="fa-solid fa-map-location-dot"></i>
+        </div>
+
+        <div class="review-headline-ar">قيّم تجربتك في <span id="review-rest-name">DUO Burger</span></div>
+
+        <div class="review-stars">
+          <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          <i class="fa-solid fa-star"></i>
+        </div>
+
+        <div class="review-discount-block">
+          <span class="review-discount-label-top">واحصل على خصم</span>
+          <span class="review-discount-pct">10%</span>
+          <span class="review-discount-label-bot">في زيارتك القادمة</span>
+        </div>
+
+        <div class="review-divider"></div>
+
+        <div class="review-steps">
+          <div class="review-step">
+            <span class="review-step-num">1</span>
+            <span class="review-step-text">قيّم المطعم بـ 5 نجوم على Google Maps</span>
+          </div>
+          <div class="review-step">
+            <span class="review-step-num">2</span>
+            <span class="review-step-text">أرِ الموظف التقييم عند طلبك القادم</span>
+          </div>
+          <div class="review-step">
+            <span class="review-step-num">3</span>
+            <span class="review-step-text">استمتع بخصم 10% على طلبك القادم!</span>
+          </div>
+        </div>
+
+        <div class="review-divider"></div>
+
+        <!-- QR أسفل كل شيء -->
+        <div class="review-qr-area">
+          <div class="review-qr-box">
+            <img id="review-qr-img" src="" alt="QR Code" style="display:none"
+                 onerror="this.style.display='none';var f=document.getElementById('review-qr-fallback');if(f)f.style.display='flex'">
+            <div id="review-qr-fallback" class="review-qr-fallback">
+              <i class="fa-brands fa-google"></i>
+              <span>أضف صورة QR هنا</span>
+            </div>
+          </div>
+          <div class="review-qr-label">امسح الكود بجوالك للتقييم</div>
+        </div>
+
+      </div><!-- /review-body -->
+
+      <!-- شريط العداد التلقائي -->
+      <div class="review-timer-bar">
+        <div id="review-timer-fill" class="review-timer-fill"></div>
+      </div>
+
+    </div><!-- /review-overlay -->
+
+    <!-- Floating info widget (overlays the slideshow) -->
+    <!-- حسابات التواصل — شرائط مكدّسة على يسار اللوحة -->
+    <div class="social-bars">
+      <div class="social-bar social-bar-tiktok">
+        <i class="fa-brands fa-tiktok"></i>
+        <span id="fab-tiktok-name">@theduoburgere</span>
+      </div>
+      <div class="social-bar social-bar-instagram">
+        <i class="fa-brands fa-instagram"></i>
+        <span id="fab-ig-name">@duo_brger1</span>
+      </div>
+    </div>
+
+    <!-- Dots -->
+    <div id="slide-dots" class="slide-dots"></div>
+
+  </div><!-- /slide-panel -->
+
+</div><!-- /screen -->
+
+<!-- ══ Dev: Password Modal ══ -->
+<div id="dev-pwd-modal" style="display:none;position:fixed;inset:0;z-index:99990;
+     background:rgba(0,0,0,.90);align-items:center;justify-content:center;
+     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)">
+  <div class="dev-modal-box">
+
+    <!-- أيقونة + عنوان -->
+    <div class="dev-modal-icon"><i class="fa-solid fa-lock"></i></div>
+    <div class="dev-modal-title">دخول المطور</div>
+
+    <!-- شاشة عرض الأرقام المدخلة -->
+    <div class="dev-pin-display" id="dev-pin-display">
+      <span class="dev-pin-dot" id="dev-pin-dot-0"></span>
+      <span class="dev-pin-dot" id="dev-pin-dot-1"></span>
+      <span class="dev-pin-dot" id="dev-pin-dot-2"></span>
+      <span class="dev-pin-dot" id="dev-pin-dot-3"></span>
+      <span class="dev-pin-dot" id="dev-pin-dot-4"></span>
+      <span class="dev-pin-dot" id="dev-pin-dot-5"></span>
+    </div>
+
+    <!-- رسالة الخطأ -->
+    <div id="dev-pwd-error" class="dev-pwd-error" style="display:none">
+      <i class="fa-solid fa-circle-xmark"></i> كلمة السر غير صحيحة
+    </div>
+
+    <!-- لوحة الأرقام -->
+    <div class="dev-keypad">
+      <button class="dev-key" onclick="devKeyPress('1')">1</button>
+      <button class="dev-key" onclick="devKeyPress('2')">2</button>
+      <button class="dev-key" onclick="devKeyPress('3')">3</button>
+      <button class="dev-key" onclick="devKeyPress('4')">4</button>
+      <button class="dev-key" onclick="devKeyPress('5')">5</button>
+      <button class="dev-key" onclick="devKeyPress('6')">6</button>
+      <button class="dev-key" onclick="devKeyPress('7')">7</button>
+      <button class="dev-key" onclick="devKeyPress('8')">8</button>
+      <button class="dev-key" onclick="devKeyPress('9')">9</button>
+      <button class="dev-key dev-key-del" onclick="devKeyDelete()">
+        <i class="fa-solid fa-delete-left"></i>
+      </button>
+      <button class="dev-key" onclick="devKeyPress('0')">0</button>
+      <button class="dev-key dev-key-ok" onclick="checkDevPassword()">OK</button>
+    </div>
+
+    <!-- إلغاء -->
+    <button class="dev-btn-cancel" onclick="closeDevModal()">إلغاء</button>
+
+  </div>
+</div>
+
+<!-- لوحة التحكم أصبحت صفحة منفصلة: dashboard.html -->
+
+<script src="products.js"></script>
+<script src="slides.js"></script>
+<script src="main.js"></script>
+
+<!-- ══ ربط الأجهزة عبر WebRTC (PeerJS) — اتصال محلي تلقائي ثابت ══ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<script src="duo-connect.js"></script>
+
+
+<!-- ══ PWA Service Worker Registration ══ -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('/sw.js', { scope: '/' })
+        .then(reg => {
+          console.log('[PWA] Service Worker registered:', reg.scope);
+
+          // Notify user when a new version is available
+          reg.addEventListener('updatefound', () => {
+            const worker = reg.installing;
+            worker.addEventListener('statechange', () => {
+              if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('[PWA] New version available — reload to update.');
+                // For a kiosk/signage display, auto-reload after a delay
+                setTimeout(() => {
+                  worker.postMessage('SKIP_WAITING');
+                  window.location.reload();
+                }, 5000);
+              }
+            });
+          });
+        })
+        .catch(err => console.warn('[PWA] SW registration failed:', err));
+    });
+  }
+</script>
+</body>
+</html>

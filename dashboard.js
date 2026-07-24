@@ -577,7 +577,7 @@ function renderPairingTab(body) {
 
     <!-- الحالة -->
     <div class="card">
-      <div class="card-title"><i class="fa-solid fa-wifi"></i> حالة الاتصال</div>
+      <div class="card-title"><i class="fa-solid fa-wifi"></i> حالة الاتصال <span class="count">هذا الجهاز فقط</span></div>
       <div id="pair-status-box" class="pair-status">
         <span class="pair-status-dot"></span>
         <div class="pair-status-text">
@@ -586,6 +586,26 @@ function renderPairingTab(body) {
         </div>
         <span id="pair-status-time" class="pair-status-time"></span>
       </div>
+      <p class="pair-adv-note" style="margin-top:10px">
+        <i class="fa-solid fa-circle-info"></i>
+        تعرض هذه البطاقة حالة <b>هذا الجهاز</b> فقط (لا تتزامن عبر الشبكة). الحالة الحقيقية تظهر
+        في المؤشّر الصغير أسفل صفحة المنيو على كل جهاز.
+      </p>
+    </div>
+
+    <!-- اختبار الخادم -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-satellite-dish"></i> اختبار الوصول للخادم</div>
+      <div class="screen-auto">
+        <div class="screen-auto-desc">
+          <strong>تحقّق من أن هذا الجهاز يصل لخادم الإشارة</strong>
+          <span>يتأكّد من الإنترنت وخادم PeerJS دون التأثير على الربط الفعلي.</span>
+        </div>
+        <button class="btn-apply" id="pair-test-btn" onclick="pairTest(this)">
+          <i class="fa-solid fa-play"></i> بدء الاختبار
+        </button>
+      </div>
+      <div id="pair-test-result" class="pair-test-result" style="display:none"></div>
     </div>
 
     <!-- تعليمات -->
@@ -697,8 +717,9 @@ function _updatePairStatus() {
   const detail = $('pair-status-detail');
   if (detail) {
     if (!cfg.enabled) detail.textContent = 'الربط غير مُفعّل. فعّله واحفظ الإعداد.';
+    else if (st && st.detail) detail.textContent = st.detail;
     else if (st && st.myId) detail.textContent = `${st.myId} ⇄ ${st.peerId || '—'}`;
-    else detail.textContent = 'افتح المنيو على الجهازين لبدء الاتصال.';
+    else detail.textContent = 'افتح صفحة المنيو على هذا الجهاز لبدء الاتصال.';
   }
 
   const time = $('pair-status-time');
@@ -709,6 +730,48 @@ function _updatePairStatus() {
     } else time.textContent = '';
   }
 }
+
+/* اختبار وصول الجهاز لخادم الإشارة (بمعرّف مؤقّت — لا يتعارض مع الربط) */
+function pairTest(btn) {
+  const box = $('pair-test-result');
+  if (typeof Peer === 'undefined') {
+    if (box) { box.style.display = 'block'; box.className = 'pair-test-result bad';
+      box.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> لم تُحمّل مكتبة PeerJS (تحقّق من الإنترنت).'; }
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جارٍ الاختبار…'; }
+  if (box) { box.style.display = 'block'; box.className = 'pair-test-result';
+    box.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> يتّصل بخادم PeerJS…'; }
+
+  const cfg  = _pairCfg();
+  const opts = { debug: 1 };
+  if (cfg.server && cfg.server.host) {
+    opts.host = cfg.server.host;
+    opts.port = cfg.server.port ? Number(cfg.server.port) : 443;
+    opts.path = cfg.server.path || '/';
+    opts.secure = !!cfg.server.secure;
+  }
+
+  const testId = 'duo-test-' + Math.random().toString(36).slice(2, 8);
+  let done = false;
+  let p;
+  const finish = (ok, msg) => {
+    if (done) return; done = true;
+    clearTimeout(timer);
+    try { if (p) p.destroy(); } catch (e) {}
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-play"></i> إعادة الاختبار'; }
+    if (box) {
+      box.className = 'pair-test-result ' + (ok ? 'good' : 'bad');
+      box.innerHTML = `<i class="fa-solid ${ok ? 'fa-circle-check' : 'fa-circle-xmark'}"></i> ${msg}`;
+    }
+  };
+  const timer = setTimeout(() => finish(false, 'انتهت المهلة: تعذّر الوصول لخادم الإشارة. تحقّق من الإنترنت أو إعداد الخادم.'), 9000);
+
+  try { p = new Peer(testId, opts); } catch (e) { finish(false, 'فشل الإنشاء: ' + e); return; }
+  p.on('open', () => finish(true, 'ناجح ✓ — هذا الجهاز يصل لخادم الإشارة. إذا بقي «غير متصل»، فالمشكلة على الجهاز الآخر أو الإعداد.'));
+  p.on('error', err => finish(false, 'فشل: ' + (err && err.type ? err.type : err)));
+}
+window.pairTest = pairTest;
 
 /* ── توست ── */
 let _toastTimer = null;

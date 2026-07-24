@@ -111,7 +111,16 @@
     setState('connecting');
 
     // خيارات الخادم (افتراضياً سحابة PeerJS العامة، أو خادم محلي إن حُدِّد)
-    const opts = { debug: 1 };
+    // خوادم STUN لاكتشاف المسار بين الجهازين عبر الشبكة المحلية
+    const opts = {
+      debug: 1,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+        ],
+      },
+    };
     if (cfg.server && cfg.server.host) {
       opts.host   = cfg.server.host;
       opts.port   = cfg.server.port ? Number(cfg.server.port) : 443;
@@ -152,16 +161,30 @@
     });
 
     peer.on('error', err => {
-      console.warn('[DuoConnect] خطأ:', err && err.type ? err.type : err);
-      // المعرّف مأخوذ (نافذة أخرى مفتوحة بنفس الجهاز) أو الشريك غير متاح بعد
-      if (err && (err.type === 'peer-unavailable')) {
-        // الشريك لم يفتح بعد — أعِد المحاولة
-        scheduleRetry();
-      } else if (err && err.type === 'unavailable-id') {
-        setState('error', { error: 'id-taken' });
-      } else {
-        setState('error', { error: err && err.type ? err.type : 'unknown' });
-        scheduleRetry();
+      const type = err && err.type ? err.type : 'unknown';
+      console.warn('[DuoConnect] خطأ:', type, err);
+      switch (type) {
+        case 'peer-unavailable':
+          // الشريك لم يفتح المنيو بعد — أعِد المحاولة بهدوء
+          setState('connecting', { detail: 'الشريك لم يفتح المنيو بعد' });
+          scheduleRetry();
+          break;
+        case 'unavailable-id':
+          setState('error', { detail: 'المعرّف مستخدم — أغلق أي تبويب آخر للمنيو على هذا الجهاز' });
+          break;
+        case 'network':
+        case 'server-error':
+        case 'socket-error':
+        case 'socket-closed':
+          setState('error', { detail: 'تعذّر الوصول لخادم الإشارة — تحقّق من اتصال الإنترنت' });
+          scheduleRetry();
+          break;
+        case 'browser-incompatible':
+          setState('error', { detail: 'المتصفح لا يدعم WebRTC' });
+          break;
+        default:
+          setState('error', { detail: 'خطأ: ' + type });
+          scheduleRetry();
       }
     });
   }
@@ -266,10 +289,12 @@
       idle:       { c: '#888',    t: 'الربط متوقف' },
     };
     const m = map[payload.state] || map.idle;
+    const label = payload.detail ? `${m.t} — ${payload.detail}` : m.t;
     _badge.style.display = 'flex';
+    _badge.style.maxWidth = '60vw';
     _badge.innerHTML =
-      `<span style="width:9px;height:9px;border-radius:50%;background:${m.c};box-shadow:0 0 8px ${m.c}"></span>` +
-      `<span>${m.t}</span>`;
+      `<span style="width:9px;height:9px;border-radius:50%;background:${m.c};box-shadow:0 0 8px ${m.c};flex-shrink:0"></span>` +
+      `<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</span>`;
   }
 
   /* ════════════════════════════════════════════════════

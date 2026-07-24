@@ -177,6 +177,7 @@
   /* ── دخول حالة "استعد" (أحمر) ── */
   function _enterReady() {
     phase = 'ready';
+    hideResult();               // أخفِ لوحة نتيجة الجولة السابقة
     setStateClass('state-ready');
     setBig('استعد…');
     setSub('لا تضغط قبل الأخضر!');

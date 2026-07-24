@@ -4,7 +4,7 @@
  * Bump CACHE_NAME to force an update on all clients.
  */
 
-const CACHE_NAME = 'duo-menu-v8';
+const CACHE_NAME = 'duo-menu-v10';
 
 /* Core assets cached on install */
 const PRECACHE = [
@@ -12,10 +12,12 @@ const PRECACHE = [
   '/index.html',
   '/style.css',
   '/game.css',
+  '/game-xo.css',
   '/main.js',
   '/products.js',
   '/slides.js',
   '/game.js',
+  '/game-xo.js',
   '/dashboard.html',
   '/dashboard.css',
   '/dashboard.js',

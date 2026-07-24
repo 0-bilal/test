@@ -78,11 +78,25 @@ const slides = [
   {
     // ── شريحة اللعبة (تحدّي الرد السريع) ──
     isGame: true,
+    game: 'reaction',
+    icon: 'fa-bolt',
     titleAr: 'تحدّي الرد السريع',
     titleEn: 'Reaction Duel',
     descriptionAr: 'استعد… وعندما تصير الشاشة خضراء، أسرع لاعب يضغط يكسب! الأفضل من ٣ جولات.',
     badge: 'العب واربح',
     badgeColor: 'gold',
+    duration: 9000,
+  },
+  {
+    // ── شريحة لعبة إكس-أو السريع ──
+    isGame: true,
+    game: 'xo',
+    icon: 'fa-hashtag',
+    titleAr: 'إكس–أو السريع',
+    titleEn: 'Speed X-O',
+    descriptionAr: 'إكس-أو التقليدية لكن بعدّاد ٣ ثوانٍ لكل حركة — تأخّرت؟ ينتقل الدور فوراً!',
+    badge: 'تحدَّ صاحبك',
+    badgeColor: 'red',
     duration: 9000,
   },
  ];

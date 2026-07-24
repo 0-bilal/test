@@ -27,6 +27,7 @@
         rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="game.css">
+  <link rel="stylesheet" href="game-xo.css">
 </head>
 <body>
 <div class="screen">
@@ -351,10 +352,43 @@
 
 </div>
 
+<!-- ══════════════════════════════════════════
+     SPEED X-O GAME OVERLAY  (إكس-أو السريع)
+══════════════════════════════════════════ -->
+<div id="xo-overlay" class="xo-overlay">
+
+  <div class="xo-topbar">
+    <button class="xo-close" onclick="exitXO()"><i class="fa-solid fa-xmark"></i></button>
+    <div class="xo-title"><i class="fa-solid fa-hashtag"></i> إكس–أو السريع</div>
+    <div class="xo-scores">
+      <span class="xo-sc xo-sc-you"><b id="xo-score-you">0</b><small>أنت</small></span>
+      <span class="xo-sc-sep">–</span>
+      <span class="xo-sc xo-sc-opp"><b id="xo-score-opp">0</b><small>المنافس</small></span>
+    </div>
+  </div>
+
+  <div class="xo-turnbar">
+    <div class="xo-turn" id="xo-turn">—</div>
+    <div class="xo-timer"><div class="xo-timer-fill" id="xo-timer-fill"></div></div>
+  </div>
+
+  <div class="xo-board" id="xo-board"></div>
+
+  <div id="xo-result" class="xo-result">
+    <div class="xo-result-box">
+      <div class="xo-result-icon" id="xo-result-icon"><i class="fa-solid fa-trophy"></i></div>
+      <div class="xo-result-title" id="xo-result-title">—</div>
+      <div class="xo-result-actions" id="xo-result-actions"></div>
+    </div>
+  </div>
+
+</div>
+
 <script src="products.js"></script>
 <script src="slides.js"></script>
 <script src="main.js"></script>
 <script src="game.js"></script>
+<script src="game-xo.js"></script>
 
 <!-- ══ ربط الأجهزة عبر Firebase Realtime Database — اتصال تلقائي ══ -->
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>

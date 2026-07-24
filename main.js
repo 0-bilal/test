@@ -663,21 +663,24 @@ function renderSlides() {
 
     if (slide.isGame) {
       // ── شريحة اللعبة ──
+      const gIcon    = slide.icon || 'fa-bolt';
+      const launcher = slide.game === 'xo' ? 'launchXO()' : 'launchDuoGame()';
+      const hintId   = slide.game === 'xo' ? 'xo-slide-hint' : 'game-slide-hint';
       el.innerHTML = `
-        <div class="game-slide-bg"></div>
+        <div class="game-slide-bg game-slide-bg--${slide.game || 'reaction'}"></div>
         <div class="slide-content game-slide-content">
           ${slide.badge
             ? `<div class="slide-badge ${slide.badgeColor || 'gold'}">
-                 <i class="fa-solid fa-bolt"></i>&nbsp;${slide.badge}
+                 <i class="fa-solid ${gIcon}"></i>&nbsp;${slide.badge}
                </div>` : ''}
-          <div class="game-slide-icon"><i class="fa-solid fa-bolt"></i></div>
+          <div class="game-slide-icon"><i class="fa-solid ${gIcon}"></i></div>
           <div class="slide-title-ar">${slide.titleAr}</div>
           ${slide.titleEn ? `<div class="slide-title-en">${slide.titleEn}</div>` : ''}
           ${slide.descriptionAr ? `<div class="slide-desc">${slide.descriptionAr}</div>` : ''}
-          <button class="game-play-btn" onclick="launchDuoGame()">
+          <button class="game-play-btn" onclick="${launcher}">
             <i class="fa-solid fa-play"></i> العب الآن
           </button>
-          <div id="game-slide-hint" class="game-slide-hint"></div>
+          <div id="${hintId}" class="game-slide-hint"></div>
         </div>`;
     } else {
       el.innerHTML = `

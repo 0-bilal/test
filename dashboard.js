@@ -455,27 +455,42 @@ window.setManualScale = setManualScale;
 window.applyCustom    = applyCustom;
 
 /* ════════════════════════════════════════════════
-   تبويب: ربط الأجهزة (WebRTC / PeerJS)
+   تبويب: ربط الأجهزة (Firebase Realtime Database)
 ════════════════════════════════════════════════ */
 const PAIR = {
   branch:  'duo_pair_branch',
   role:    'duo_pair_role',      // 'left' | 'right'
   enabled: 'duo_pair_enabled',   // 'true' | 'false'
-  server:  'duo_pair_server',    // JSON اختياري
+  fb:      'duo_fb_config',       // إعداد مشروع Firebase (JSON)
   status:  'duo_conn_status',     // مرآة الحالة من صفحة المنيو
 };
 
 function _pairCfg() {
-  let server = null;
-  try { server = JSON.parse(localStorage.getItem(PAIR.server) || 'null'); } catch (e) {}
+  let fb = null;
+  try { fb = JSON.parse(localStorage.getItem(PAIR.fb) || 'null'); } catch (e) {}
   return {
     branch:  localStorage.getItem(PAIR.branch)  || 'Branch01',
     role:    localStorage.getItem(PAIR.role)    || 'left',
     enabled: localStorage.getItem(PAIR.enabled) === 'true',
-    server:  server,
+    fb:      fb,
   };
 }
-function _peerId(role, branch) { return `iPad-${role === 'left' ? 'Left' : 'Right'}-${branch}`; }
+const _roleLabel = r => (r === 'left' ? 'يسار' : 'يمين');
+
+/* استخراج إعداد Firebase من نص ملصوق (JSON أو كائن JS) */
+function parseFirebaseConfig(text) {
+  if (!text || !text.trim()) return null;
+  // محاولة JSON مباشرة
+  try { const o = JSON.parse(text); if (o && typeof o === 'object' && o.databaseURL) return o; } catch (e) {}
+  // استخراج الحقول بالتعبير النمطي من كائن JS
+  const keys = ['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId','measurementId'];
+  const o = {};
+  keys.forEach(k => {
+    const m = text.match(new RegExp(k + '\\s*:\\s*["\'`]([^"\'`]+)["\'`]'));
+    if (m) o[k] = m[1];
+  });
+  return Object.keys(o).length ? o : null;
+}
 
 const STATE_META = {
   connected:  { c: '#22c55e', t: 'مرتبط ويعمل',     i: 'fa-circle-check' },
@@ -488,29 +503,29 @@ const STATE_META = {
 
 function renderPairingTab(body) {
   const cfg    = _pairCfg();
-  const myId    = _peerId(cfg.role, cfg.branch);
-  const partId  = _peerId(cfg.role === 'left' ? 'right' : 'left', cfg.branch);
-  const srv     = cfg.server || {};
+  const fb     = cfg.fb || {};
+  const fbText = fb.databaseURL ? JSON.stringify(fb, null, 2) : '';
+  const fbOk   = !!fb.databaseURL;
 
   body.innerHTML = `
     <div class="screen-note">
       <i class="fa-solid fa-circle-info"></i>
       <div>
-        <strong>ربط ثابت لمرة واحدة عبر شبكة الـ Wi-Fi</strong>
-        اضبط كل جهاز مرة واحدة فقط (فرع + دور). بعدها يتصل الأيبادان تلقائياً كلما فُتح المنيو،
-        بدون غرف أو QR. اضبط جهازاً كـ«يسار» والآخر كـ«يمين» بنفس معرّف الفرع.
+        <strong>ربط مجاني عبر Firebase — يعمل بلا خادم محلي</strong>
+        اضبط كل جهاز مرة واحدة (فرع + دور)، والصق إعداد Firebase. بعدها يتصل الأيبادان تلقائياً
+        كلما فُتح المنيو، بدون غرف أو QR، ويعمل حتى لو كان الراوتر يعزل الأجهزة.
       </div>
     </div>
 
-    <!-- الإعداد -->
+    <!-- إعداد الجهاز -->
     <div class="card">
       <div class="card-title"><i class="fa-solid fa-sliders"></i> إعداد هذا الجهاز</div>
 
       <div class="pair-field">
-        <label>معرّف الفرع (Branch ID)</label>
+        <label>معرّف الفرع / الغرفة (Branch ID)</label>
         <input type="text" id="pair-branch" value="${cfg.branch}" placeholder="Branch01"
                oninput="pairPreview()">
-        <small>يجب أن يكون نفسه على الجهازين (مثال: Branch01).</small>
+        <small>يجب أن يكون نفسه تماماً على الجهازين (مثال: Branch01).</small>
       </div>
 
       <div class="pair-field">
@@ -520,26 +535,26 @@ function renderPairingTab(body) {
                   onclick="pairSetRole('left')">
             <i class="fa-solid fa-tablet-screen-button"></i>
             <span>الجهاز الأيسر</span>
-            <small>iPad-Left</small>
+            <small>left</small>
           </button>
           <button class="pair-role ${cfg.role==='right'?'pair-role--active':''}" data-role="right"
                   onclick="pairSetRole('right')">
             <i class="fa-solid fa-tablet-screen-button"></i>
             <span>الجهاز الأيمن</span>
-            <small>iPad-Right</small>
+            <small>right</small>
           </button>
         </div>
       </div>
 
       <div class="pair-ids">
         <div class="pair-id-box">
-          <span class="pair-id-label"><i class="fa-solid fa-tablet-screen-button"></i> معرّف هذا الجهاز</span>
-          <code id="pair-my-id">${myId}</code>
+          <span class="pair-id-label"><i class="fa-solid fa-door-open"></i> الغرفة / الدور</span>
+          <code id="pair-my-id">—</code>
         </div>
         <div class="pair-id-arrow"><i class="fa-solid fa-right-left"></i></div>
         <div class="pair-id-box">
           <span class="pair-id-label"><i class="fa-solid fa-tablet-screen-button"></i> الجهاز الشريك</span>
-          <code id="pair-partner-id">${partId}</code>
+          <code id="pair-partner-id">—</code>
         </div>
       </div>
 
@@ -554,21 +569,23 @@ function renderPairingTab(body) {
           <span class="slider"></span>
         </span>
       </label>
+    </div>
 
-      <!-- خادم متقدّم (اختياري) -->
-      <details class="pair-adv">
-        <summary><i class="fa-solid fa-server"></i> خادم PeerJS متقدّم (اختياري)</summary>
-        <p class="pair-adv-note">اتركه فارغاً لاستخدام خادم PeerJS السحابي الافتراضي. للتشغيل المحلي بالكامل داخل المحل، شغّل PeerServer على جهاز في نفس الشبكة وأدخل عنوانه هنا.</p>
-        <div class="pair-server-grid">
-          <div class="pair-field"><label>Host</label><input type="text" id="pair-srv-host" value="${srv.host||''}" placeholder="192.168.1.50"></div>
-          <div class="pair-field"><label>Port</label><input type="number" id="pair-srv-port" value="${srv.port||''}" placeholder="9000"></div>
-          <div class="pair-field"><label>Path</label><input type="text" id="pair-srv-path" value="${srv.path||''}" placeholder="/"></div>
-          <label class="pair-secure">
-            <input type="checkbox" id="pair-srv-secure" ${srv.secure?'checked':''}> HTTPS (secure)
-          </label>
-        </div>
-      </details>
-
+    <!-- إعداد Firebase -->
+    <div class="card">
+      <div class="card-title">
+        <i class="fa-solid fa-fire"></i> إعداد Firebase
+        <span class="count">${fbOk ? '✓ محفوظ' : 'مطلوب'}</span>
+      </div>
+      <p class="pair-adv-note">
+        من مشروع Firebase ← إعدادات المشروع ← تطبيق الويب، انسخ كائن <code>firebaseConfig</code> بالكامل
+        والصقه هنا. تأكّد أنك أنشأت <b>Realtime Database</b> (وليس Firestore) ليحتوي على <code>databaseURL</code>.
+      </p>
+      <div class="pair-field">
+        <label>الصق إعداد Firebase (firebaseConfig)</label>
+        <textarea id="pair-fb" class="pair-textarea" rows="9"
+          placeholder='الصق هنا كائن firebaseConfig كاملاً — يجب أن يحتوي على apiKey و databaseURL و projectId و appId'>${fbText ? fbText.replace(/</g,'&lt;') : ''}</textarea>
+      </div>
       <div class="pair-actions">
         <button class="btn-apply" onclick="pairSave()"><i class="fa-solid fa-floppy-disk"></i> حفظ الإعداد</button>
         <button class="btn-reset" onclick="pairReset()"><i class="fa-solid fa-rotate-left"></i> إعادة تعيين</button>
@@ -588,18 +605,18 @@ function renderPairingTab(body) {
       </div>
       <p class="pair-adv-note" style="margin-top:10px">
         <i class="fa-solid fa-circle-info"></i>
-        تعرض هذه البطاقة حالة <b>هذا الجهاز</b> فقط (لا تتزامن عبر الشبكة). الحالة الحقيقية تظهر
-        في المؤشّر الصغير أسفل صفحة المنيو على كل جهاز.
+        تعرض هذه البطاقة حالة <b>هذا الجهاز</b> فقط. الحالة الحقيقية تظهر في المؤشّر الصغير
+        أسفل صفحة المنيو على كل جهاز.
       </p>
     </div>
 
-    <!-- اختبار الخادم -->
+    <!-- اختبار الاتصال -->
     <div class="card">
-      <div class="card-title"><i class="fa-solid fa-satellite-dish"></i> اختبار الوصول للخادم</div>
+      <div class="card-title"><i class="fa-solid fa-satellite-dish"></i> اختبار الاتصال بـ Firebase</div>
       <div class="screen-auto">
         <div class="screen-auto-desc">
-          <strong>تحقّق من أن هذا الجهاز يصل لخادم الإشارة</strong>
-          <span>يتأكّد من الإنترنت وخادم PeerJS دون التأثير على الربط الفعلي.</span>
+          <strong>تحقّق من أن هذا الجهاز يتصل بقاعدة البيانات</strong>
+          <span>يتأكّد من صحّة الإعداد والإنترنت دون التأثير على الربط الفعلي.</span>
         </div>
         <button class="btn-apply" id="pair-test-btn" onclick="pairTest(this)">
           <i class="fa-solid fa-play"></i> بدء الاختبار
@@ -612,9 +629,10 @@ function renderPairingTab(body) {
     <div class="card">
       <div class="card-title"><i class="fa-solid fa-list-check"></i> خطوات الإعداد لمرة واحدة</div>
       <div class="pair-steps">
-        <div class="pair-step"><span>1</span> على الأيباد الأول: اختر «الأيسر»، نفس معرّف الفرع، وفعّل الربط، ثم احفظ.</div>
-        <div class="pair-step"><span>2</span> على الأيباد الثاني: اختر «الأيمن»، نفس معرّف الفرع، وفعّل الربط، ثم احفظ.</div>
-        <div class="pair-step"><span>3</span> افتح صفحة المنيو على الجهازين — سيتصلان تلقائياً وتظهر «مرتبط».</div>
+        <div class="pair-step"><span>1</span> أنشئ مشروع Firebase مجاني، ثم فعّل «Realtime Database» واجعل قواعده تسمح بالقراءة/الكتابة.</div>
+        <div class="pair-step"><span>2</span> انسخ إعداد firebaseConfig والصقه في الحقل أعلاه على كلا الجهازين.</div>
+        <div class="pair-step"><span>3</span> أيباد = «يسار»، الآخر = «يمين»، بنفس معرّف الفرع، وفعّل الربط، ثم احفظ.</div>
+        <div class="pair-step"><span>4</span> افتح المنيو على الجهازين — يتصلان تلقائياً وتظهر «مرتبط».</div>
       </div>
     </div>
   `;
@@ -623,14 +641,13 @@ function renderPairingTab(body) {
   _startPairingPoll();
 }
 
-/* معاينة المعرّفات فور تغيير الفرع/الدور */
+/* معاينة الغرفة/الدور فور التغيير */
 function pairPreview() {
   const branch = ($('pair-branch')?.value || 'Branch01').trim() || 'Branch01';
-  const roleBtn = document.querySelector('.pair-role--active');
-  const role   = roleBtn?.dataset.role || 'left';
+  const role   = document.querySelector('.pair-role--active')?.dataset.role || 'left';
   const my = $('pair-my-id'), pt = $('pair-partner-id');
-  if (my) my.textContent = _peerId(role, branch);
-  if (pt) pt.textContent = _peerId(role === 'left' ? 'right' : 'left', branch);
+  if (my) my.textContent = `${branch} · ${_roleLabel(role)}`;
+  if (pt) pt.textContent = `${branch} · ${_roleLabel(role === 'left' ? 'right' : 'left')}`;
 }
 window.pairPreview = pairPreview;
 
@@ -648,25 +665,20 @@ function pairSave() {
   const role = document.querySelector('.pair-role--active')?.dataset.role || 'left';
   const enabled = !!$('pair-enabled')?.checked;
 
-  // خادم اختياري
-  const host = ($('pair-srv-host')?.value || '').trim();
-  let server = null;
-  if (host) {
-    server = {
-      host,
-      port:   ($('pair-srv-port')?.value || '').trim(),
-      path:   ($('pair-srv-path')?.value || '/').trim() || '/',
-      secure: !!$('pair-srv-secure')?.checked,
-    };
-  }
+  // إعداد Firebase
+  const fbText = $('pair-fb')?.value || '';
+  const fb = parseFirebaseConfig(fbText);
+  if (fbText.trim() && !fb) { toast('تعذّر قراءة إعداد Firebase — تأكّد من نسخه كاملاً'); return; }
+  if (fb && !fb.databaseURL) { toast('الإعداد ينقصه databaseURL — أنشئ Realtime Database أولاً'); return; }
+  if (enabled && !fb) { toast('الصق إعداد Firebase قبل تفعيل الربط'); return; }
 
   localStorage.setItem(PAIR.branch, branch);
   localStorage.setItem(PAIR.role, role);
   localStorage.setItem(PAIR.enabled, String(enabled));
-  if (server) localStorage.setItem(PAIR.server, JSON.stringify(server));
-  else        localStorage.removeItem(PAIR.server);
+  if (fb) localStorage.setItem(PAIR.fb, JSON.stringify(fb));
 
   toast('تم حفظ إعداد الربط ✓');
+  renderPairingTab($('dash-body'));
 }
 window.pairSave = pairSave;
 
@@ -674,7 +686,7 @@ function pairReset() {
   localStorage.removeItem(PAIR.branch);
   localStorage.removeItem(PAIR.role);
   localStorage.removeItem(PAIR.enabled);
-  localStorage.removeItem(PAIR.server);
+  localStorage.removeItem(PAIR.fb);
   localStorage.removeItem(PAIR.status);
   toast('تمت إعادة تعيين الربط');
   renderPairingTab($('dash-body'));
@@ -731,45 +743,56 @@ function _updatePairStatus() {
   }
 }
 
-/* اختبار وصول الجهاز لخادم الإشارة (بمعرّف مؤقّت — لا يتعارض مع الربط) */
+/* اختبار الاتصال بـ Firebase (يستخدم الإعداد الملصوق حالياً أو المحفوظ) */
 function pairTest(btn) {
   const box = $('pair-test-result');
-  if (typeof Peer === 'undefined') {
-    if (box) { box.style.display = 'block'; box.className = 'pair-test-result bad';
-      box.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> لم تُحمّل مكتبة PeerJS (تحقّق من الإنترنت).'; }
+  const show = (cls, html) => { if (box) { box.style.display = 'block'; box.className = 'pair-test-result ' + cls; box.innerHTML = html; } };
+
+  if (typeof firebase === 'undefined' || !firebase.database) {
+    show('bad', '<i class="fa-solid fa-triangle-exclamation"></i> لم تُحمّل مكتبة Firebase (تحقّق من الإنترنت).');
     return;
   }
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جارٍ الاختبار…'; }
-  if (box) { box.style.display = 'block'; box.className = 'pair-test-result';
-    box.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> يتّصل بخادم PeerJS…'; }
-
-  const cfg  = _pairCfg();
-  const opts = { debug: 1 };
-  if (cfg.server && cfg.server.host) {
-    opts.host = cfg.server.host;
-    opts.port = cfg.server.port ? Number(cfg.server.port) : 443;
-    opts.path = cfg.server.path || '/';
-    opts.secure = !!cfg.server.secure;
+  // استخدم النص الملصوق إن وُجد، وإلا المحفوظ
+  const fb = parseFirebaseConfig($('pair-fb')?.value || '') || _pairCfg().fb;
+  if (!fb || !fb.databaseURL) {
+    show('bad', '<i class="fa-solid fa-circle-xmark"></i> لا يوجد إعداد Firebase صالح (ينقص databaseURL).');
+    return;
   }
 
-  const testId = 'duo-test-' + Math.random().toString(36).slice(2, 8);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جارٍ الاختبار…'; }
+  show('', '<i class="fa-solid fa-spinner fa-spin"></i> يتّصل بقاعدة بيانات Firebase…');
+
   let done = false;
-  let p;
+  let testApp = null;
   const finish = (ok, msg) => {
     if (done) return; done = true;
     clearTimeout(timer);
-    try { if (p) p.destroy(); } catch (e) {}
+    try { if (testApp) testApp.delete(); } catch (e) {}
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-play"></i> إعادة الاختبار'; }
-    if (box) {
-      box.className = 'pair-test-result ' + (ok ? 'good' : 'bad');
-      box.innerHTML = `<i class="fa-solid ${ok ? 'fa-circle-check' : 'fa-circle-xmark'}"></i> ${msg}`;
-    }
+    show(ok ? 'good' : 'bad',
+      `<i class="fa-solid ${ok ? 'fa-circle-check' : 'fa-circle-xmark'}"></i> ${msg}`);
   };
-  const timer = setTimeout(() => finish(false, 'انتهت المهلة: تعذّر الوصول لخادم الإشارة. تحقّق من الإنترنت أو إعداد الخادم.'), 9000);
+  const timer = setTimeout(() => finish(false, 'انتهت المهلة: تعذّر الاتصال. تأكّد من databaseURL وقواعد قاعدة البيانات والإنترنت.'), 9000);
 
-  try { p = new Peer(testId, opts); } catch (e) { finish(false, 'فشل الإنشاء: ' + e); return; }
-  p.on('open', () => finish(true, 'ناجح ✓ — هذا الجهاز يصل لخادم الإشارة. إذا بقي «غير متصل»، فالمشكلة على الجهاز الآخر أو الإعداد.'));
-  p.on('error', err => finish(false, 'فشل: ' + (err && err.type ? err.type : err)));
+  try {
+    const name = 'duoTest-' + Date.now();
+    testApp = firebase.initializeApp(fb, name);
+    const db = firebase.database(testApp);
+
+    // 1) تأكّد من الاتصال بالخادم
+    db.ref('.info/connected').on('value', snap => {
+      if (snap.val() === true) {
+        // 2) جرّب كتابة/قراءة فعلية للتأكد من القواعد
+        const ref = db.ref('duo/__test__/' + Math.random().toString(36).slice(2, 8));
+        ref.set({ t: Date.now() })
+          .then(() => ref.remove().catch(() => {}))
+          .then(() => finish(true, 'ناجح ✓ — الاتصال والكتابة يعملان. إذا بقي «غير متصل»، فتأكّد أن الجهاز الآخر بنفس الفرع.'))
+          .catch(err => finish(false, 'الاتصال تمّ لكن الكتابة مرفوضة — عدّل قواعد Realtime Database للسماح بالقراءة/الكتابة. (' + (err && err.code ? err.code : err) + ')'));
+      }
+    });
+  } catch (e) {
+    finish(false, 'فشل التهيئة: ' + e);
+  }
 }
 window.pairTest = pairTest;
 

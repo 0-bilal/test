@@ -407,6 +407,19 @@ html, body {
 }
 .pair-id-arrow { display:flex; align-items:center; color:var(--red); font-size:20px; }
 
+.pair-textarea {
+  width:100%; resize:vertical; min-height:150px;
+  background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.14);
+  border-radius:12px; padding:14px 16px; color:#e5e7eb;
+  font-family:var(--en); font-size:14px; line-height:1.6; direction:ltr; text-align:left;
+  outline:none; transition:border-color .2s;
+}
+.pair-textarea:focus { border-color:var(--red); }
+.pair-adv-note code {
+  font-family:var(--en); font-size:13px; color:#f5c200;
+  background:rgba(245,194,0,.10); padding:1px 6px; border-radius:6px;
+}
+
 .pair-adv { margin-top:10px; border-top:1px solid rgba(255,255,255,.06); padding-top:10px; }
 .pair-adv summary {
   cursor:pointer; font-size:15px; font-weight:600; color:rgba(255,255,255,.6);

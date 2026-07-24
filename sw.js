@@ -4,7 +4,7 @@
  * Bump CACHE_NAME to force an update on all clients.
  */
 
-const CACHE_NAME = 'duo-menu-v4';
+const CACHE_NAME = 'duo-menu-v5';
 
 /* Core assets cached on install */
 const PRECACHE = [

@@ -1,266 +1,166 @@
 /**
- * duo-connect.js — الربط الثابت التلقائي بين جهازَي iPad عبر WebRTC (PeerJS)
+ * duo-connect.js — الربط بين جهازَي iPad عبر Firebase Realtime Database
  * ────────────────────────────────────────────────────────────────────────
- * • إعداد لمرة واحدة من لوحة التحكم (معرّف الفرع + دور الجهاز يسار/يمين).
- * • كل جهاز يحصل على Peer ID ثابت: iPad-Left-<Branch> / iPad-Right-<Branch>.
- * • عند فتح المنيو على الجهازين يتصلان تلقائياً عبر شبكة الـ Wi-Fi المحلية،
- *   بدون أي تدخّل من العميل (لا غرف ولا QR).
- * • إعادة اتصال تلقائية عند انقطاع الشبكة.
+ * • تمرير موثوق عبر خدمة Firebase المجانية (بدون خادم محلي).
+ * • يعمل مع GitHub Pages (HTTPS) وحتى مع راوترات تعزل الأجهزة.
+ * • إعداد لمرة واحدة من لوحة التحكم: معرّف الفرع + الدور + إعداد Firebase.
+ * • عند فتح المنيو على الجهازين يتصلان تلقائياً بدون أي تدخّل من العميل.
  *
- * واجهة برمجية للألعاب لاحقاً:
- *   DuoConnect.send({ ... })          → إرسال بيانات للجهاز الآخر
- *   DuoConnect.onData(fn)             → استقبال البيانات
- *   DuoConnect.onStatus(fn)          → متابعة حالة الاتصال
- *   DuoConnect.status()               → الحالة الحالية { state, myId, peerId }
- *   DuoConnect.reconnect()            → إعادة المحاولة يدوياً
+ * واجهة برمجية للألعاب (لم تتغيّر):
+ *   DuoConnect.send({ ... })   → إرسال حدث للجهاز الآخر
+ *   DuoConnect.onData(fn)      → استقبال الأحداث
+ *   DuoConnect.onStatus(fn)    → متابعة حالة الاتصال
+ *   DuoConnect.status()        → الحالة الحالية
+ *   DuoConnect.reconnect()     → إعادة المحاولة يدوياً
  *
- * ملاحظة: يعتمد على مكتبة PeerJS المحمّلة قبله في الصفحة.
+ * يعتمد على Firebase compat SDK المحمّل قبله (app + database).
  */
 (function () {
   'use strict';
 
-  /* ── مفاتيح التخزين (مشتركة مع لوحة التحكم) ── */
   const LS = {
     branch:  'duo_pair_branch',
-    role:    'duo_pair_role',      // 'left' | 'right'
-    enabled: 'duo_pair_enabled',   // 'true' | 'false'
-    server:  'duo_pair_server',    // JSON اختياري لخادم PeerJS محلي
-    status:  'duo_conn_status',     // مرآة الحالة لعرضها في لوحة التحكم
+    role:    'duo_pair_role',     // 'left' | 'right'
+    enabled: 'duo_pair_enabled',  // 'true' | 'false'
+    fb:      'duo_fb_config',      // إعداد مشروع Firebase (JSON)
+    status:  'duo_conn_status',    // مرآة الحالة للوحة التحكم
   };
 
-  const RETRY_MS      = 4000;   // إعادة محاولة الاتصال
-  const HEARTBEAT_MS  = 15000;  // نبضة للتأكد من بقاء الاتصال حياً
-
-  /* ── قراءة الإعداد ── */
   function readConfig() {
-    let server = null;
-    try { server = JSON.parse(localStorage.getItem(LS.server) || 'null'); } catch (e) { server = null; }
+    let fb = null;
+    try { fb = JSON.parse(localStorage.getItem(LS.fb) || 'null'); } catch (e) { fb = null; }
     return {
       branch:  (localStorage.getItem(LS.branch)  || '').trim(),
-      role:    (localStorage.getItem(LS.role)    || '').trim(),   // 'left' | 'right'
+      role:    (localStorage.getItem(LS.role)    || '').trim(),
       enabled: localStorage.getItem(LS.enabled) === 'true',
-      server:  server,
+      fb:      fb,
     };
   }
-
-  /* ── توليد المعرّفات الثابتة ── */
-  function makePeerId(role, branch) {
-    const r = role === 'left' ? 'Left' : 'Right';
-    return `iPad-${r}-${branch}`;
-  }
-  function partnerRole(role) { return role === 'left' ? 'right' : 'left'; }
+  const partnerRole = r => (r === 'left' ? 'right' : 'left');
 
   /* ── الحالة الداخلية ── */
-  let peer        = null;
-  let conn        = null;
-  let retryTimer  = null;
-  let heartbeat   = null;
-  let myId        = '';
-  let peerId      = '';
-  let cfg         = null;
-
-  let _state = 'idle';   // idle | offline | connecting | waiting | connected | error
+  let app = null, db = null, cfg = null;
+  let myRole = '', peerRole = '';
+  let connRef = null, presMineRef = null, presPeerRef = null, outMineRef = null, outPeerRef = null;
+  let fbConnected = false, peerOnline = false;
+  let _state = 'idle';
   const statusListeners = [];
   const dataListeners    = [];
 
-  /* ── نشر تغيّر الحالة ── */
   function setState(state, extra) {
     _state = state;
-    const payload = Object.assign({ state, myId, peerId, ts: Date.now() }, extra || {});
-    // مرآة في localStorage لتعرضها لوحة التحكم (صفحة أخرى)
+    const payload = Object.assign({
+      state,
+      myId:   (cfg && cfg.branch && myRole)   ? `${cfg.branch}/${myRole}`   : '',
+      peerId: (cfg && cfg.branch && peerRole) ? `${cfg.branch}/${peerRole}` : '',
+      ts: Date.now(),
+    }, extra || {});
     try { localStorage.setItem(LS.status, JSON.stringify(payload)); } catch (e) {}
     statusListeners.forEach(fn => { try { fn(payload); } catch (e) {} });
     _renderBadge(payload);
   }
 
+  function recompute() {
+    if (!fbConnected) { setState('offline', { detail: 'لا يوجد اتصال بالإنترنت / Firebase' }); return; }
+    if (peerOnline)   { setState('connected'); }
+    else              { setState('waiting', { detail: 'الجهاز الشريك غير متصل بعد' }); }
+  }
+
   /* ── واجهة برمجية عامة ── */
   const api = {
     send(obj) {
-      if (conn && conn.open) { try { conn.send(obj); return true; } catch (e) { return false; } }
-      return false;
+      if (!outMineRef) return false;
+      try { outMineRef.push({ d: obj, t: Date.now() }); return true; } catch (e) { return false; }
     },
     onData(fn)   { if (typeof fn === 'function') dataListeners.push(fn); },
-    onStatus(fn) { if (typeof fn === 'function') { statusListeners.push(fn); fn({ state: _state, myId, peerId, ts: Date.now() }); } },
-    status()     { return { state: _state, myId, peerId }; },
-    reconnect()  { _teardown(); start(); },
-    ids()        { return { myId, peerId }; },
+    onStatus(fn) { if (typeof fn === 'function') { statusListeners.push(fn); fn({ state: _state, ts: Date.now() }); } },
+    status()     { return { state: _state, myId: myRole, peerId: peerRole }; },
+    reconnect()  { _detach(); start(); },
+    ids()        { return { myId: myRole, peerId: peerRole }; },
   };
   window.DuoConnect = api;
 
   /* ════════════════════════════════════════════════════
-     الاتصال
+     البدء
   ════════════════════════════════════════════════════ */
   function start() {
     cfg = readConfig();
 
-    // غير مُفعّل أو غير مُعدّ → لا شيء
     if (!cfg.enabled || !cfg.branch || (cfg.role !== 'left' && cfg.role !== 'right')) {
-      setState('idle');
-      return;
+      setState('idle'); return;
     }
-    // مكتبة PeerJS غير محمّلة
-    if (typeof Peer === 'undefined') {
-      console.warn('[DuoConnect] PeerJS غير محمّلة.');
-      setState('error', { error: 'peerjs-missing' });
-      return;
+    if (typeof firebase === 'undefined' || !firebase.database) {
+      setState('error', { detail: 'مكتبة Firebase غير محمّلة (تحقّق من الإنترنت)' }); return;
+    }
+    if (!cfg.fb || !cfg.fb.databaseURL) {
+      setState('error', { detail: 'إعداد Firebase ناقص — أدخله في لوحة التحكم' }); return;
     }
 
-    myId   = makePeerId(cfg.role, cfg.branch);
-    peerId = makePeerId(partnerRole(cfg.role), cfg.branch);
-
+    myRole   = cfg.role;
+    peerRole = partnerRole(cfg.role);
     setState('connecting');
 
-    // خيارات الخادم (افتراضياً سحابة PeerJS العامة، أو خادم محلي إن حُدِّد)
-    // خوادم STUN لاكتشاف المسار بين الجهازين عبر الشبكة المحلية
-    const opts = {
-      debug: 1,
-      config: {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-        ],
-      },
-    };
-    if (cfg.server && cfg.server.host) {
-      opts.host   = cfg.server.host;
-      opts.port   = cfg.server.port ? Number(cfg.server.port) : 443;
-      opts.path   = cfg.server.path || '/';
-      opts.secure = !!cfg.server.secure;
-      if (cfg.server.key) opts.key = cfg.server.key;
-    }
-
     try {
-      peer = new Peer(myId, opts);
+      app = (firebase.apps || []).find(a => a && a.name === 'duoApp')
+            || firebase.initializeApp(cfg.fb, 'duoApp');
+      db  = firebase.database(app);
     } catch (e) {
-      console.warn('[DuoConnect] فشل إنشاء Peer:', e);
-      setState('error', { error: String(e) });
-      scheduleRetry();
+      console.warn('[DuoConnect] فشل تهيئة Firebase:', e);
+      setState('error', { detail: 'فشل تهيئة Firebase' });
       return;
     }
 
-    peer.on('open', id => {
-      console.log('[DuoConnect] جاهز بالمعرّف:', id);
-      // جهاز "اليسار" هو من يبدأ الاتصال؛ "اليمين" يستمع فقط
-      if (cfg.role === 'left') {
-        tryConnect();
-      } else {
-        setState('waiting');
+    const base   = `duo/${cfg.branch}`;
+    presMineRef  = db.ref(`${base}/presence/${myRole}`);
+    presPeerRef  = db.ref(`${base}/presence/${peerRole}`);
+    outMineRef   = db.ref(`${base}/out/${myRole}`);
+    outPeerRef   = db.ref(`${base}/out/${peerRole}`);
+    connRef      = db.ref('.info/connected');
+
+    // نظّف صندوق الخروج القديم لهذا الجهاز (رسائل جلسة سابقة)
+    outMineRef.remove().catch(() => {});
+
+    // مراقبة اتصال Firebase + إعلان الحضور
+    connRef.on('value', snap => {
+      fbConnected = snap.val() === true;
+      if (fbConnected) {
+        try {
+          presMineRef.onDisconnect().set({ online: false, ts: firebase.database.ServerValue.TIMESTAMP });
+          presMineRef.set({ online: true, ts: firebase.database.ServerValue.TIMESTAMP });
+        } catch (e) {}
       }
+      recompute();
     });
 
-    // استقبال اتصال وارد (على جهاز اليمين، أو أي طرف)
-    peer.on('connection', incoming => {
-      console.log('[DuoConnect] اتصال وارد من', incoming.peer);
-      bindConnection(incoming);
+    // مراقبة حضور الشريك
+    presPeerRef.on('value', snap => {
+      const v = snap.val();
+      peerOnline = !!(v && v.online);
+      recompute();
     });
 
-    peer.on('disconnected', () => {
-      console.warn('[DuoConnect] انفصال عن الوسيط — إعادة اتصال…');
-      setState('connecting');
-      try { peer.reconnect(); } catch (e) { scheduleRetry(); }
-    });
-
-    peer.on('error', err => {
-      const type = err && err.type ? err.type : 'unknown';
-      console.warn('[DuoConnect] خطأ:', type, err);
-      switch (type) {
-        case 'peer-unavailable':
-          // الشريك لم يفتح المنيو بعد — أعِد المحاولة بهدوء
-          setState('connecting', { detail: 'الشريك لم يفتح المنيو بعد' });
-          scheduleRetry();
-          break;
-        case 'unavailable-id':
-          setState('error', { detail: 'المعرّف مستخدم — أغلق أي تبويب آخر للمنيو على هذا الجهاز' });
-          break;
-        case 'network':
-        case 'server-error':
-        case 'socket-error':
-        case 'socket-closed':
-          setState('error', { detail: 'تعذّر الوصول لخادم الإشارة — تحقّق من اتصال الإنترنت' });
-          scheduleRetry();
-          break;
-        case 'browser-incompatible':
-          setState('error', { detail: 'المتصفح لا يدعم WebRTC' });
-          break;
-        default:
-          setState('error', { detail: 'خطأ: ' + type });
-          scheduleRetry();
+    // استقبال رسائل الشريك (ثم حذفها لإبقاء القائمة صغيرة)
+    outPeerRef.on('child_added', snap => {
+      const v = snap.val();
+      if (v && v.d !== undefined) {
+        if (v.d && v.d.__duo) return; // رسائل داخلية
+        dataListeners.forEach(fn => { try { fn(v.d); } catch (e) {} });
       }
+      snap.ref.remove().catch(() => {});
     });
   }
 
-  function tryConnect() {
-    if (!peer || peer.destroyed) return;
-    if (conn && conn.open) return;
-    setState('connecting');
-    try {
-      const c = peer.connect(peerId, { reliable: true, serialization: 'json' });
-      bindConnection(c);
-    } catch (e) {
-      scheduleRetry();
-    }
-  }
-
-  function bindConnection(c) {
-    // إن وُجد اتصال قديم مفتوح، احتفظ بالأحدث فقط
-    conn = c;
-
-    c.on('open', () => {
-      console.log('[DuoConnect] ✅ متصل بـ', c.peer);
-      clearTimeout(retryTimer);
-      setState('connected');
-      startHeartbeat();
-    });
-
-    c.on('data', data => {
-      // نبضة داخلية — تجاهلها
-      if (data && data.__duo === 'ping') { api.send({ __duo: 'pong' }); return; }
-      if (data && data.__duo === 'pong') return;
-      dataListeners.forEach(fn => { try { fn(data); } catch (e) {} });
-    });
-
-    c.on('close', () => {
-      console.warn('[DuoConnect] أُغلق الاتصال.');
-      stopHeartbeat();
-      if (conn === c) conn = null;
-      // اليسار يعيد المحاولة؛ اليمين يعود للانتظار
-      if (cfg && cfg.role === 'left') { setState('connecting'); scheduleRetry(); }
-      else setState('waiting');
-    });
-
-    c.on('error', err => {
-      console.warn('[DuoConnect] خطأ اتصال:', err);
-      stopHeartbeat();
-      if (conn === c) conn = null;
-      scheduleRetry();
-    });
-  }
-
-  function scheduleRetry() {
-    if (!cfg || !cfg.enabled) return;
-    clearTimeout(retryTimer);
-    retryTimer = setTimeout(() => {
-      if (cfg.role === 'left') tryConnect();
-    }, RETRY_MS);
-  }
-
-  /* نبضة تُبقي الاتصال حياً وتكتشف الانقطاع الصامت */
-  function startHeartbeat() {
-    stopHeartbeat();
-    heartbeat = setInterval(() => { api.send({ __duo: 'ping' }); }, HEARTBEAT_MS);
-  }
-  function stopHeartbeat() { if (heartbeat) { clearInterval(heartbeat); heartbeat = null; } }
-
-  function _teardown() {
-    clearTimeout(retryTimer);
-    stopHeartbeat();
-    try { if (conn) conn.close(); } catch (e) {}
-    try { if (peer) peer.destroy(); } catch (e) {}
-    conn = null; peer = null;
+  function _detach() {
+    try { if (connRef)     connRef.off(); } catch (e) {}
+    try { if (presPeerRef) presPeerRef.off(); } catch (e) {}
+    try { if (outPeerRef)  outPeerRef.off(); } catch (e) {}
+    try { if (presMineRef) presMineRef.set({ online: false, ts: Date.now() }); } catch (e) {}
+    connRef = presPeerRef = outPeerRef = null;
+    fbConnected = false; peerOnline = false;
   }
 
   /* ════════════════════════════════════════════════════
-     مؤشر حالة صغير (اختياري) — أسفل يسار الشاشة
+     مؤشر حالة صغير — أسفل يسار الشاشة
   ════════════════════════════════════════════════════ */
   let _badge = null;
   function _renderBadge(payload) {
@@ -271,7 +171,7 @@
       Object.assign(_badge.style, {
         position: 'fixed', bottom: '10px', left: '10px', zIndex: '99998',
         display: 'flex', alignItems: 'center', gap: '7px',
-        padding: '6px 12px', borderRadius: '100px',
+        padding: '6px 12px', borderRadius: '100px', maxWidth: '60vw',
         background: 'rgba(10,0,2,.82)', backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         border: '1px solid rgba(255,255,255,.14)',
@@ -285,24 +185,22 @@
       connecting: { c: '#f5c200', t: 'جارٍ الاتصال…' },
       waiting:    { c: '#3b82f6', t: 'بانتظار الشريك' },
       offline:    { c: '#f87171', t: 'غير متصل' },
-      error:      { c: '#f87171', t: 'خطأ اتصال' },
+      error:      { c: '#f87171', t: 'خطأ' },
       idle:       { c: '#888',    t: 'الربط متوقف' },
     };
     const m = map[payload.state] || map.idle;
     const label = payload.detail ? `${m.t} — ${payload.detail}` : m.t;
     _badge.style.display = 'flex';
-    _badge.style.maxWidth = '60vw';
     _badge.innerHTML =
       `<span style="width:9px;height:9px;border-radius:50%;background:${m.c};box-shadow:0 0 8px ${m.c};flex-shrink:0"></span>` +
       `<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</span>`;
   }
 
   /* ════════════════════════════════════════════════════
-     تشغيل تلقائي عند تحميل الصفحة
+     تشغيل تلقائي
   ════════════════════════════════════════════════════ */
-  // إعادة الاتصال عند عودة الشبكة / عودة الصفحة للواجهة
   window.addEventListener('online',  () => { if (cfg && cfg.enabled) api.reconnect(); });
-  window.addEventListener('offline', () => setState('offline'));
+  window.addEventListener('offline', () => setState('offline', { detail: 'انقطع الإنترنت' }));
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && cfg && cfg.enabled && _state !== 'connected') api.reconnect();
   });

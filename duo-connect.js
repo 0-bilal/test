@@ -29,6 +29,8 @@
   function readConfig() {
     let fb = null;
     try { fb = JSON.parse(localStorage.getItem(LS.fb) || 'null'); } catch (e) { fb = null; }
+    // احتياطي: الإعداد المضمّن في duo-config.js (لا حاجة للصقه على الأجهزة)
+    if ((!fb || !fb.databaseURL) && window.DUO_FIREBASE_CONFIG) fb = window.DUO_FIREBASE_CONFIG;
     return {
       branch:  (localStorage.getItem(LS.branch)  || '').trim(),
       role:    (localStorage.getItem(LS.role)    || '').trim(),

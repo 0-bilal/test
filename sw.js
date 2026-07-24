@@ -4,7 +4,7 @@
  * Bump CACHE_NAME to force an update on all clients.
  */
 
-const CACHE_NAME = 'duo-menu-v6';
+const CACHE_NAME = 'duo-menu-v7';
 
 /* Core assets cached on install */
 const PRECACHE = [
@@ -17,6 +17,7 @@ const PRECACHE = [
   '/dashboard.html',
   '/dashboard.css',
   '/dashboard.js',
+  '/duo-config.js',
   '/duo-connect.js',
   '/manifest.json',
   '/icons/logo.ico',

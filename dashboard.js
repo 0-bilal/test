@@ -468,6 +468,8 @@ const PAIR = {
 function _pairCfg() {
   let fb = null;
   try { fb = JSON.parse(localStorage.getItem(PAIR.fb) || 'null'); } catch (e) {}
+  // احتياطي: الإعداد المضمّن في duo-config.js
+  if ((!fb || !fb.databaseURL) && window.DUO_FIREBASE_CONFIG) fb = window.DUO_FIREBASE_CONFIG;
   return {
     branch:  localStorage.getItem(PAIR.branch)  || 'Branch01',
     role:    localStorage.getItem(PAIR.role)    || 'left',
@@ -589,18 +591,21 @@ function renderPairingTab(body) {
     <div class="card">
       <div class="card-title">
         <i class="fa-solid fa-fire"></i> إعداد Firebase
-        <span class="count">${fbOk ? '✓ محفوظ' : 'مطلوب'}</span>
+        <span class="count">${fbOk ? '✓ مضمّن' : 'مطلوب'}</span>
       </div>
       <p class="pair-adv-note">
-        من مشروع Firebase ← إعدادات المشروع ← تطبيق الويب، انسخ كائن <code>firebaseConfig</code> بالكامل
-        والصقه هنا. تأكّد أنك أنشأت <b>Realtime Database</b> (وليس Firestore) ليحتوي على <code>databaseURL</code>.
+        الإعداد <b>مضمّن مسبقاً</b> في ملف <code>duo-config.js</code> لكل الأجهزة — لا حاجة للصق أي شيء.
+        كل ما تحتاجه: اختيار الدور أعلاه وتفعيل الربط ثم الحفظ.
       </p>
-      <div class="pair-field">
-        <label>الصق إعداد Firebase (firebaseConfig)</label>
-        <textarea id="pair-fb" class="pair-textarea" rows="9"
-          autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false"
-          placeholder='الصق هنا كائن firebaseConfig كاملاً — يجب أن يحتوي على apiKey و databaseURL و projectId و appId'>${fbText ? fbText.replace(/</g,'&lt;') : ''}</textarea>
-      </div>
+      <details class="pair-adv">
+        <summary><i class="fa-solid fa-pen"></i> تعديل إعداد Firebase (اختياري)</summary>
+        <p class="pair-adv-note">اتركه فارغاً لاستخدام الإعداد المضمّن. الصق كائن firebaseConfig آخر فقط لو أردت تغييره على هذا الجهاز.</p>
+        <div class="pair-field">
+          <textarea id="pair-fb" class="pair-textarea" rows="9"
+            autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false"
+            placeholder='الإعداد المضمّن مُستخدَم حالياً. الصق firebaseConfig هنا فقط للتغيير.'></textarea>
+        </div>
+      </details>
       <div class="pair-actions">
         <button class="btn-apply" onclick="pairSave()"><i class="fa-solid fa-floppy-disk"></i> حفظ الإعداد</button>
         <button class="btn-reset" onclick="pairReset()"><i class="fa-solid fa-rotate-left"></i> إعادة تعيين</button>
@@ -644,9 +649,9 @@ function renderPairingTab(body) {
     <div class="card">
       <div class="card-title"><i class="fa-solid fa-list-check"></i> خطوات الإعداد لمرة واحدة</div>
       <div class="pair-steps">
-        <div class="pair-step"><span>1</span> أنشئ مشروع Firebase مجاني، ثم فعّل «Realtime Database» واجعل قواعده تسمح بالقراءة/الكتابة.</div>
-        <div class="pair-step"><span>2</span> انسخ إعداد firebaseConfig والصقه في الحقل أعلاه على كلا الجهازين.</div>
-        <div class="pair-step"><span>3</span> أيباد = «يسار»، الآخر = «يمين»، بنفس معرّف الفرع، وفعّل الربط، ثم احفظ.</div>
+        <div class="pair-step"><span>1</span> إعداد Firebase مضمّن مسبقاً — لا حاجة للصق أي شيء على أي جهاز.</div>
+        <div class="pair-step"><span>2</span> على كل جهاز: اختر الدور (أيباد «يسار» والآخر «يمين») بنفس معرّف الفرع.</div>
+        <div class="pair-step"><span>3</span> فعّل «الربط التلقائي» ثم اضغط «حفظ الإعداد».</div>
         <div class="pair-step"><span>4</span> افتح المنيو على الجهازين — يتصلان تلقائياً وتظهر «مرتبط».</div>
       </div>
     </div>
@@ -680,12 +685,16 @@ function pairSave() {
   const role = document.querySelector('.pair-role--active')?.dataset.role || 'left';
   const enabled = !!$('pair-enabled')?.checked;
 
-  // إعداد Firebase
+  // إعداد Firebase — اختياري (مضمّن في duo-config.js)
   const fbText = $('pair-fb')?.value || '';
-  const fb = parseFirebaseConfig(fbText);
+  let fb = fbText.trim() ? parseFirebaseConfig(fbText) : null;
   if (fbText.trim() && !fb) { toast('تعذّر قراءة إعداد Firebase — تأكّد من نسخه كاملاً'); return; }
-  if (fb && !fb.databaseURL) { toast('الإعداد ينقصه databaseURL — أنشئ Realtime Database أولاً'); return; }
-  if (enabled && !fb) { toast('الصق إعداد Firebase قبل تفعيل الربط'); return; }
+
+  // الإعداد الفعّال: الملصوق، وإلا المحفوظ/المضمّن
+  const effectiveFb = fb || _pairCfg().fb;
+  if (enabled && (!effectiveFb || !effectiveFb.databaseURL)) {
+    toast('لا يوجد إعداد Firebase — تأكّد من ملف duo-config.js'); return;
+  }
 
   localStorage.setItem(PAIR.branch, branch);
   localStorage.setItem(PAIR.role, role);

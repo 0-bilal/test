@@ -480,8 +480,16 @@ const _roleLabel = r => (r === 'left' ? 'يسار' : 'يمين');
 /* استخراج إعداد Firebase من نص ملصوق (JSON أو كائن JS) */
 function parseFirebaseConfig(text) {
   if (!text || !text.trim()) return null;
+
+  // توحيد علامات الاقتباس الذكية التي يضيفها iPad/Safari إلى مستقيمة
+  text = text
+    .replace(/[“”„‟″‶]/g, '"')   // " " „ ‟ ″ ‶
+    .replace(/[‘’‚‛′‵]/g, "'")   // ' ' ‚ ‛ ′ ‵
+    .replace(/ /g, ' ');                                   // مسافة غير قابلة للكسر
+
   // محاولة JSON مباشرة
   try { const o = JSON.parse(text); if (o && typeof o === 'object' && o.databaseURL) return o; } catch (e) {}
+
   // استخراج الحقول بالتعبير النمطي من كائن JS
   const keys = ['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId','measurementId'];
   const o = {};
@@ -489,6 +497,12 @@ function parseFirebaseConfig(text) {
     const m = text.match(new RegExp(k + '\\s*:\\s*["\'`]([^"\'`]+)["\'`]'));
     if (m) o[k] = m[1];
   });
+
+  // اشتقاق databaseURL إن غاب لكن projectId موجود (احتياطي)
+  if (!o.databaseURL && o.projectId) {
+    o.databaseURL = `https://${o.projectId}-default-rtdb.firebaseio.com`;
+  }
+
   return Object.keys(o).length ? o : null;
 }
 
@@ -584,6 +598,7 @@ function renderPairingTab(body) {
       <div class="pair-field">
         <label>الصق إعداد Firebase (firebaseConfig)</label>
         <textarea id="pair-fb" class="pair-textarea" rows="9"
+          autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false"
           placeholder='الصق هنا كائن firebaseConfig كاملاً — يجب أن يحتوي على apiKey و databaseURL و projectId و appId'>${fbText ? fbText.replace(/</g,'&lt;') : ''}</textarea>
       </div>
       <div class="pair-actions">
@@ -755,7 +770,7 @@ function pairTest(btn) {
   // استخدم النص الملصوق إن وُجد، وإلا المحفوظ
   const fb = parseFirebaseConfig($('pair-fb')?.value || '') || _pairCfg().fb;
   if (!fb || !fb.databaseURL) {
-    show('bad', '<i class="fa-solid fa-circle-xmark"></i> لا يوجد إعداد Firebase صالح (ينقص databaseURL).');
+    show('bad', '<i class="fa-solid fa-circle-xmark"></i> لا يوجد إعداد Firebase على هذا الجهاز. الصق كائن firebaseConfig في الحقل أعلاه على <b>هذا الأيباد</b> ثم أعد الاختبار (الإعداد لا ينتقل من جهاز لآخر).');
     return;
   }
 

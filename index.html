@@ -51,8 +51,12 @@
           <div id="rest-name-en" class="restaurant-name-en">Burger House</div>
           <div id="rest-tagline"  class="restaurant-tagline">نكهة لا تُنسى في كل قضمة</div>
         </div>
-        <!-- رقم الهاتف + زر الخصم — يسار الهيدر -->
+        <!-- رقم الهاتف + زر الخصم + زر الألعاب — يسار الهيدر -->
         <div class="header-actions">
+          <button class="header-games-btn" id="header-games-btn" onclick="showGamesHub()">
+            <i class="fa-solid fa-gamepad"></i>
+            <span class="hgb-label">مَن يدفع؟</span>
+          </button>
           <button class="header-discount-btn" id="store-notif-btn" onclick="showReviewOverlay()">
             <i class="fa-solid fa-tags"></i>
             <span class="hdb-pct">10%</span>
@@ -104,13 +108,18 @@
         <span id="wifi-name" class="wifi-name">—</span>
       </div>
       <div class="qb-credit">
-        <span class="qb-brand">QB</span>
+        <span class="qb-brand">QB 15v</span>
         <span class="qb-sep">|</span>
         <span class="qb-text">تطوير بلال الخواجة</span>
         <span class="qb-sep" id="battery-sep" style="display:none">|</span>
         <div id="battery-widget" class="battery-widget" style="display:none">
           <i id="battery-bolt" class="fa-solid fa-bolt" style="display:none"></i>
           <span id="battery-pct" class="battery-pct-text"></span>
+        </div>
+        <span class="qb-sep" id="conn-sep" style="display:none">|</span>
+        <div id="duo-conn-mini" class="duo-conn-mini" style="display:none">
+          <span class="dcm-dot"></span>
+          <span class="dcm-label"></span>
         </div>
       </div>
     </div>
@@ -384,17 +393,72 @@
 
 </div>
 
+<!-- ══════════════════════════════════════════
+     GAMES HUB  (مَن يدفع الحساب؟)
+══════════════════════════════════════════ -->
+<div id="games-hub" class="games-hub">
+  <div class="gh-backdrop" onclick="hideGamesHub()"></div>
+
+  <div class="gh-panel">
+    <button class="gh-close" onclick="hideGamesHub()"><i class="fa-solid fa-xmark"></i></button>
+
+    <div class="gh-header">
+      <div class="gh-flame"><i class="fa-solid fa-fire"></i></div>
+      <div class="gh-title">مَن يدفع الحساب؟</div>
+      <div class="gh-sub">تبون تكرمون بعض؟ خلّوا اللعبة تحسمها — الفائز هو مَن يشرّف ويدفع الحساب!</div>
+    </div>
+
+    <div id="gh-status" class="gh-status"></div>
+
+    <div class="gh-cards">
+
+      <!-- تحدّي الرد السريع -->
+      <div class="gh-card">
+        <div class="gh-card-icon gh-icon-reaction"><i class="fa-solid fa-bolt"></i></div>
+        <div class="gh-card-name">تحدّي الرد السريع</div>
+        <div class="gh-card-idea">أسرع لاعب يضغط عند تحوّل الشاشة للأخضر يكسب الجولة.</div>
+        <ol class="gh-steps">
+          <li>الشاشتان حمراء — استعدّوا.</li>
+          <li>عند تحوّلها للأخضر: اضغط بأسرع ما يمكن!</li>
+          <li>الأسرع يفوز — الأفضل من ٣ جولات. والفائز يدفع الحساب.</li>
+        </ol>
+        <button class="gh-play gh-play--reaction" onclick="hubPlay('reaction')">
+          <i class="fa-solid fa-play"></i> ابدأ اللعب
+        </button>
+      </div>
+
+      <!-- إكس-أو السريع -->
+      <div class="gh-card">
+        <div class="gh-card-icon gh-icon-xo"><i class="fa-solid fa-hashtag"></i></div>
+        <div class="gh-card-name">إكس–أو السريع</div>
+        <div class="gh-card-idea">إكس-أو التقليدية لكن بعدّاد ٣ ثوانٍ لكل حركة!</div>
+        <ol class="gh-steps">
+          <li>كل لاعب برمز: X أو O.</li>
+          <li>لديك ٣ ثوانٍ للعب — تأخّرت؟ ينتقل الدور فوراً!</li>
+          <li>أول من يصنع خطاً يفوز. والفائز يدفع الحساب.</li>
+        </ol>
+        <button class="gh-play gh-play--xo" onclick="hubPlay('xo')">
+          <i class="fa-solid fa-play"></i> ابدأ اللعب
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <script src="products.js"></script>
 <script src="slides.js"></script>
 <script src="main.js"></script>
 <script src="game.js"></script>
 <script src="game-xo.js"></script>
+<script src="games-hub.js"></script>
 
 <!-- ══ ربط الأجهزة عبر Firebase Realtime Database — اتصال تلقائي ══ -->
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 <script src="duo-config.js"></script>
 <script src="duo-connect.js"></script>
+<script src="duo-sync.js"></script>
 
 
 <!-- ══ PWA Service Worker Registration ══ -->

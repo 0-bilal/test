@@ -863,6 +863,7 @@ const SS_ITEMS     = 'duo_hidden_items';
 const SS_SLIDES    = 'duo_hidden_slides';
 const SS_DISCOUNT  = 'duo_discount_hidden';
 const SS_PHONE     = 'duo_phone_hidden';
+const SS_GAMES     = 'duo_games_hidden';
 const SS_VARIANTS  = 'duo_hidden_variants';
 const LS_BADGES    = 'duo_badges';
 const LS_STATS_PFX = 'duo_stats_';
@@ -872,6 +873,7 @@ let _devHiddenSlides   = new Set();
 let _devHiddenVariants = new Set();
 let _devDiscountHidden = false;
 let _devPhoneHidden    = false;
+let _devGamesHidden    = false;
 let _devBadges         = {};   // { "catId||nameAr": "popular"|"new"|"limited"|"" }
 
 /* ── إحصائيات المشاهدة ── */
@@ -911,6 +913,7 @@ function _devLoadSettings() {
     const phoneRaw = sessionStorage.getItem(SS_PHONE);
     _devDiscountHidden = discRaw  === 'true';
     _devPhoneHidden    = phoneRaw === 'true';
+    _devGamesHidden    = sessionStorage.getItem(SS_GAMES) === 'true';
     // ضمان: إذا لم تُحدَّد بعد، تأكّد من وضعها كـ "ظاهر"
     if (discRaw  === null) { sessionStorage.setItem(SS_DISCOUNT, 'false'); _devDiscountHidden = false; }
     if (phoneRaw === null) { sessionStorage.setItem(SS_PHONE,    'false'); _devPhoneHidden    = false; }
@@ -963,9 +966,59 @@ function applyDevSettings() {
   const phoneRow = $('header-phone-row');
   if (phoneRow) phoneRow.style.display = _devPhoneHidden ? 'none' : '';
 
+  // زر الألعاب "مَن يدفع؟"
+  const gamesBtn = $('header-games-btn');
+  if (gamesBtn) gamesBtn.style.display = _devGamesHidden ? 'none' : '';
+
   // عداد المنتجات
   const visCount = allItemEls.filter(el => el.style.display !== 'none').length;
   setText('scroll-total', String(visCount || allItemEls.length));
+}
+
+/* ════════════════════════════════════════════════════════
+   مزامنة الإعدادات من الجهاز الآخر (عبر Firebase / DuoSync)
+   عند تغيير أي إعداد في لوحة تحكم أحد الجهازين، يصل هنا فيُطبَّق فوراً.
+════════════════════════════════════════════════════════ */
+function applyRemoteSettings(v) {
+  if (!v || typeof v !== 'object') return;
+  try {
+    _devHiddenItems    = new Set(v.hiddenItems    || []);
+    _devHiddenSlides   = new Set((v.hiddenSlides  || []).map(String));
+    _devHiddenVariants = new Set(v.hiddenVariants || []);
+    _devDiscountHidden = !!v.discountHidden;
+    _devPhoneHidden    = !!v.phoneHidden;
+    _devGamesHidden    = !!v.gamesHidden;
+    _devBadges         = v.badges || {};
+
+    // خزّن محلياً كنسخة احتياطية
+    sessionStorage.setItem(SS_ITEMS,    JSON.stringify([..._devHiddenItems]));
+    sessionStorage.setItem(SS_SLIDES,   JSON.stringify([..._devHiddenSlides]));
+    sessionStorage.setItem(SS_VARIANTS, JSON.stringify([..._devHiddenVariants]));
+    sessionStorage.setItem(SS_DISCOUNT, String(_devDiscountHidden));
+    sessionStorage.setItem(SS_PHONE,    String(_devPhoneHidden));
+    sessionStorage.setItem(SS_GAMES,    String(_devGamesHidden));
+    localStorage.setItem(LS_BADGES,     JSON.stringify(_devBadges));
+
+    _refreshAllBadges();
+    applyDevSettings();
+  } catch (e) { console.warn('[Sync] apply error:', e); }
+}
+window.applyRemoteSettings = applyRemoteSettings;
+
+/* تحديث شارات كل البطاقات بحسب _devBadges */
+function _refreshAllBadges() {
+  document.querySelectorAll('.menu-item').forEach(card => {
+    const nameEl = card.querySelector('.item-name-ar');
+    const catId  = card.dataset.cat;
+    if (!nameEl) return;
+    const key    = _devItemKey(catId, nameEl.textContent.trim());
+    const infoEl = card.querySelector('.item-info');
+    if (!infoEl) return;
+    let badgeEl  = infoEl.querySelector('.item-badge');
+    const newHtml = _badgeHTML(_devBadges[key] || '');
+    if (badgeEl) { if (newHtml) badgeEl.outerHTML = newHtml; else badgeEl.remove(); }
+    else if (newHtml) infoEl.insertAdjacentHTML('afterbegin', newHtml);
+  });
 }
 
 /* ── لوحة الأرقام المخصصة ── */
@@ -1155,6 +1208,11 @@ document.addEventListener('DOMContentLoaded', () => {
   setupLogoSecretTap();
   // ملاءمة الموقع لحجم الشاشة (تلقائي + عند تغيير الحجم)
   fitScreenToViewport();
+
+  // مزامنة الإعدادات من الجهاز الآخر (إن كان الربط مفعّلاً)
+  if (window.DuoSync && typeof window.DuoSync.listen === 'function') {
+    window.DuoSync.listen(applyRemoteSettings);
+  }
 
   // ── مؤشر البطارية ──
   initBattery();

@@ -11,6 +11,7 @@ const SS_ITEMS    = 'duo_hidden_items';
 const SS_SLIDES   = 'duo_hidden_slides';
 const SS_DISCOUNT = 'duo_discount_hidden';
 const SS_PHONE    = 'duo_phone_hidden';
+const SS_GAMES    = 'duo_games_hidden';
 const SS_VARIANTS = 'duo_hidden_variants';
 const LS_BADGES   = 'duo_badges';
 const LS_STATS_PFX = 'duo_stats_';
@@ -28,6 +29,7 @@ let _hiddenSlides   = new Set();
 let _hiddenVariants = new Set();
 let _discountHidden = false;
 let _phoneHidden    = false;
+let _gamesHidden    = false;
 let _badges         = {};
 
 /* ── شارات ── */
@@ -49,6 +51,7 @@ function loadSettings() {
     _hiddenVariants = new Set(JSON.parse(sessionStorage.getItem(SS_VARIANTS) || '[]'));
     _discountHidden = sessionStorage.getItem(SS_DISCOUNT) === 'true';
     _phoneHidden    = sessionStorage.getItem(SS_PHONE)    === 'true';
+    _gamesHidden    = sessionStorage.getItem(SS_GAMES)    === 'true';
     _badges         = JSON.parse(localStorage.getItem(LS_BADGES) || '{}');
   } catch (e) {
     _hiddenItems = new Set(); _hiddenSlides = new Set(); _hiddenVariants = new Set();
@@ -125,6 +128,17 @@ function renderHeaderTab(body) {
         </div>
         <span class="toggle">
           <input type="checkbox" ${!_discountHidden ? 'checked' : ''} onchange="toggleDiscount(this.checked)">
+          <span class="slider"></span>
+        </span>
+      </label>
+      <label class="row">
+        <div class="row-icon" style="background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.25);color:#3b82f6"><i class="fa-solid fa-gamepad"></i></div>
+        <div class="row-label">
+          إظهار زر الألعاب «مَن يدفع؟»
+          <small>الزر الأزرق الذي يفتح شاشة الألعاب</small>
+        </div>
+        <span class="toggle">
+          <input type="checkbox" ${!_gamesHidden ? 'checked' : ''} onchange="toggleGames(this.checked)">
           <span class="slider"></span>
         </span>
       </label>
@@ -376,26 +390,50 @@ function renderScreenTab(body) {
 /* ════════════════════════════════════════════════
    إجراءات — الهيدر / الشرائح / المنتجات
 ════════════════════════════════════════════════ */
+/* دفع كل الإعدادات للجهاز الآخر عبر Firebase */
+function _syncPush() {
+  if (!window.DuoSync) return;
+  window.DuoSync.write({
+    hiddenItems:    [..._hiddenItems],
+    hiddenSlides:   [..._hiddenSlides],
+    hiddenVariants: [..._hiddenVariants],
+    discountHidden: _discountHidden,
+    phoneHidden:    _phoneHidden,
+    gamesHidden:    _gamesHidden,
+    badges:         _badges,
+  });
+}
+
 function togglePhone(checked) {
   _phoneHidden = !checked;
   sessionStorage.setItem(SS_PHONE, String(_phoneHidden));
+  _syncPush();
   toast(checked ? 'تم إظهار رقم الهاتف' : 'تم إخفاء رقم الهاتف');
 }
 function toggleDiscount(checked) {
   _discountHidden = !checked;
   sessionStorage.setItem(SS_DISCOUNT, String(_discountHidden));
+  _syncPush();
   toast(checked ? 'تم إظهار زر الخصم' : 'تم إخفاء زر الخصم');
+}
+function toggleGames(checked) {
+  _gamesHidden = !checked;
+  sessionStorage.setItem(SS_GAMES, String(_gamesHidden));
+  _syncPush();
+  toast(checked ? 'تم إظهار زر الألعاب' : 'تم إخفاء زر الألعاب');
 }
 function toggleSlide(idx, checked) {
   if (checked) _hiddenSlides.delete(String(idx));
   else         _hiddenSlides.add(String(idx));
   sessionStorage.setItem(SS_SLIDES, JSON.stringify([..._hiddenSlides]));
+  _syncPush();
   renderSlidesTab($('dash-body'));
 }
 function toggleItem(key, checked) {
   if (checked) _hiddenItems.delete(key);
   else         _hiddenItems.add(key);
   sessionStorage.setItem(SS_ITEMS, JSON.stringify([..._hiddenItems]));
+  _syncPush();
   // تحديث العداد
   const cat = menuCategories.find(c => c.items.some(it => _key(c.id, it.nameAr) === key));
   if (cat) {
@@ -408,10 +446,12 @@ function toggleVariant(vkey, checked) {
   if (checked) _hiddenVariants.delete(vkey);
   else         _hiddenVariants.add(vkey);
   sessionStorage.setItem(SS_VARIANTS, JSON.stringify([..._hiddenVariants]));
+  _syncPush();
 }
 function setBadge(key, badge, btn) {
   _badges[key] = badge;
   localStorage.setItem(LS_BADGES, JSON.stringify(_badges));
+  _syncPush();
   btn.closest('.badge-btns').querySelectorAll('.badge-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.badge === badge)
   );
@@ -419,6 +459,7 @@ function setBadge(key, badge, btn) {
 }
 window.togglePhone    = togglePhone;
 window.toggleDiscount = toggleDiscount;
+window.toggleGames    = toggleGames;
 window.toggleSlide    = toggleSlide;
 window.toggleItem     = toggleItem;
 window.toggleVariant  = toggleVariant;
@@ -831,6 +872,28 @@ function toast(msg) {
   _toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
+/* تطبيق الإعدادات المشتركة (القادمة من الجهاز الآخر) على لوحة التحكم */
+function _applyRemoteToDashboard(v) {
+  if (!v || typeof v !== 'object') return;
+  try {
+    _hiddenItems    = new Set(v.hiddenItems    || []);
+    _hiddenSlides   = new Set((v.hiddenSlides  || []).map(String));
+    _hiddenVariants = new Set(v.hiddenVariants || []);
+    _discountHidden = !!v.discountHidden;
+    _phoneHidden    = !!v.phoneHidden;
+    _gamesHidden    = !!v.gamesHidden;
+    _badges         = v.badges || {};
+    sessionStorage.setItem(SS_ITEMS,    JSON.stringify([..._hiddenItems]));
+    sessionStorage.setItem(SS_SLIDES,   JSON.stringify([..._hiddenSlides]));
+    sessionStorage.setItem(SS_VARIANTS, JSON.stringify([..._hiddenVariants]));
+    sessionStorage.setItem(SS_DISCOUNT, String(_discountHidden));
+    sessionStorage.setItem(SS_PHONE,    String(_phoneHidden));
+    sessionStorage.setItem(SS_GAMES,    String(_gamesHidden));
+    localStorage.setItem(LS_BADGES,     JSON.stringify(_badges));
+    showTab(_activeTab);   // أعد رسم التبويب الحالي بالقيم الجديدة
+  } catch (e) {}
+}
+
 /* ════════════════════════════════════════════════
    INIT
 ════════════════════════════════════════════════ */
@@ -839,4 +902,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const rn = $('dash-rest-name');
   if (rn && typeof restaurantInfo !== 'undefined') rn.textContent = restaurantInfo.nameEn || restaurantInfo.nameAr || 'DUO';
   showTab('header');
+
+  // اجلب الإعدادات المشتركة من الجهاز الآخر (إن كان الربط مفعّلاً)
+  if (window.DuoSync && typeof window.DuoSync.readOnce === 'function') {
+    window.DuoSync.readOnce(v => { if (v) _applyRemoteToDashboard(v); });
+  }
 });

@@ -225,6 +225,7 @@
 
     // مؤشّر الدور + العدّاد
     if (status === 'playing') {
+      hideResult();          // أخفِ لوحة نتيجة الجولة السابقة (على الجهازين)
       _renderTurn();
       _restartTimerBar();
     } else if (status === 'over') {
@@ -262,9 +263,9 @@
   ════════════════════════════════════════════════════ */
   function _showOver() {
     let title, icon, cls;
-    if (winner === myRole)        { title = '🏆 فزت!';    icon = 'fa-trophy';     cls = 'win'; }
-    else if (winner === peerRole) { title = 'خسرت';       icon = 'fa-face-frown'; cls = 'lose'; }
-    else                          { title = 'تعادل!';     icon = 'fa-handshake';  cls = 'tie'; }
+    if (winner === myRole)        { title = 'فزت — أنت تدفع'; icon = 'fa-trophy';     cls = 'win'; }
+    else if (winner === peerRole) { title = 'خسرت — صاحبك يدفع'; icon = 'fa-face-smile'; cls = 'lose'; }
+    else                          { title = 'تعادل!';               icon = 'fa-handshake';  cls = 'tie'; }
 
     const actions = isHost
       ? `<button class="xo-btn xo-btn--again" onclick="xoReplay()"><i class="fa-solid fa-rotate-right"></i> جولة جديدة</button>

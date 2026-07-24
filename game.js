@@ -311,10 +311,10 @@
     updateScoreUI();
     setStateClass('state-result');
 
-    let title, icon, cls;
-    if (p.champ === myRole)       { title = '🏆 أنت الفائز!'; icon = 'fa-trophy'; cls = 'win'; }
-    else if (p.champ === peerRole){ title = 'المنافس فاز';   icon = 'fa-medal';   cls = 'lose'; }
-    else                          { title = 'تعادل!';        icon = 'fa-handshake'; cls = 'tie'; }
+    let title, icon, cls, payNote;
+    if (p.champ === myRole)       { title = 'أنت الفائز!';  icon = 'fa-trophy';    cls = 'win';  payNote = 'تكرّم وادفع الحساب'; }
+    else if (p.champ === peerRole){ title = 'فاز المنافس';   icon = 'fa-medal';     cls = 'lose'; payNote = 'صاحبك يدفع الحساب'; }
+    else                          { title = 'تعادل!';        icon = 'fa-handshake'; cls = 'tie';  payNote = 'أعيدوا الجولة لتحسموها!'; }
 
     const actions = isHost
       ? `<button class="game-btn game-btn--again" onclick="gameReplay()"><i class="fa-solid fa-rotate-right"></i> العب مجدداً</button>
@@ -322,7 +322,7 @@
       : `<button class="game-btn game-btn--exit"  onclick="exitDuoGame()"><i class="fa-solid fa-xmark"></i> خروج</button>
          <div class="game-wait-host">بانتظار المضيف لإعادة اللعب…</div>`;
 
-    showResult({ title, sub: `النتيجة ${score[myRole]} – ${score[peerRole]}`, icon, cls, actions });
+    showResult({ title, sub: `${payNote} — النتيجة ${score[myRole]} – ${score[peerRole]}`, icon, cls, actions });
   }
 
   /* ════════════════════════════════════════════════════

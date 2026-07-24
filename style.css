@@ -266,6 +266,24 @@ html,body {
 .hdb-pct  { font-family:var(--en); font-size:26px; font-weight:900; color:#3d2700; line-height:1; }
 .hdb-label { font-size:19px; font-weight:800; color:#3d2700; }
 
+/* ── زر الألعاب "مَن يدفع؟" ── */
+@keyframes gamesGlow {
+  0%,100% { box-shadow:0 0 0 0 rgba(59,130,246,0), 0 4px 16px rgba(0,0,0,.35); }
+  50%     { box-shadow:0 0 0 8px rgba(59,130,246,.16), 0 4px 20px rgba(0,0,0,.45); }
+}
+.header-games-btn {
+  display:flex; align-items:center; gap:9px;
+  padding:10px 22px 10px 18px;
+  background:linear-gradient(135deg,#2563eb 0%,#3b82f6 50%,#1d4ed8 100%);
+  border-radius:var(--rp);
+  cursor:pointer; flex-shrink:0;
+  animation:gamesGlow 2.6s ease-in-out infinite;
+  transition:transform .15s;
+}
+.header-games-btn:active { transform:scale(.93); }
+.header-games-btn i { font-size:22px; color:#fff; }
+.hgb-label { font-size:20px; font-weight:800; color:#fff; }
+
 .red-strip {
   height:3px;
   background:linear-gradient(90deg,var(--red-dk),var(--red),var(--red-lt),transparent);
@@ -529,6 +547,22 @@ html,body {
 .battery-pct-text {
   font-family:var(--en); font-size:12px; font-weight:700;
   letter-spacing:.3px;
+}
+
+/* ── مؤشّر الاتصال المصغّر (بجانب البطارية) ── */
+.duo-conn-mini {
+  display:flex; align-items:center; gap:6px;
+  padding:5px 12px; border-radius:30px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.07);
+  flex-shrink:0;
+}
+.dcm-dot {
+  width:8px; height:8px; border-radius:50%;
+  background:#888; flex-shrink:0;
+}
+.dcm-label {
+  font-size:12px; font-weight:700; color:#fff;
 }
 
 /* ════════════════════════════════════════════════════════

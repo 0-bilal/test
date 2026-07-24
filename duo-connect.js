@@ -162,40 +162,37 @@
   }
 
   /* ════════════════════════════════════════════════════
-     مؤشر حالة صغير — أسفل يسار الشاشة
+     مؤشر حالة مصغّر — بجانب البطارية في الفوتر
+     كلمة واحدة لكل حالة
   ════════════════════════════════════════════════════ */
-  let _badge = null;
   function _renderBadge(payload) {
-    if (!cfg || !cfg.enabled) { if (_badge) _badge.style.display = 'none'; return; }
-    if (!_badge) {
-      _badge = document.createElement('div');
-      _badge.id = 'duo-conn-badge';
-      Object.assign(_badge.style, {
-        position: 'fixed', bottom: '10px', left: '10px', zIndex: '99998',
-        display: 'flex', alignItems: 'center', gap: '7px',
-        padding: '6px 12px', borderRadius: '100px', maxWidth: '60vw',
-        background: 'rgba(10,0,2,.82)', backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        border: '1px solid rgba(255,255,255,.14)',
-        font: "600 12px 'Tajawal',sans-serif", color: '#fff',
-        pointerEvents: 'none', direction: 'rtl',
-      });
-      document.body.appendChild(_badge);
+    const mini = document.getElementById('duo-conn-mini');
+    const sep  = document.getElementById('conn-sep');
+    if (!mini) return;
+
+    // أخفِ عند التوقّف / عدم التفعيل
+    if (!cfg || !cfg.enabled || payload.state === 'idle') {
+      mini.style.display = 'none';
+      if (sep) sep.style.display = 'none';
+      return;
     }
+
     const map = {
       connected:  { c: '#22c55e', t: 'مرتبط' },
-      connecting: { c: '#f5c200', t: 'جارٍ الاتصال…' },
-      waiting:    { c: '#3b82f6', t: 'بانتظار الشريك' },
-      offline:    { c: '#f87171', t: 'غير متصل' },
+      connecting: { c: '#f5c200', t: 'يتصل' },
+      waiting:    { c: '#3b82f6', t: 'انتظار' },
+      offline:    { c: '#f87171', t: 'منقطع' },
       error:      { c: '#f87171', t: 'خطأ' },
-      idle:       { c: '#888',    t: 'الربط متوقف' },
     };
-    const m = map[payload.state] || map.idle;
-    const label = payload.detail ? `${m.t} — ${payload.detail}` : m.t;
-    _badge.style.display = 'flex';
-    _badge.innerHTML =
-      `<span style="width:9px;height:9px;border-radius:50%;background:${m.c};box-shadow:0 0 8px ${m.c};flex-shrink:0"></span>` +
-      `<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</span>`;
+    const m = map[payload.state] || map.offline;
+
+    const dot = mini.querySelector('.dcm-dot');
+    const lbl = mini.querySelector('.dcm-label');
+    if (dot) { dot.style.background = m.c; dot.style.boxShadow = `0 0 6px ${m.c}`; }
+    if (lbl) { lbl.textContent = m.t; lbl.style.color = m.c; }
+
+    mini.style.display = 'flex';
+    if (sep) sep.style.display = '';
   }
 
   /* ════════════════════════════════════════════════════

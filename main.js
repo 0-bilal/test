@@ -659,23 +659,44 @@ function renderSlides() {
 
   slides.forEach((slide, i) => {
     const el = document.createElement('div');
-    el.className = 'slide' + (i === 0 ? ' active' : '');
-    el.innerHTML = `
-      <img class="slide-img" src="${slide.image}" alt="${slide.titleAr}"
-           onerror="this.style.background='#0a0001'">
-      <div class="slide-content">
-        ${slide.badge
-          ? `<div class="slide-badge ${slide.badgeColor || 'red'}">
-               <i class="fa-solid fa-star"></i>&nbsp;${slide.badge}
-             </div>` : ''}
-        <div class="slide-title-ar">${slide.titleAr}</div>
-        ${slide.titleEn ? `<div class="slide-title-en">${slide.titleEn}</div>` : ''}
-        ${slide.descriptionAr ? `<div class="slide-desc">${slide.descriptionAr}</div>` : ''}
-        ${slide.price != null
-          ? `<div class="slide-price-tag">
-               ${slide.price}<span class="currency"> ريال</span>
-             </div>` : ''}
-      </div>`;
+    el.className = 'slide' + (i === 0 ? ' active' : '') + (slide.isGame ? ' slide--game' : '');
+
+    if (slide.isGame) {
+      // ── شريحة اللعبة ──
+      el.innerHTML = `
+        <div class="game-slide-bg"></div>
+        <div class="slide-content game-slide-content">
+          ${slide.badge
+            ? `<div class="slide-badge ${slide.badgeColor || 'gold'}">
+                 <i class="fa-solid fa-bolt"></i>&nbsp;${slide.badge}
+               </div>` : ''}
+          <div class="game-slide-icon"><i class="fa-solid fa-bolt"></i></div>
+          <div class="slide-title-ar">${slide.titleAr}</div>
+          ${slide.titleEn ? `<div class="slide-title-en">${slide.titleEn}</div>` : ''}
+          ${slide.descriptionAr ? `<div class="slide-desc">${slide.descriptionAr}</div>` : ''}
+          <button class="game-play-btn" onclick="launchDuoGame()">
+            <i class="fa-solid fa-play"></i> العب الآن
+          </button>
+          <div id="game-slide-hint" class="game-slide-hint"></div>
+        </div>`;
+    } else {
+      el.innerHTML = `
+        <img class="slide-img" src="${slide.image}" alt="${slide.titleAr}"
+             onerror="this.style.background='#0a0001'">
+        <div class="slide-content">
+          ${slide.badge
+            ? `<div class="slide-badge ${slide.badgeColor || 'red'}">
+                 <i class="fa-solid fa-star"></i>&nbsp;${slide.badge}
+               </div>` : ''}
+          <div class="slide-title-ar">${slide.titleAr}</div>
+          ${slide.titleEn ? `<div class="slide-title-en">${slide.titleEn}</div>` : ''}
+          ${slide.descriptionAr ? `<div class="slide-desc">${slide.descriptionAr}</div>` : ''}
+          ${slide.price != null
+            ? `<div class="slide-price-tag">
+                 ${slide.price}<span class="currency"> ريال</span>
+               </div>` : ''}
+        </div>`;
+    }
     wrapper.appendChild(el);
 
     const dot = document.createElement('div');

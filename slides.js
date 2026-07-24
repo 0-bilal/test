@@ -75,4 +75,14 @@ const slides = [
     price: 33,
     duration: 8000,
    },
+  {
+    // ── شريحة اللعبة (تحدّي الرد السريع) ──
+    isGame: true,
+    titleAr: 'تحدّي الرد السريع',
+    titleEn: 'Reaction Duel',
+    descriptionAr: 'استعد… وعندما تصير الشاشة خضراء، أسرع لاعب يضغط يكسب! الأفضل من ٣ جولات.',
+    badge: 'العب واربح',
+    badgeColor: 'gold',
+    duration: 9000,
+  },
  ];

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="er" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DUO Menu</title>
+
+  <!-- ══ PWA ══ -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#be1e2d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DUO Menu">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144.png">
+  <link rel="icon" type="image/svg+xml" href="icons/logo.ico">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+  <!-- ══ Fonts & Icons ══ -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/vmenu.css">
+  <link rel="stylesheet" href="css/game.css">
+  <link rel="stylesheet" href="css/game-xo.css">
+</head>
+<body>
+<div class="screen">
+
+  <!-- ══════════════════════════════════════════
+       RIGHT — MENU PANEL (579px)
+  ══════════════════════════════════════════ -->
+  <div class="menu-panel">
+
+    <!-- Header -->
+    <div class="menu-header">
+      <div class="header-top">
+        <div class="logo-wrap" id="logo-wrap">
+          <img id="logo-img" src="" alt="logo" style="display:none">
+          <div id="logo-placeholder" class="logo-placeholder">
+            <i class="fa-solid fa-burger"></i>
+          </div>
+        </div>
+        <div class="header-text">
+          <div id="rest-name-ar" class="restaurant-name-ar">برجر هاوس</div>
+          <div id="rest-name-en" class="restaurant-name-en">Burger House</div>
+          <div id="rest-tagline"  class="restaurant-tagline">نكهة لا تُنسى في كل قضمة</div>
+        </div>
+        <!-- رقم الهاتف + زر الخصم + زر الألعاب — يسار الهيدر -->
+        <div class="header-actions">
+          <button class="header-games-btn" id="header-games-btn" onclick="showGamesHub()">
+            <i class="fa-solid fa-gamepad"></i>
+            <span class="hgb-label">مَن يدفع؟</span>
+          </button>
+          <button class="header-discount-btn" id="store-notif-btn" onclick="showReviewOverlay()">
+            <i class="fa-solid fa-tags"></i>
+            <span class="hdb-pct">10%</span>
+            <span class="hdb-label">خصم</span>
+          </button>
+          <div class="header-phone" id="header-phone-row">
+            <i class="fa-solid fa-phone"></i>
+            <span id="fab-phone-value">----</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="red-strip"></div>
+
+    <!-- Category anchor tabs -->
+    <div id="category-tabs" class="category-tabs">
+      <!-- Rendered by main.js -->
+    </div>
+
+    <!-- All items in one scrollable area -->
+    <div id="menu-items-area" class="menu-items-area">
+      <!-- Rendered by main.js -->
+    </div>
+
+    <!-- Status bar -->
+    <div class="scroll-status-bar">
+      <div class="scroll-item-indicator">
+        <i class="fa-solid fa-circle-play"></i>
+        <span>عرض</span>
+        <strong id="scroll-cur">1</strong>
+        <span>من</span>
+        <strong id="scroll-total">1</strong>
+      </div>
+      <div class="scroll-timer-track">
+        <div id="scroll-timer-fill" class="scroll-timer-fill"></div>
+      </div>
+      <div id="scroll-cat-label" class="scroll-cat-label">—</div>
+    </div>
+
+    <!-- Footer -->
+    <div class="menu-footer">
+      <div class="tax-note">
+        <i class="fa-solid fa-circle-info"></i>
+        <span id="tax-note-text">الأسعار شاملة ضريبة القيمة المضافة 15%</span>
+      </div>
+      <div id="wifi-section" class="wifi-info" style="display:none">
+        <i class="fa-solid fa-wifi"></i>
+        <span id="wifi-name" class="wifi-name">—</span>
+      </div>
+      <div class="qb-credit">
+        <span class="qb-brand">QB 15v</span>
+        <span class="qb-sep">|</span>
+        <span class="qb-text">تطوير بلال الخواجة</span>
+        <span class="qb-sep" id="battery-sep" style="display:none">|</span>
+        <div id="battery-widget" class="battery-widget" style="display:none">
+          <i id="battery-bolt" class="fa-solid fa-bolt" style="display:none"></i>
+          <span id="battery-pct" class="battery-pct-text"></span>
+        </div>
+        <span class="qb-sep" id="conn-sep" style="display:none">|</span>
+        <div id="duo-conn-mini" class="duo-conn-mini" style="display:none">
+          <span class="dcm-dot"></span>
+          <span class="dcm-label"></span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /menu-panel -->
+
+  <div class="panel-divider"></div>
+
+  <!-- ══════════════════════════════════════════
+       LEFT — SLIDE PANEL (620px)
+  ══════════════════════════════════════════ -->
+  <div class="slide-panel">
+
+    <!-- Slideshow -->
+    <div id="slides-wrapper" class="slides-wrapper">
+      <!-- Rendered by main.js -->
+    </div>
+
+    <!-- Product Detail Overlay -->
+    <div id="product-overlay" class="product-overlay">
+
+      <!-- طبقتا الصورة للـ crossfade السلس -->
+      <img id="product-overlay-img"  class="product-overlay-bg-img" src="" alt="">
+      <img id="product-overlay-img2" class="product-overlay-bg-img product-overlay-bg-img-2" src="" alt="" style="display:none;opacity:0">
+      <div id="product-overlay-img-ph" class="product-overlay-placeholder">
+        <i class="fa-solid fa-burger"></i>
+      </div>
+
+      <!-- طبقة التدرّج الداكن -->
+      <div class="product-overlay-gradient"></div>
+
+      <!-- زر الإغلاق -->
+      <button class="product-overlay-close" onclick="hideProductOverlay()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <!-- معلومات المنتج — أسفل الشاشة -->
+      <div class="product-overlay-info">
+
+        <!-- السعرات الحرارية -->
+        <div id="product-overlay-cal" class="product-overlay-cal-badge" style="display:none">
+          <i class="fa-solid fa-fire-flame-curved"></i>
+          <span id="product-overlay-cal-num"></span>
+          <span>سعرة حرارية</span>
+        </div>
+
+        <div id="product-overlay-name-ar" class="product-overlay-name-ar"></div>
+        <div id="product-overlay-name-en" class="product-overlay-name-en"></div>
+        <!-- الأنواع / الخيارات (مثلاً: كولا، كولا دايت، كولا زيرو) -->
+        <div id="product-overlay-variants" class="product-overlay-variants" style="display:none"></div>
+        <div id="product-overlay-desc" class="product-overlay-desc"></div>
+
+        <!-- السعر -->
+        <div id="product-overlay-price-wrap" class="product-overlay-price-wrap" style="display:none">
+          <span id="product-overlay-price-num" class="product-overlay-price-num"></span>
+          <span class="product-overlay-price-cur">ريال</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ Review / Discount Overlay ══ -->
+    <div id="review-overlay" class="review-overlay">
+
+      <button class="review-close" onclick="hideReviewOverlay()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <!-- خلفية ضبابية -->
+      <div class="review-glow"></div>
+
+      <!-- محتوى الـ overlay — عمود واحد -->
+      <div class="review-body">
+
+        <div class="review-gmaps-icon">
+          <i class="fa-solid fa-map-location-dot"></i>
+        </div>
+
+        <div class="review-headline-ar">قيّم تجربتك في <span id="review-rest-name">DUO Burger</span></div>
+
+        <div class="review-stars">
+          <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          <i class="fa-solid fa-star"></i>
+        </div>
+
+        <div class="review-discount-block">
+          <span class="review-discount-label-top">واحصل على خصم</span>
+          <span class="review-discount-pct">10%</span>
+          <span class="review-discount-label-bot">في زيارتك القادمة</span>
+        </div>
+
+        <div class="review-divider"></div>
+
+        <div class="review-steps">
+          <div class="review-step">
+            <span class="review-step-num">1</span>
+            <span class="review-step-text">قيّم المطعم بـ 5 نجوم على Google Maps</span>
+          </div>
+          <div class="review-step">
+            <span class="review-step-num">2</span>
+            <span class="review-step-text">أرِ الموظف التقييم عند طلبك القادم</span>
+          </div>
+          <div class="review-step">
+            <span class="review-step-num">3</span>
+            <span class="review-step-text">استمتع بخصم 10% على طلبك القادم!</span>
+          </div>
+        </div>
+
+        <div class="review-divider"></div>
+
+        <!-- QR أسفل كل شيء -->
+        <div class="review-qr-area">
+          <div class="review-qr-box">
+            <img id="review-qr-img" src="" alt="QR Code" style="display:none"
+                 onerror="this.style.display='none';var f=document.getElementById('review-qr-fallback');if(f)f.style.display='flex'">
+            <div id="review-qr-fallback" class="review-qr-fallback">
+              <i class="fa-brands fa-google"></i>
+              <span>أضف صورة QR هنا</span>
+            </div>
+          </div>
+          <div class="review-qr-label">امسح الكود بجوالك للتقييم</div>
+        </div>
+
+      </div><!-- /review-body -->
+
+      <!-- شريط العداد التلقائي -->
+      <div class="review-timer-bar">
+        <div id="review-timer-fill" class="review-timer-fill"></div>
+      </div>
+
+    </div><!-- /review-overlay -->
+
+    <!-- Floating info widget (overlays the slideshow) -->
+    <!-- حسابات التواصل — شرائط مكدّسة على يسار اللوحة -->
+    <div class="social-bars">
+      <div class="social-bar social-bar-tiktok">
+        <i class="fa-brands fa-tiktok"></i>
+        <span id="fab-tiktok-name">@theduoburgere</span>
+      </div>
+      <div class="social-bar social-bar-instagram">
+        <i class="fa-brands fa-instagram"></i>
+        <span id="fab-ig-name">@duo_brger1</span>
+      </div>
+    </div>
+
+    <!-- Dots -->
+    <div id="slide-dots" class="slide-dots"></div>
+
+  </div><!-- /slide-panel -->
+
+</div><!-- /screen -->
+
+<!-- ══ Dev: Password Modal ══ -->
+<div id="dev-pwd-modal" style="display:none;position:fixed;inset:0;z-index:99990;
+     background:rgba(0,0,0,.90);align-items:center;justify-content:center;
+     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)">
+  <div class="dev-modal-box">
+
+    <!-- أيقونة + عنوان -->
+    <div class="dev-modal-icon"><i class="fa-solid fa-lock"></i></div>
+    <div class="dev-modal-title">دخول المطور</div>
+
+    <!-- شاشة عرض الأرقام المدخلة -->
+    <div class="dev-pin-display" id="dev-pin-display">
+      <span class="dev-pin-dot" id="dev-pin-dot-0"></span>
+      <span class="dev-pin-dot" id="dev-pin-dot-1"></span>
+      <span class="dev-pin-dot" id="dev-pin-dot-2"></span>
+      <span class="dev-pin-dot" id="dev-pin-dot-3"></span>
+      <span class="dev-pin-dot" id="dev-pin-dot-4"></span>
+      <span class="dev-pin-dot" id="dev-pin-dot-5"></span>
+    </div>
+
+    <!-- رسالة الخطأ -->
+    <div id="dev-pwd-error" class="dev-pwd-error" style="display:none">
+      <i class="fa-solid fa-circle-xmark"></i> كلمة السر غير صحيحة
+    </div>
+
+    <!-- لوحة الأرقام -->
+    <div class="dev-keypad">
+      <button class="dev-key" onclick="devKeyPress('1')">1</button>
+      <button class="dev-key" onclick="devKeyPress('2')">2</button>
+      <button class="dev-key" onclick="devKeyPress('3')">3</button>
+      <button class="dev-key" onclick="devKeyPress('4')">4</button>
+      <button class="dev-key" onclick="devKeyPress('5')">5</button>
+      <button class="dev-key" onclick="devKeyPress('6')">6</button>
+      <button class="dev-key" onclick="devKeyPress('7')">7</button>
+      <button class="dev-key" onclick="devKeyPress('8')">8</button>
+      <button class="dev-key" onclick="devKeyPress('9')">9</button>
+      <button class="dev-key dev-key-del" onclick="devKeyDelete()">
+        <i class="fa-solid fa-delete-left"></i>
+      </button>
+      <button class="dev-key" onclick="devKeyPress('0')">0</button>
+      <button class="dev-key dev-key-ok" onclick="checkDevPassword()">OK</button>
+    </div>
+
+    <!-- إلغاء -->
+    <button class="dev-btn-cancel" onclick="closeDevModal()">إلغاء</button>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     VERTICAL LAYOUT — العرض السينمائي  (1080 × 1920)
+     صورة المنتج أعلى الوسط · أسامي القسم في صف أفقي ·
+     الاسم بالعربي مقابل الإنجليزي + السعر + الوصف
+     يُفعَّل من لوحة التحكم ← ضبط الشاشة
+══════════════════════════════════════════ -->
+<div class="screen screen--vertical" id="screen-vertical" style="display:none">
+
+  <!-- خلفية موحّدة بألوان الهوية مع حركة بطيئة -->
+  <div class="vx-bg">
+    <span class="vx-orb vx-orb-1"></span>
+    <span class="vx-orb vx-orb-2"></span>
+    <span class="vx-orb vx-orb-3"></span>
+    <span class="vx-sheen"></span>
+  </div>
+  <div class="vx-vignette"></div>
+  <div class="vx-grain"></div>
+
+  <!-- ── الهيدر ── -->
+  <div class="vx-header">
+    <div class="vx-head-top">
+      <div class="vx-logo-wrap" id="vl-logo-wrap">
+        <img id="vx-logo-img" src="" alt="logo" style="display:none">
+        <div id="vx-logo-ph" class="vx-logo-ph"><i class="fa-solid fa-burger"></i></div>
+      </div>
+      <div class="vx-head-text">
+        <div id="vx-rest-ar"  class="vx-rest-ar"></div>
+        <div id="vx-rest-en"  class="vx-rest-en"></div>
+        <div id="vx-rest-tag" class="vx-rest-tag"></div>
+      </div>
+
+      <div class="vx-act-phone" id="vl-phone-row">
+        <i class="fa-solid fa-phone"></i><span id="vl-phone-value">----</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── شريط الأقسام: التنقّل بين الأقسام ── -->
+  <div class="vx-cat-bar">
+    <div class="vx-cat-tabs" id="vx-cat-tabs"></div>
+  </div>
+
+  <!-- ── المسرح ── -->
+  <div class="vx-stage" id="vx-stage">
+
+    <!-- صورة المنتج + أزرار التنقّل بين المنتجات -->
+    <div class="vx-img-stage">
+      <div class="vx-img-halo"></div>
+      <div class="vx-img-frame">
+        <div id="vx-img-ph" class="vx-img-ph on"><i class="fa-solid fa-burger"></i></div>
+        <img id="vx-img"  class="vx-img" src="" alt="">
+        <img id="vx-img2" class="vx-img" src="" alt="">
+        <div class="vx-img-gloss"></div>
+      </div>
+      <div id="vx-img-badge" class="vx-img-badge"></div>
+
+      <button class="vx-nav vx-nav-prev" id="vx-nav-prev" aria-label="المنتج السابق">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+      <button class="vx-nav vx-nav-next" id="vx-nav-next" aria-label="المنتج التالي">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+    </div>
+
+    <!-- أسامي منتجات القسم — صف أفقي واحد -->
+    <div class="vx-names-holder" id="vx-names-holder">
+      <div class="vx-names" id="vx-names"></div>
+      <div class="vx-underline" id="vx-underline"></div>
+    </div>
+
+    <!-- التفاصيل: العربي وتحته الإنجليزي ⟷ السعر + الوصف -->
+    <div class="vx-details" id="vx-details">
+
+      <div class="vx-det-ar">
+        <div id="vx-name-ar" class="vx-name-ar"></div>
+        <div id="vx-name-en" class="vx-name-en"></div>
+        <div class="vx-ar-meta">
+          <div id="vx-cal"  class="vx-cal"></div>
+          <div id="vx-meal" class="vx-meal"><i class="fa-solid fa-utensils"></i> وجبة كاملة</div>
+        </div>
+      </div>
+
+      <div class="vx-det-div"></div>
+
+      <div class="vx-det-info">
+        <div class="vx-price" id="vx-price">
+          <span id="vx-price-num" class="vx-price-num">0</span>
+          <span class="vx-price-cur">ريال</span>
+        </div>
+        <div id="vx-desc"     class="vx-desc"></div>
+        <div id="vx-variants" class="vx-variants"></div>
+      </div>
+
+    </div>
+
+  </div><!-- /vx-stage -->
+
+  <!-- مؤشر التصفح اليدوي -->
+  <div class="vx-paused" id="vx-paused">
+    <i class="fa-solid fa-hand-pointer"></i><span>تصفح يدوي</span>
+  </div>
+
+  <!-- ── الفوتر ── -->
+  <div class="vx-footer">
+    <div class="vx-foot-tax">
+      <i class="fa-solid fa-circle-info"></i>
+      <span id="vx-tax-text"></span>
+    </div>
+
+    <div class="vx-foot-right">
+      <span>QB 15v</span>
+      <span class="vx-sep">|</span>
+      <span>تطوير بلال الخواجة</span>
+      <span class="vx-sep" id="vl-battery-sep" style="display:none">|</span>
+      <div id="vl-battery-widget" class="battery-widget" style="display:none">
+        <i id="vl-battery-bolt" class="fa-solid fa-bolt" style="display:none"></i>
+        <span id="vl-battery-pct" class="battery-pct-text"></span>
+      </div>
+      <span class="vx-sep" id="vl-conn-sep" style="display:none">|</span>
+      <div id="vl-duo-conn-mini" class="duo-conn-mini" style="display:none">
+        <span class="dcm-dot"></span>
+        <span class="dcm-label"></span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /screen--vertical -->
+
+<!-- لوحة التحكم أصبحت صفحة منفصلة: dashboard.html -->
+
+<!-- ══════════════════════════════════════════
+     REACTION GAME OVERLAY  (تحدّي الرد السريع)
+══════════════════════════════════════════ -->
+<div id="game-overlay" class="game-overlay">
+
+  <!-- شريط علوي: الجولة + النتيجة + إغلاق -->
+  <div class="game-topbar">
+    <button class="game-close" onclick="exitDuoGame()"><i class="fa-solid fa-xmark"></i></button>
+    <div class="game-round" id="game-round">الجولة 1 / 3</div>
+    <div class="game-score">
+      <span class="gs-cell gs-you"><b id="game-score-you">0</b><small>أنت</small></span>
+      <span class="gs-sep">–</span>
+      <span class="gs-cell gs-opp"><b id="game-score-opp">0</b><small>المنافس</small></span>
+    </div>
+  </div>
+
+  <!-- منطقة الضغط الكبيرة -->
+  <div id="game-tap" class="game-tap" onclick="gameTap()">
+    <div class="game-flash"></div>
+    <div class="game-center">
+      <div class="game-big"  id="game-big">استعد…</div>
+      <div class="game-sub"  id="game-sub">انتظر تحوّل الشاشة للأخضر</div>
+    </div>
+  </div>
+
+  <!-- لوحة نتيجة الجولة / نهاية اللعبة -->
+  <div id="game-result" class="game-result">
+    <div class="game-result-box">
+      <div class="game-result-icon" id="game-result-icon"><i class="fa-solid fa-trophy"></i></div>
+      <div class="game-result-title" id="game-result-title">—</div>
+      <div class="game-result-sub"   id="game-result-sub"></div>
+      <div class="game-result-actions" id="game-result-actions"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     SPEED X-O GAME OVERLAY  (إكس-أو السريع)
+══════════════════════════════════════════ -->
+<div id="xo-overlay" class="xo-overlay">
+
+  <div class="xo-topbar">
+    <button class="xo-close" onclick="exitXO()"><i class="fa-solid fa-xmark"></i></button>
+    <div class="xo-title"><i class="fa-solid fa-hashtag"></i> إكس–أو السريع</div>
+    <div class="xo-scores">
+      <span class="xo-sc xo-sc-you"><b id="xo-score-you">0</b><small>أنت</small></span>
+      <span class="xo-sc-sep">–</span>
+      <span class="xo-sc xo-sc-opp"><b id="xo-score-opp">0</b><small>المنافس</small></span>
+    </div>
+  </div>
+
+  <div class="xo-turnbar">
+    <div class="xo-turn" id="xo-turn">—</div>
+    <div class="xo-timer"><div class="xo-timer-fill" id="xo-timer-fill"></div></div>
+  </div>
+
+  <div class="xo-board" id="xo-board"></div>
+
+  <div id="xo-result" class="xo-result">
+    <div class="xo-result-box">
+      <div class="xo-result-icon" id="xo-result-icon"><i class="fa-solid fa-trophy"></i></div>
+      <div class="xo-result-title" id="xo-result-title">—</div>
+      <div class="xo-result-actions" id="xo-result-actions"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     GAMES HUB  (مَن يدفع الحساب؟)
+══════════════════════════════════════════ -->
+<div id="games-hub" class="games-hub">
+  <div class="gh-backdrop" onclick="hideGamesHub()"></div>
+
+  <div class="gh-panel">
+    <button class="gh-close" onclick="hideGamesHub()"><i class="fa-solid fa-xmark"></i></button>
+
+    <div class="gh-header">
+      <div class="gh-flame"><i class="fa-solid fa-fire"></i></div>
+      <div class="gh-title">مَن يدفع الحساب؟</div>
+      <div class="gh-sub">تبون تكرمون بعض؟ خلّوا اللعبة تحسمها — الفائز هو مَن يشرّف ويدفع الحساب!</div>
+    </div>
+
+    <div id="gh-status" class="gh-status"></div>
+
+    <div class="gh-cards">
+
+      <!-- تحدّي الرد السريع -->
+      <div class="gh-card">
+        <div class="gh-card-icon gh-icon-reaction"><i class="fa-solid fa-bolt"></i></div>
+        <div class="gh-card-name">تحدّي الرد السريع</div>
+        <div class="gh-card-idea">أسرع لاعب يضغط عند تحوّل الشاشة للأخضر يكسب الجولة.</div>
+        <ol class="gh-steps">
+          <li>الشاشتان حمراء — استعدّوا.</li>
+          <li>عند تحوّلها للأخضر: اضغط بأسرع ما يمكن!</li>
+          <li>الأسرع يفوز — الأفضل من ٣ جولات. والفائز يدفع الحساب.</li>
+        </ol>
+        <button class="gh-play gh-play--reaction" onclick="hubPlay('reaction')">
+          <i class="fa-solid fa-play"></i> ابدأ اللعب
+        </button>
+      </div>
+
+      <!-- إكس-أو السريع -->
+      <div class="gh-card">
+        <div class="gh-card-icon gh-icon-xo"><i class="fa-solid fa-hashtag"></i></div>
+        <div class="gh-card-name">إكس–أو السريع</div>
+        <div class="gh-card-idea">إكس-أو التقليدية لكن بعدّاد ٣ ثوانٍ لكل حركة!</div>
+        <ol class="gh-steps">
+          <li>كل لاعب برمز: X أو O.</li>
+          <li>لديك ٣ ثوانٍ للعب — تأخّرت؟ ينتقل الدور فوراً!</li>
+          <li>أول من يصنع خطاً يفوز. والفائز يدفع الحساب.</li>
+        </ol>
+        <button class="gh-play gh-play--xo" onclick="hubPlay('xo')">
+          <i class="fa-solid fa-play"></i> ابدأ اللعب
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="products.js"></script>
+<script src="slides.js"></script>
+<script src="main.js"></script>
+<script src="vmenu.js"></script>
+<script src="game.js"></script>
+<script src="game-xo.js"></script>
+<script src="games-hub.js"></script>
+
+<!-- ══ ربط الأجهزة عبر Firebase Realtime Database — اتصال تلقائي ══ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="duo-config.js"></script>
+<script src="duo-connect.js"></script>
+<script src="duo-sync.js"></script>
+
+
+<!-- ══ PWA Service Worker Registration ══ -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('/sw.js', { scope: '/' })
+        .then(reg => {
+          console.log('[PWA] Service Worker registered:', reg.scope);
+
+          // Notify user when a new version is available
+          reg.addEventListener('updatefound', () => {
+            const worker = reg.installing;
+            worker.addEventListener('statechange', () => {
+              if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('[PWA] New version available — reload to update.');
+                // For a kiosk/signage display, auto-reload after a delay
+                setTimeout(() => {
+                  worker.postMessage('SKIP_WAITING');
+                  window.location.reload();
+                }, 5000);
+              }
+            });
+          });
+        })
+        .catch(err => console.warn('[PWA] SW registration failed:', err));
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+/* =========================================================
+   game.css — تحدّي الرد السريع (Reaction Duel)
+   ========================================================= */
+
+/* ══════════════════════════════════════════
+   شريحة اللعبة داخل السلايدشو
+══════════════════════════════════════════ */
+.slide--game .game-slide-bg {
+  position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,194,0,.18) 0%, transparent 60%),
+    linear-gradient(160deg, #1a0006 0%, #0a0001 55%, #000 100%);
+}
+.slide--game::after { display:none; }   /* ألغِ تدرّج الصورة الافتراضي */
+
+.game-slide-content {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  text-align:center; gap:14px;
+  padding:40px 48px;
+}
+.game-slide-icon {
+  width:120px; height:120px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:56px; color:#3d2700;
+  background:radial-gradient(circle at 35% 30%, #ffe066, #f5c200 55%, #d4960a);
+  box-shadow:0 10px 40px rgba(245,194,0,.45), inset 0 -6px 18px rgba(0,0,0,.25);
+  margin-bottom:6px;
+  animation:gameIconPulse 1.8s ease-in-out infinite;
+}
+@keyframes gameIconPulse {
+  0%,100% { transform:scale(1); box-shadow:0 10px 40px rgba(245,194,0,.40); }
+  50%     { transform:scale(1.07); box-shadow:0 14px 54px rgba(245,194,0,.65); }
+}
+.slide--game .slide-title-ar { font-size:76px; }
+.slide--game .slide-desc { max-width:80%; margin-top:6px; }
+
+.game-play-btn {
+  margin-top:26px;
+  display:inline-flex; align-items:center; gap:14px;
+  padding:22px 64px; border-radius:100px;
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+  color:#fff; font-family:var(--ar); font-size:38px; font-weight:900;
+  box-shadow:0 10px 34px rgba(34,197,94,.5);
+  transition:transform .15s, box-shadow .2s;
+  animation:playPulse 2s ease-in-out infinite;
+}
+.game-play-btn i { font-size:32px; }
+.game-play-btn:active { transform:scale(.94); }
+@keyframes playPulse {
+  0%,100% { box-shadow:0 10px 30px rgba(34,197,94,.40); }
+  50%     { box-shadow:0 12px 48px rgba(34,197,94,.70); }
+}
+.game-slide-hint {
+  margin-top:18px; font-size:24px; font-weight:700; color:#f87171;
+  min-height:30px; opacity:0; transition:opacity .3s;
+}
+.game-slide-hint.show { opacity:1; }
+
+/* ══════════════════════════════════════════
+   شاشة اللعبة (Overlay) — تملأ كامل الجهاز
+══════════════════════════════════════════ */
+.game-overlay {
+  position:fixed; inset:0; z-index:99995;
+  display:none; flex-direction:column;
+  background:#7f1622;
+  direction:rtl; overflow:hidden;
+  transition:background .12s ease;
+  font-family:var(--ar, 'Tajawal', sans-serif);
+}
+.game-overlay.active { display:flex; }
+
+/* ألوان الحالات */
+.game-overlay.state-ready  { background:linear-gradient(160deg,#b91c1c 0%,#7f1622 100%); }
+.game-overlay.state-green  { background:linear-gradient(160deg,#16a34a 0%,#15803d 100%); }
+.game-overlay.state-tapped { background:linear-gradient(160deg,#1f2937 0%,#0f172a 100%); }
+.game-overlay.state-result { background:linear-gradient(160deg,#111827 0%,#0a0a0b 100%); }
+
+/* شريط علوي */
+.game-topbar {
+  position:relative; z-index:3;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:22px 30px; gap:16px;
+  background:rgba(0,0,0,.18);
+  flex-shrink:0;
+}
+.game-close {
+  width:60px; height:60px; border-radius:50%;
+  background:rgba(0,0,0,.30); color:#fff; font-size:26px;
+  display:flex; align-items:center; justify-content:center;
+  border:1.5px solid rgba(255,255,255,.25);
+  transition:transform .15s, background .2s;
+}
+.game-close:active { transform:scale(.9); background:rgba(0,0,0,.5); }
+
+.game-round {
+  font-size:30px; font-weight:800; color:#fff;
+  background:rgba(0,0,0,.22); padding:8px 26px; border-radius:100px;
+}
+.game-score {
+  display:flex; align-items:center; gap:16px;
+  background:rgba(0,0,0,.22); padding:8px 24px; border-radius:100px;
+}
+.gs-cell { display:flex; flex-direction:column; align-items:center; line-height:1; }
+.gs-cell b { font-size:38px; font-weight:900; color:#fff; font-family:var(--en, sans-serif); }
+.gs-cell small { font-size:15px; color:rgba(255,255,255,.75); margin-top:2px; }
+.gs-you b { color:#fde047; }
+.gs-sep { font-size:30px; color:rgba(255,255,255,.5); font-weight:900; }
+
+/* منطقة الضغط */
+.game-tap {
+  position:relative; z-index:2; flex:1;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; user-select:none; -webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.game-flash {
+  position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(circle at 50% 45%, rgba(255,255,255,.14) 0%, transparent 60%);
+  opacity:0; transition:opacity .1s;
+}
+.game-overlay.state-green .game-flash { opacity:1; }
+
+.game-center {
+  text-align:center; padding:20px; pointer-events:none;
+}
+.game-big {
+  font-size:150px; font-weight:900; color:#fff; line-height:1;
+  text-shadow:0 6px 30px rgba(0,0,0,.4);
+  letter-spacing:-1px;
+}
+.game-overlay.state-green .game-big { animation:greenPop .25s ease; }
+@keyframes greenPop { from { transform:scale(.7); opacity:.4; } to { transform:scale(1); opacity:1; } }
+
+.game-sub {
+  font-size:38px; font-weight:700; color:rgba(255,255,255,.86);
+  margin-top:20px;
+}
+
+/* لوحة النتيجة */
+.game-result {
+  position:absolute; inset:0; z-index:5;
+  display:none; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.62); backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  padding:40px;
+}
+.game-result.show { display:flex; animation:resultIn .3s ease; }
+@keyframes resultIn { from { opacity:0; } to { opacity:1; } }
+
+.game-result-box {
+  background:linear-gradient(160deg,#16161a,#0c0c0e);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:32px; padding:56px 60px;
+  text-align:center; max-width:760px; width:100%;
+  box-shadow:0 30px 90px rgba(0,0,0,.7);
+}
+.game-result-icon {
+  font-size:96px; margin-bottom:20px;
+}
+.game-result.win  .game-result-icon { color:#fde047; filter:drop-shadow(0 6px 22px rgba(253,224,71,.5)); }
+.game-result.lose .game-result-icon { color:#94a3b8; }
+.game-result.tie  .game-result-icon { color:#60a5fa; }
+
+.game-result-title {
+  font-size:66px; font-weight:900; color:#fff; line-height:1.1;
+}
+.game-result-sub {
+  font-size:32px; color:rgba(255,255,255,.7); margin-top:16px;
+  font-family:var(--en, sans-serif);
+}
+.game-result-actions {
+  display:flex; gap:18px; justify-content:center; flex-wrap:wrap;
+  margin-top:38px;
+}
+.game-btn {
+  display:inline-flex; align-items:center; gap:12px;
+  padding:20px 44px; border-radius:18px;
+  font-family:var(--ar, sans-serif); font-size:30px; font-weight:800;
+  transition:transform .15s, opacity .2s;
+}
+.game-btn:active { transform:scale(.95); }
+.game-btn--again { background:linear-gradient(135deg,#22c55e,#16a34a); color:#fff; }
+.game-btn--exit  { background:rgba(255,255,255,.10); color:#fff; border:1.5px solid rgba(255,255,255,.20); }
+.game-wait-host  { width:100%; font-size:24px; color:rgba(255,255,255,.55); margin-top:6px; }
+
+/* شاشات أصغر */
+@media (max-width: 900px), (max-height: 700px) {
+  .game-big { font-size:96px; }
+  .game-sub { font-size:26px; }
+  .game-result-title { font-size:44px; }
+  .game-result-sub { font-size:22px; }
+  .game-result-box { padding:38px 34px; }
+  .gs-cell b { font-size:28px; }
+  .game-round { font-size:22px; }
+}
+
+/* ══════════════════════════════════════════
+   GAMES HUB  (مَن يدفع الحساب؟)
+══════════════════════════════════════════ */
+.games-hub {
+  position:fixed; inset:0; z-index:99994;
+  display:none; align-items:center; justify-content:center;
+  padding:40px; direction:rtl;
+  font-family:var(--ar, 'Tajawal', sans-serif);
+}
+.games-hub.active { display:flex; }
+.gh-backdrop {
+  position:absolute; inset:0;
+  background:rgba(4,0,2,.82);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+}
+.gh-panel {
+  position:relative; z-index:2;
+  width:min(1100px, 94vw); max-height:92vh; overflow-y:auto;
+  background:
+    radial-gradient(ellipse 90% 40% at 50% 0%, rgba(245,120,0,.16) 0%, transparent 60%),
+    linear-gradient(165deg,#16100a 0%,#0b0b0d 55%,#0a0a0b 100%);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:32px; padding:40px 42px 44px;
+  box-shadow:0 40px 120px rgba(0,0,0,.85);
+  animation:ghIn .3s ease;
+}
+@keyframes ghIn { from { opacity:0; transform:translateY(18px) scale(.98); } to { opacity:1; transform:none; } }
+.gh-panel::-webkit-scrollbar { width:5px; }
+.gh-panel::-webkit-scrollbar-thumb { background:rgba(255,255,255,.14); border-radius:10px; }
+
+.gh-close {
+  position:absolute; top:22px; left:22px;
+  width:54px; height:54px; border-radius:50%;
+  background:rgba(255,255,255,.08); color:#fff; font-size:22px;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid rgba(255,255,255,.14); transition:background .2s, transform .15s;
+}
+.gh-close:active { transform:scale(.9); background:rgba(239,68,68,.4); }
+
+/* رأس */
+.gh-header { text-align:center; margin-bottom:22px; }
+.gh-flame {
+  width:96px; height:96px; border-radius:50%; margin:0 auto 16px;
+  display:flex; align-items:center; justify-content:center; font-size:46px; color:#fff;
+  background:radial-gradient(circle at 35% 30%, #ffb020, #f5720a 55%, #d43a0a);
+  box-shadow:0 10px 40px rgba(245,114,10,.5);
+  animation:gameIconPulse 1.8s ease-in-out infinite;
+}
+.gh-title { font-size:56px; font-weight:900; color:#fff; line-height:1.1; }
+.gh-sub { font-size:26px; color:rgba(255,255,255,.7); margin-top:10px; }
+
+/* شريط الحالة */
+.gh-status {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  font-size:20px; font-weight:700; text-align:center;
+  padding:14px 20px; border-radius:16px; margin-bottom:24px;
+  border:1px solid transparent;
+}
+.gh-status--ok   { color:#4ade80; background:rgba(34,197,94,.10);  border-color:rgba(34,197,94,.3); }
+.gh-status--wait { color:#fbbf24; background:rgba(245,158,11,.10); border-color:rgba(245,158,11,.28); }
+.gh-status--off  { color:#f87171; background:rgba(248,113,113,.10); border-color:rgba(248,113,113,.28); }
+@keyframes ghShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+.gh-status.shake { animation:ghShake .4s ease; }
+
+/* البطاقات */
+.gh-cards { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+.gh-card {
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:24px; padding:30px 28px 28px;
+  display:flex; flex-direction:column; align-items:center; text-align:center;
+  transition:border-color .2s, transform .2s;
+}
+.gh-card:hover { border-color:rgba(255,255,255,.18); transform:translateY(-3px); }
+.gh-card-icon {
+  width:96px; height:96px; border-radius:26px;
+  display:flex; align-items:center; justify-content:center; font-size:46px; color:#fff;
+  margin-bottom:16px;
+}
+.gh-icon-reaction { background:radial-gradient(circle at 35% 30%, #ffe066, #f5c200 55%, #d4960a); color:#3d2700; }
+.gh-icon-xo       { background:radial-gradient(circle at 35% 30%, #93c5fd, #3b82f6 55%, #1d4ed8); }
+.gh-card-name { font-size:34px; font-weight:900; color:#fff; }
+.gh-card-idea { font-size:21px; color:rgba(255,255,255,.72); margin-top:10px; line-height:1.5; min-height:64px; }
+.gh-steps {
+  list-style:none; counter-reset:s; text-align:right;
+  width:100%; margin:16px 0 22px; display:flex; flex-direction:column; gap:10px;
+}
+.gh-steps li {
+  counter-increment:s; position:relative;
+  padding:12px 54px 12px 14px;
+  background:rgba(255,255,255,.035); border-radius:14px;
+  font-size:19px; color:rgba(255,255,255,.82); line-height:1.5;
+}
+.gh-steps li::before {
+  content:counter(s);
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  width:32px; height:32px; border-radius:50%;
+  background:linear-gradient(135deg,var(--red-dk),var(--red));
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-weight:900; color:#fff; font-family:var(--en, sans-serif);
+}
+.gh-play {
+  margin-top:auto;
+  display:inline-flex; align-items:center; gap:12px;
+  padding:18px 52px; border-radius:100px;
+  font-size:28px; font-weight:900; color:#fff;
+  transition:transform .15s, opacity .2s, filter .2s;
+}
+.gh-play:active { transform:scale(.95); }
+.gh-play--reaction { background:linear-gradient(135deg,#22c55e,#16a34a); box-shadow:0 8px 26px rgba(34,197,94,.45); }
+.gh-play--xo       { background:linear-gradient(135deg,#3b82f6,#2563eb); box-shadow:0 8px 26px rgba(59,130,246,.45); }
+.gh-play.disabled  { filter:grayscale(.7) brightness(.7); opacity:.7; }
+
+@media (max-width: 900px) {
+  .gh-cards { grid-template-columns:1fr; }
+  .gh-title { font-size:40px; }
+  .gh-sub { font-size:20px; }
+  .gh-card-idea { min-height:0; }
+}

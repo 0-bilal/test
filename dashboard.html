@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة التحكم — DUO Burger</title>
+
+  <link rel="icon" type="image/svg+xml" href="icons/logo.ico">
+
+  <!-- Fonts & Icons -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+<div class="dash">
+
+  <!-- ══ Sidebar ══ -->
+  <aside class="dash-side">
+    <div class="dash-brand">
+      <div class="dash-brand-icon"><i class="fa-solid fa-gauge-high"></i></div>
+      <div class="dash-brand-text">
+        <span class="dash-brand-title">لوحة التحكم</span>
+        <span class="dash-brand-sub" id="dash-rest-name">DUO Burger</span>
+      </div>
+    </div>
+
+    <nav class="dash-nav" id="dash-nav">
+      <button class="dash-nav-btn active" data-tab="header" onclick="showTab('header')">
+        <i class="fa-solid fa-sliders"></i><span>الهيدر</span>
+      </button>
+      <button class="dash-nav-btn" data-tab="slides" onclick="showTab('slides')">
+        <i class="fa-solid fa-images"></i><span>الشرائح</span>
+      </button>
+      <button class="dash-nav-btn" data-tab="products" onclick="showTab('products')">
+        <i class="fa-solid fa-burger"></i><span>المنتجات</span>
+      </button>
+      <button class="dash-nav-btn" data-tab="stats" onclick="showTab('stats')">
+        <i class="fa-solid fa-chart-bar"></i><span>الإحصائيات</span>
+      </button>
+      <button class="dash-nav-btn" data-tab="screen" onclick="showTab('screen')">
+        <i class="fa-solid fa-display"></i><span>ضبط الشاشة</span>
+      </button>
+      <button class="dash-nav-btn" data-tab="pairing" onclick="showTab('pairing')">
+        <i class="fa-solid fa-link"></i><span>ربط الأجهزة</span>
+      </button>
+    </nav>
+
+    <button class="dash-back-btn" onclick="window.location.href='index.html'">
+      <i class="fa-solid fa-arrow-right-to-bracket"></i>
+      <span>العودة للمنيو</span>
+    </button>
+  </aside>
+
+  <!-- ══ Main content ══ -->
+  <main class="dash-main">
+    <header class="dash-topbar">
+      <button class="dash-menu-toggle" onclick="document.body.classList.toggle('side-open')">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <h1 class="dash-page-title" id="dash-page-title">الهيدر</h1>
+      <div class="dash-topbar-right">
+        <span class="dash-live-dot"></span>
+        <span class="dash-live-label">مباشر</span>
+      </div>
+    </header>
+
+    <div class="dash-body" id="dash-body"></div>
+  </main>
+
+</div>
+
+<!-- توست الحفظ -->
+<div id="dash-toast" class="dash-toast"></div>
+
+<script src="js/products.js"></script>
+<script src="js/slides.js"></script>
+<!-- Firebase — يُستخدم لاختبار الاتصال داخل لوحة التحكم -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="js/duo-config.js"></script>
+<script src="js/duo-sync.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

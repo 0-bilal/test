@@ -1,0 +1,147 @@
+/* =========================================================
+   game-xo.css — إكس–أو السريع (Speed X-O)
+   ========================================================= */
+
+/* خلفية شريحة XO (تطغى على خلفية اللعبة الذهبية) */
+.slide--game .game-slide-bg--xo {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59,130,246,.18) 0%, transparent 60%),
+    linear-gradient(160deg, #0a0f1e 0%, #0a0001 55%, #000 100%);
+}
+.slide--game .game-slide-bg--xo ~ .game-slide-content .game-slide-icon {
+  background:radial-gradient(circle at 35% 30%, #93c5fd, #3b82f6 55%, #1d4ed8);
+  color:#fff; box-shadow:0 10px 40px rgba(59,130,246,.45), inset 0 -6px 18px rgba(0,0,0,.25);
+}
+
+/* ══════════════════════════════════════════
+   شاشة إكس-أو — تملأ كامل الجهاز
+══════════════════════════════════════════ */
+.xo-overlay {
+  position:fixed; inset:0; z-index:99995;
+  display:none; flex-direction:column;
+  background:linear-gradient(160deg,#0b1220 0%,#0a0a0b 100%);
+  direction:rtl; overflow:hidden;
+  font-family:var(--ar, 'Tajawal', sans-serif);
+}
+.xo-overlay.active { display:flex; }
+
+/* شريط علوي */
+.xo-topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:16px; padding:20px 30px;
+  background:rgba(255,255,255,.03);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  flex-shrink:0;
+}
+.xo-close {
+  width:58px; height:58px; border-radius:50%;
+  background:rgba(255,255,255,.08); color:#fff; font-size:24px;
+  display:flex; align-items:center; justify-content:center;
+  border:1.5px solid rgba(255,255,255,.18); transition:transform .15s, background .2s;
+}
+.xo-close:active { transform:scale(.9); background:rgba(239,68,68,.4); }
+.xo-title { font-size:32px; font-weight:900; color:#fff; display:flex; align-items:center; gap:12px; }
+.xo-title i { color:#3b82f6; }
+.xo-scores { display:flex; align-items:center; gap:16px; background:rgba(255,255,255,.05); padding:8px 24px; border-radius:100px; }
+.xo-sc { display:flex; flex-direction:column; align-items:center; line-height:1; }
+.xo-sc b { font-size:36px; font-weight:900; color:#fff; font-family:var(--en, sans-serif); }
+.xo-sc small { font-size:14px; color:rgba(255,255,255,.7); margin-top:2px; }
+.xo-sc-you b { color:#fde047; }
+.xo-sc-sep { font-size:28px; color:rgba(255,255,255,.4); font-weight:900; }
+
+/* شريط الدور + العدّاد */
+.xo-turnbar {
+  padding:18px 30px 6px; flex-shrink:0;
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+}
+.xo-turn {
+  font-size:36px; font-weight:900; padding:8px 32px; border-radius:100px;
+  transition:color .2s, background .2s;
+}
+.xo-turn.mine   { color:#22c55e; background:rgba(34,197,94,.12); border:1.5px solid rgba(34,197,94,.35); }
+.xo-turn.theirs { color:#f87171; background:rgba(248,113,113,.10); border:1.5px solid rgba(248,113,113,.28); }
+@keyframes xoShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+.xo-turn.shake { animation:xoShake .35s ease; }
+
+.xo-timer {
+  width:min(560px, 80%); height:14px; border-radius:100px;
+  background:rgba(255,255,255,.08); overflow:hidden;
+}
+.xo-timer-fill {
+  height:100%; width:100%; border-radius:100px;
+  background:linear-gradient(90deg,#16a34a,#22c55e);
+}
+
+/* اللوحة */
+.xo-board {
+  flex:1; align-self:center;
+  display:grid; grid-template-columns:repeat(3, 1fr); grid-template-rows:repeat(3, 1fr);
+  gap:14px; padding:22px;
+  width:min(70vh, 92vw); aspect-ratio:1/1; max-height:74vh;
+  margin:auto;
+}
+.xo-cell {
+  background:rgba(255,255,255,.05);
+  border:2px solid rgba(255,255,255,.10);
+  border-radius:22px;
+  font-family:var(--en, sans-serif); font-weight:900;
+  font-size:min(16vh, 20vw); line-height:1;
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  transition:transform .12s, background .2s, border-color .2s, box-shadow .3s;
+  -webkit-tap-highlight-color:transparent;
+}
+.xo-cell.x { color:#60a5fa; }
+.xo-cell.o { color:#fbbf24; }
+.xo-cell.filled { background:rgba(255,255,255,.03); }
+.xo-cell.playable {
+  cursor:pointer; border-color:rgba(34,197,94,.45);
+  box-shadow:inset 0 0 0 2px rgba(34,197,94,.18);
+}
+.xo-cell.playable:active { transform:scale(.94); background:rgba(34,197,94,.10); }
+.xo-cell.win {
+  border-color:#22c55e; background:rgba(34,197,94,.18);
+  box-shadow:0 0 0 3px rgba(34,197,94,.4), 0 0 30px rgba(34,197,94,.35);
+  animation:xoWinPulse 1s ease-in-out infinite;
+}
+@keyframes xoWinPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+
+/* لوحة النتيجة */
+.xo-result {
+  position:absolute; inset:0; z-index:5;
+  display:none; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.62); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  padding:40px;
+}
+.xo-result.show { display:flex; animation:xoResIn .3s ease; }
+@keyframes xoResIn { from{opacity:0} to{opacity:1} }
+.xo-result-box {
+  background:linear-gradient(160deg,#16161a,#0c0c0e);
+  border:1px solid rgba(255,255,255,.10); border-radius:32px;
+  padding:52px 60px; text-align:center; max-width:720px; width:100%;
+  box-shadow:0 30px 90px rgba(0,0,0,.7);
+}
+.xo-result-icon { font-size:92px; margin-bottom:18px; }
+.xo-result.win  .xo-result-icon { color:#fde047; filter:drop-shadow(0 6px 22px rgba(253,224,71,.5)); }
+.xo-result.lose .xo-result-icon { color:#94a3b8; }
+.xo-result.tie  .xo-result-icon { color:#60a5fa; }
+.xo-result-title { font-size:62px; font-weight:900; color:#fff; line-height:1.1; }
+.xo-result-actions { display:flex; gap:18px; justify-content:center; flex-wrap:wrap; margin-top:36px; }
+.xo-btn {
+  display:inline-flex; align-items:center; gap:12px;
+  padding:20px 44px; border-radius:18px;
+  font-family:var(--ar, sans-serif); font-size:28px; font-weight:800;
+  transition:transform .15s;
+}
+.xo-btn:active { transform:scale(.95); }
+.xo-btn--again { background:linear-gradient(135deg,#3b82f6,#2563eb); color:#fff; }
+.xo-btn--exit  { background:rgba(255,255,255,.10); color:#fff; border:1.5px solid rgba(255,255,255,.20); }
+.xo-wait-host  { width:100%; font-size:22px; color:rgba(255,255,255,.55); margin-top:6px; }
+
+/* شاشات أصغر */
+@media (max-width: 900px), (max-height: 700px) {
+  .xo-turn { font-size:26px; }
+  .xo-title { font-size:24px; }
+  .xo-result-title { font-size:42px; }
+  .xo-result-box { padding:36px 32px; }
+  .xo-sc b { font-size:26px; }
+}

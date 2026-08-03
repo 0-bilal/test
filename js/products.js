@@ -11,7 +11,7 @@ const restaurantInfo = {
   phone:        '..قريبا',
   workingHours: '12:00 م – 03:00 ص',
   workingDays:  'طوال أيام الأسبوع',
-  instagram:    'duo_brger1@',
+  instagram:    'duo_burger1@',
   tiktok:       'theduoburger@',
   address:      'مكه - حي الشوقية',
   taxNote:      'الأسعار شاملة ضريبة القيمة المضافة 15%',
@@ -37,6 +37,13 @@ const menuCategories = [
         price:         23,
         calories:      630,
         descriptionAr: 'برجر اسماش دبل 140 غرام من اللحم المشوي، مع صوص، يعطي لذعة حموضة',
+        ingredients: [
+          { nameAr: 'خبز بريوش', removable: false },
+          { nameAr: 'لحم سماش دبل 140غ', removable: false },
+          { nameAr: 'جبنة شيدر', removable: false },
+          { nameAr: 'مخلل', removable: true },
+          { nameAr: 'صوص ديو', removable: false },
+        ],
       },
       {
         nameAr:        'دبل اوريقا برجر',
@@ -45,13 +52,25 @@ const menuCategories = [
         price:         23,
         calories:      946,
         descriptionAr: 'برجر اسماش دبل 140 غرام من اللحم المشوي، معصوص يعطي اللحمة بعضا من الحلاوة',
+        ingredients: [
+          { nameAr: 'خبز بريوش', removable: false },
+          { nameAr: 'لحم سماش دبل 140غ', removable: false },
+          { nameAr: 'جبنة شيدر', removable: false },
+          { nameAr: 'صوص اوريقا', removable: false },
+        ],
       },
       {
         nameAr:        'دبل ترافل برجر',
         nameEn:        'Double Truffle Burger',
         image:         'images/products/truffle-burger.jpg',
         price:         26,
-        descriptionAr: 'برجر اسماش دبل 140 غرام لعشاق النكهات العميقة والفريدة، ليقدم مزيجاً لا يُقاوم من المكونات الفاخرة التي تذوب في الفم وتأخذ حواسك إلى مستوى آخر        ',
+        descriptionAr: 'برجر اسماش دبل 140 غرام لعشاق النكهات العميقة والفريدة، ليقدم مزيجاً لا يُقاوم من المكونات الفاخرة التي تذوب في الفم وتأخذ حواسك إلى مستوى آخر',
+        ingredients: [
+          { nameAr: 'خبز بريوش', removable: false },
+          { nameAr: 'لحم سماش دبل 140غ', removable: false },
+          { nameAr: 'جبنة شيدر', removable: false },
+          { nameAr: 'صوص ترافل', removable: false },
+        ],
       },
       {
         nameAr:        'أضافة شريحة لحم',
@@ -104,6 +123,7 @@ const menuCategories = [
         image:         'images/products/spicy-wedges.jpg',
         price:         19,
         descriptionAr: 'البطاطس المقلية الذهبية معصوص ديو أو أوريغا من اختيارك و اللحم. وصوص الجبنة وقطع الهليبينو',
+        sauceOptions:  ['صوص الديو', 'صوص أوريقا'],
       },
     ],
   },
@@ -160,10 +180,29 @@ const menuCategories = [
       },
       {
         nameAr:        'صوص ترافل',
-        nameEn:        'DUO Sauce',
+        nameEn:        'Truffle Sauce',
         price:         4,
         descriptionAr: 'صوص ترافل لعشاق النكهات العميقة والفريدة',
       },
+      {
+        nameAr:        'صوص جبنه',
+        nameEn:        'Cheese Sauce',
+        price:         3,
+        descriptionAr: '',
+      },
+      {
+        nameAr:        'قطع مخلل',
+        nameEn:        'Pickled pieces',
+        price:         2,
+        descriptionAr: '',
+      },
+      {
+        nameAr:        'قطع هلابينو',
+        nameEn:        'Jalapeño Slices',
+        price:         2,
+        descriptionAr: '',
+      },
+      
     ],
   },
 

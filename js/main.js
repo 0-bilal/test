@@ -151,6 +151,16 @@ function renderAllCategories() {
             ? `<div class="item-variants">
                  ${item.variants.map(v => `<span class="item-variant-tag" data-vkey="${_devItemKey(cat.id, item.nameAr)}||${v}">${v}</span>`).join('')}
                </div>` : ''}
+          ${item.ingredients?.some(i => i.removable)
+            ? `<div class="item-removable-note">
+                 <i class="fa-solid fa-circle-info"></i>
+                 يحتوي على ${item.ingredients.filter(i => i.removable).map(i => i.nameAr).join('، ')} — يمكن إزالته
+               </div>` : ''}
+          ${item.sauceOptions?.length
+            ? `<div class="item-sauce-note">
+                 <i class="fa-solid fa-bottle-droplet"></i>
+                 اختر: ${item.sauceOptions.join(' أو ')}
+               </div>` : ''}
           <div class="item-meta">
             ${item.calories
               ? `<span class="cal-badge">
@@ -363,14 +373,20 @@ function stepScroll() {
   clearTimeout(autoTimer);
   if (isPaused) return;
 
-  // تخطّى المنتجات المخفية
+  // تخطّى المنتجات المخفية والمتخطَّاة في السكرول
   let nextIdx = (curIdx + 1) % allItemEls.length;
   let attempts = 0;
-  while (allItemEls[nextIdx]?.style.display === 'none' && attempts < allItemEls.length) {
+  while (attempts < allItemEls.length) {
+    const el      = allItemEls[nextIdx];
+    const nameEl  = el?.querySelector('.item-name-ar');
+    const itemKey = _devItemKey(el?.dataset.cat || '', nameEl?.textContent || '');
+    const hidden  = el?.style.display === 'none';
+    const skipped = _devScrollSkip.has(itemKey) || _devCatSkip.has(el?.dataset.cat || '');
+    if (!hidden && !skipped) break;
     nextIdx = (nextIdx + 1) % allItemEls.length;
     attempts++;
   }
-  if (attempts === allItemEls.length) return; // كل المنتجات مخفية
+  if (attempts === allItemEls.length) return; // كل المنتجات مخفية أو متخطَّاة
 
   const nextEl = allItemEls[nextIdx];
   const curEl  = allItemEls[curIdx];
@@ -499,6 +515,45 @@ function _fillOverlayContent(item, idx) {
     } else {
       variantsEl.innerHTML = '';
       variantsEl.style.display = 'none';
+    }
+  }
+
+  // ── المكونات (الفكرة الثالثة + الرابعة) ──
+  const ingredientsEl = $('product-overlay-ingredients');
+  if (ingredientsEl) {
+    if (item.ingredients?.length) {
+      const tags = item.ingredients.map(ing => {
+        if (ing.removable) {
+          return `<span class="ingredient-tag ingredient-tag--removable">
+                    <i class="fa-solid fa-circle-minus"></i> ${ing.nameAr}
+                    <span class="ingredient-tag-hint">يمكن إزالته</span>
+                  </span>`;
+        }
+        return `<span class="ingredient-tag">${ing.nameAr}</span>`;
+      }).join('');
+      ingredientsEl.innerHTML = tags;
+      ingredientsEl.style.display = 'flex';
+    } else {
+      ingredientsEl.innerHTML = '';
+      ingredientsEl.style.display = 'none';
+    }
+  }
+
+  // ── اختيار الصوص ──
+  const sauceSection = $('product-overlay-sauce');
+  const sauceBtns    = $('product-overlay-sauce-btns');
+  if (sauceSection && sauceBtns) {
+    if (item.sauceOptions?.length) {
+      sauceBtns.innerHTML = item.sauceOptions.map((s, i) =>
+        `<button class="sauce-btn${i === 0 ? ' sauce-btn--active' : ''}"
+                 onclick="this.parentElement.querySelectorAll('.sauce-btn').forEach(b=>b.classList.remove('sauce-btn--active'));this.classList.add('sauce-btn--active')">
+           ${s}
+         </button>`
+      ).join('');
+      sauceSection.style.display = 'flex';
+    } else {
+      sauceBtns.innerHTML = '';
+      sauceSection.style.display = 'none';
     }
   }
 
@@ -644,6 +699,77 @@ function hideReviewOverlay() {
 }
 window.hideReviewOverlay = hideReviewOverlay;
 window.showReviewOverlay  = showReviewOverlay;
+
+/* ════════════════════════════════════════════════════════
+   QR MENU OVERLAY — منيو الجوال
+════════════════════════════════════════════════════════ */
+const QRMENU_OVERLAY_DURATION = 30000;  // 30 ثانية إغلاق تلقائي
+let   _qrmenuTimer = null;
+
+function showQRMenuOverlay() {
+  const overlay = $('qrmenu-overlay');
+  if (!overlay) return;
+
+  // أغلق overlays أخرى إن كانت مفتوحة
+  const productOverlay = $('product-overlay');
+  if (productOverlay?.classList.contains('active')) hideProductOverlay();
+
+  // شعار المطعم
+  const logoImg = $('qrmenu-logo-img'), logoPh = $('qrmenu-logo-ph');
+  if (logoImg && restaurantInfo.logo) {
+    logoImg.src = restaurantInfo.logo;
+    logoImg.style.display = 'block';
+    if (logoPh) logoPh.style.display = 'none';
+    logoImg.onerror = () => { logoImg.style.display='none'; if(logoPh) logoPh.style.display=''; };
+  }
+
+  // اسم المطعم
+  const nameAr = $('qrmenu-name-ar'), nameEn = $('qrmenu-name-en');
+  if (nameAr) nameAr.textContent = restaurantInfo.nameAr || '';
+  if (nameEn) nameEn.textContent = restaurantInfo.nameEn || '';
+
+  // ملاحظة الضريبة
+  const taxEl = $('qrmenu-tax-text');
+  if (taxEl) taxEl.textContent = restaurantInfo.taxNote || '';
+
+  clearTimeout(_qrmenuTimer);
+  overlay.style.display = 'block';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    overlay.classList.remove('closing');
+    overlay.classList.add('active');
+  }));
+
+  _startQRMenuTimer();
+  _qrmenuTimer = setTimeout(hideQRMenuOverlay, QRMENU_OVERLAY_DURATION);
+  pauseAutoScroll();
+}
+
+function hideQRMenuOverlay() {
+  clearTimeout(_qrmenuTimer);
+  const overlay = $('qrmenu-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('active');
+  overlay.classList.add('closing');
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    overlay.classList.remove('closing');
+    resumeAutoScroll();
+  }, 420);
+}
+
+function _startQRMenuTimer() {
+  const fill = $('qrmenu-timer-fill');
+  if (!fill) return;
+  fill.style.transition = 'none';
+  fill.style.transform  = 'scaleX(1)';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    fill.style.transition = `transform ${QRMENU_OVERLAY_DURATION}ms linear`;
+    fill.style.transform  = 'scaleX(0)';
+  }));
+}
+
+window.showQRMenuOverlay = showQRMenuOverlay;
+window.hideQRMenuOverlay = hideQRMenuOverlay;
 
 function _startReviewTimer() {
   const fill = $('review-timer-fill');
@@ -875,9 +1001,13 @@ const SS_SLIDES    = 'duo_hidden_slides';
 const SS_DISCOUNT  = 'duo_discount_hidden';
 const SS_PHONE     = 'duo_phone_hidden';
 const SS_GAMES     = 'duo_games_hidden';
+const SS_QRMENU    = 'duo_qrmenu_hidden';
 const SS_VARIANTS  = 'duo_hidden_variants';
 const LS_BADGES    = 'duo_badges';
 const LS_STATS_PFX = 'duo_stats_';
+const LS_TEMP_HIDE   = 'duo_temp_hide';    // { "key": expiryMs }
+const LS_SCROLL_SKIP = 'duo_scroll_skip';  // ["key",…]
+const LS_CAT_SKIP    = 'duo_cat_scroll_skip'; // ["catId",…]
 
 let _devHiddenItems    = new Set();
 let _devHiddenSlides   = new Set();
@@ -885,7 +1015,11 @@ let _devHiddenVariants = new Set();
 let _devDiscountHidden = false;
 let _devPhoneHidden    = false;
 let _devGamesHidden    = false;
+let _devQRMenuHidden   = false;
 let _devBadges         = {};   // { "catId||nameAr": "popular"|"new"|"limited"|"" }
+let _devTempHide       = {};   // { "key": expiryMs }  — إخفاء مؤقت
+let _devScrollSkip     = new Set(); // مفاتيح المنتجات التي يتخطاها السكرول
+let _devCatSkip        = new Set(); // معرّفات الأقسام التي يتخطاها السكرول
 
 /* ── إحصائيات المشاهدة ── */
 function _todayKey()  { return LS_STATS_PFX + new Date().toISOString().slice(0, 10); }
@@ -924,16 +1058,36 @@ function _devLoadSettings() {
     const phoneRaw = sessionStorage.getItem(SS_PHONE);
     _devDiscountHidden = discRaw  === 'true';
     _devPhoneHidden    = phoneRaw === 'true';
-    _devGamesHidden    = sessionStorage.getItem(SS_GAMES) === 'true';
+    _devGamesHidden    = sessionStorage.getItem(SS_GAMES)  === 'true';
+    _devQRMenuHidden   = sessionStorage.getItem(SS_QRMENU) === 'true';
     // ضمان: إذا لم تُحدَّد بعد، تأكّد من وضعها كـ "ظاهر"
     if (discRaw  === null) { sessionStorage.setItem(SS_DISCOUNT, 'false'); _devDiscountHidden = false; }
     if (phoneRaw === null) { sessionStorage.setItem(SS_PHONE,    'false'); _devPhoneHidden    = false; }
     _loadBadges();
+    try { _devTempHide = JSON.parse(localStorage.getItem(LS_TEMP_HIDE) || '{}'); } catch { _devTempHide = {}; }
+    _devScrollSkip = new Set(JSON.parse(localStorage.getItem(LS_SCROLL_SKIP) || '[]'));
+    _devCatSkip    = new Set(JSON.parse(localStorage.getItem(LS_CAT_SKIP)    || '[]'));
   } catch(e) {
     _devHiddenItems = new Set(); _devHiddenSlides = new Set();
     _devHiddenVariants = new Set(); _devDiscountHidden = false; _devPhoneHidden = false;
+    _devTempHide = {}; _devScrollSkip = new Set(); _devCatSkip = new Set();
   }
 }
+
+/* تحقّق من انتهاء أوقات الإخفاء المؤقت وأظهر المنتجات تلقائياً */
+function _checkTempHides() {
+  const now = Date.now();
+  let changed = false;
+  Object.keys(_devTempHide).forEach(k => {
+    if (_devTempHide[k] <= now) { delete _devTempHide[k]; changed = true; }
+  });
+  if (changed) {
+    localStorage.setItem(LS_TEMP_HIDE, JSON.stringify(_devTempHide));
+    applyDevSettings();
+    if (typeof window._vxRebuild === 'function') window._vxRebuild();
+  }
+}
+setInterval(_checkTempHides, 30000); // كل 30 ثانية
 
 /* إعادة ضبط ظهور الزرين قسراً (تُستخدم عند الحاجة) */
 function _forceShowHeaderButtons() {
@@ -946,11 +1100,15 @@ function _forceShowHeaderButtons() {
 
 /* تطبيق الإعدادات على الـ DOM */
 function applyDevSettings() {
-  // المنتجات
+  // المنتجات — إخفاء دائم أو مؤقت، وتمييز المتخطَّى في السكرول
+  const _now = Date.now();
   allItemEls.forEach(el => {
-    const nameEl = el.querySelector('.item-name-ar');
-    const key    = _devItemKey(el.dataset.cat, nameEl?.textContent || '');
-    el.style.display = _devHiddenItems.has(key) ? 'none' : '';
+    const nameEl  = el.querySelector('.item-name-ar');
+    const key     = _devItemKey(el.dataset.cat, nameEl?.textContent || '');
+    const permHid = _devHiddenItems.has(key);
+    const tempHid = _devTempHide[key] && _devTempHide[key] > _now;
+    el.style.display = (permHid || tempHid) ? 'none' : '';
+    el.classList.toggle('scroll-skipped', _devScrollSkip.has(key) || _devCatSkip.has(el.dataset.cat));
   });
 
   // الشرائح
@@ -987,6 +1145,10 @@ function applyDevSettings() {
   const gamesBtnV = $('vl-games-btn');
   if (gamesBtnV) gamesBtnV.style.display = _devGamesHidden ? 'none' : '';
 
+  // زر منيو الجوال
+  const qrMenuBtn = $('header-qrmenu-btn');
+  if (qrMenuBtn) qrMenuBtn.style.display = _devQRMenuHidden ? 'none' : '';
+
   // عداد المنتجات
   const visCount = allItemEls.filter(el => el.style.display !== 'none').length;
   setText('scroll-total', String(visCount || allItemEls.length));
@@ -1005,7 +1167,11 @@ function applyRemoteSettings(v) {
     _devDiscountHidden = !!v.discountHidden;
     _devPhoneHidden    = !!v.phoneHidden;
     _devGamesHidden    = !!v.gamesHidden;
+    _devQRMenuHidden   = !!v.qrmenuHidden;
     _devBadges         = v.badges || {};
+    _devTempHide       = v.tempHide   || {};
+    _devScrollSkip     = new Set(v.scrollSkip || []);
+    _devCatSkip        = new Set(v.catSkip    || []);
 
     // خزّن محلياً كنسخة احتياطية
     sessionStorage.setItem(SS_ITEMS,    JSON.stringify([..._devHiddenItems]));
@@ -1014,7 +1180,11 @@ function applyRemoteSettings(v) {
     sessionStorage.setItem(SS_DISCOUNT, String(_devDiscountHidden));
     sessionStorage.setItem(SS_PHONE,    String(_devPhoneHidden));
     sessionStorage.setItem(SS_GAMES,    String(_devGamesHidden));
+    sessionStorage.setItem(SS_QRMENU,  String(_devQRMenuHidden));
     localStorage.setItem(LS_BADGES,     JSON.stringify(_devBadges));
+    localStorage.setItem(LS_TEMP_HIDE,  JSON.stringify(_devTempHide));
+    localStorage.setItem(LS_SCROLL_SKIP,JSON.stringify([..._devScrollSkip]));
+    localStorage.setItem(LS_CAT_SKIP,   JSON.stringify([..._devCatSkip]));
 
     _refreshAllBadges();
     applyDevSettings();

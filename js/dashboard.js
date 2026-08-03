@@ -12,9 +12,13 @@ const SS_SLIDES   = 'duo_hidden_slides';
 const SS_DISCOUNT = 'duo_discount_hidden';
 const SS_PHONE    = 'duo_phone_hidden';
 const SS_GAMES    = 'duo_games_hidden';
+const SS_QRMENU   = 'duo_qrmenu_hidden';
 const SS_VARIANTS = 'duo_hidden_variants';
-const LS_BADGES   = 'duo_badges';
-const LS_STATS_PFX = 'duo_stats_';
+const LS_BADGES      = 'duo_badges';
+const LS_STATS_PFX   = 'duo_stats_';
+const LS_TEMP_HIDE   = 'duo_temp_hide';
+const LS_SCROLL_SKIP = 'duo_scroll_skip';
+const LS_CAT_SKIP    = 'duo_cat_scroll_skip';
 
 /* ── مفاتيح ضبط الشاشة ── */
 const BASE_W = 2000, BASE_H = 1200;
@@ -31,7 +35,11 @@ let _hiddenVariants = new Set();
 let _discountHidden = false;
 let _phoneHidden    = false;
 let _gamesHidden    = false;
+let _qrmenuHidden   = false;
 let _badges         = {};
+let _tempHide       = {};   // { "key": expiryMs }
+let _scrollSkip     = new Set();
+let _catSkip        = new Set();
 
 /* ── شارات ── */
 const BADGE_META = {
@@ -52,12 +60,24 @@ function loadSettings() {
     _hiddenVariants = new Set(JSON.parse(sessionStorage.getItem(SS_VARIANTS) || '[]'));
     _discountHidden = sessionStorage.getItem(SS_DISCOUNT) === 'true';
     _phoneHidden    = sessionStorage.getItem(SS_PHONE)    === 'true';
-    _gamesHidden    = sessionStorage.getItem(SS_GAMES)    === 'true';
+    _gamesHidden    = sessionStorage.getItem(SS_GAMES)   === 'true';
+    _qrmenuHidden   = sessionStorage.getItem(SS_QRMENU) === 'true';
     _badges         = JSON.parse(localStorage.getItem(LS_BADGES) || '{}');
+    try { _tempHide = JSON.parse(localStorage.getItem(LS_TEMP_HIDE) || '{}'); } catch { _tempHide = {}; }
+    _scrollSkip = new Set(JSON.parse(localStorage.getItem(LS_SCROLL_SKIP) || '[]'));
+    _catSkip    = new Set(JSON.parse(localStorage.getItem(LS_CAT_SKIP)    || '[]'));
   } catch (e) {
     _hiddenItems = new Set(); _hiddenSlides = new Set(); _hiddenVariants = new Set();
-    _badges = {};
+    _badges = {}; _tempHide = {}; _scrollSkip = new Set(); _catSkip = new Set();
   }
+}
+
+function _fmtRemaining(ms) {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h > 0 && m > 0) return `${h}س ${m}د`;
+  if (h > 0) return `${h} ساعة`;
+  return `${m} دقيقة`;
 }
 
 /* ── إحصائيات ── */
@@ -143,6 +163,17 @@ function renderHeaderTab(body) {
           <span class="slider"></span>
         </span>
       </label>
+      <label class="row">
+        <div class="row-icon" style="background:rgba(6,120,100,.15);border-color:rgba(20,184,166,.30);color:rgba(20,184,166,.90)"><i class="fa-solid fa-qrcode"></i></div>
+        <div class="row-label">
+          إظهار زر «منيو الجوال»
+          <small>يعرض QR code على لوحة الشرائح ليمسحه العميل بهاتفه</small>
+        </div>
+        <span class="toggle">
+          <input type="checkbox" ${!_qrmenuHidden ? 'checked' : ''} onchange="toggleQRMenu(this.checked)">
+          <span class="slider"></span>
+        </span>
+      </label>
     </div>`;
 }
 
@@ -181,20 +212,34 @@ function renderSlidesTab(body) {
    تبويب: المنتجات
 ════════════════════════════════════════════════ */
 function renderProductsTab(body) {
+  const now = Date.now();
   let html = '';
   menuCategories.forEach(cat => {
-    const visCount = cat.items.filter(it => !_hiddenItems.has(_key(cat.id, it.nameAr))).length;
+    const visCount  = cat.items.filter(it => !_hiddenItems.has(_key(cat.id, it.nameAr))).length;
+    const catSkipped = _catSkip.has(cat.id);
     html += `<div class="card">
       <div class="card-title">
         <i class="fa-solid ${cat.icon}"></i> ${cat.nameAr}
         <span class="count" data-cat="${cat.id}">${visCount}/${cat.items.length}</span>
+        <label class="cat-skip-toggle" title="تخطي القسم كاملاً في السكرول التلقائي">
+          <span class="cat-skip-label"><i class="fa-solid fa-forward-step"></i> تخطي القسم</span>
+          <span class="toggle toggle--sm">
+            <input type="checkbox" ${catSkipped ? 'checked' : ''} onchange="toggleCatSkip('${cat.id}', this.checked)">
+            <span class="slider"></span>
+          </span>
+        </label>
       </div>`;
     cat.items.forEach(item => {
-      const key    = _key(cat.id, item.nameAr);
-      const badge  = _badges[key] || '';
-      const hidden = _hiddenItems.has(key);
+      const key        = _key(cat.id, item.nameAr);
+      const badge      = _badges[key] || '';
+      const hidden     = _hiddenItems.has(key);
+      const tempExpiry = _tempHide[key];
+      const isTempHid  = tempExpiry && tempExpiry > now;
+      const remaining  = isTempHid ? _fmtRemaining(tempExpiry - now) : '';
+      const isSkipped  = _scrollSkip.has(key);
+
       html += `
-      <label class="row ${hidden ? 'row--off' : ''}">
+      <label class="row ${(hidden || isTempHid) ? 'row--off' : ''}">
         <div class="row-icon row-icon--img">
           <i class="fa-solid fa-burger" style="${item.image ? 'display:none' : ''}"></i>
           ${item.image
@@ -211,6 +256,8 @@ function renderProductsTab(body) {
           <span class="slider"></span>
         </span>
       </label>
+
+      <!-- شارة -->
       <div class="badge-row">
         <span class="badge-label"><i class="fa-solid fa-tag"></i> شارة</span>
         <div class="badge-btns">
@@ -220,7 +267,38 @@ function renderProductsTab(body) {
               ${b ? BADGE_META[b].label : 'لا شيء'}
             </button>`).join('')}
         </div>
+      </div>
+
+      <!-- إخفاء مؤقت + تخطي السكرول -->
+      <div class="item-controls-row">
+
+        <div class="item-ctrl-group">
+          <span class="item-ctrl-label"><i class="fa-solid fa-clock"></i> إخفاء مؤقت</span>
+          ${isTempHid
+            ? `<div class="temp-active">
+                <span class="temp-remaining"><i class="fa-solid fa-hourglass-half"></i> ${remaining}</span>
+                <button class="temp-cancel" onclick="cancelTempHide('${key}')">
+                  <i class="fa-solid fa-xmark"></i> إلغاء
+                </button>
+               </div>`
+            : `<div class="temp-btns">
+                ${[1,2,4,8].map(h => `
+                  <button class="temp-btn" onclick="setTempHide('${key}',${h})">${h}س</button>
+                `).join('')}
+               </div>`
+          }
+        </div>
+
+        <div class="item-ctrl-group item-ctrl-group--skip">
+          <span class="item-ctrl-label"><i class="fa-solid fa-forward-step"></i> تخطي في السكرول</span>
+          <label class="toggle toggle--sm">
+            <input type="checkbox" ${isSkipped ? 'checked' : ''} onchange="toggleScrollSkip('${key}', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
       </div>`;
+
       if (item.variants?.length) {
         item.variants.forEach(v => {
           const vkey = key + '||' + v;
@@ -438,7 +516,11 @@ function _syncPush() {
     discountHidden: _discountHidden,
     phoneHidden:    _phoneHidden,
     gamesHidden:    _gamesHidden,
+    qrmenuHidden:   _qrmenuHidden,
     badges:         _badges,
+    tempHide:       _tempHide,
+    scrollSkip:     [..._scrollSkip],
+    catSkip:        [..._catSkip],
   });
 }
 
@@ -459,6 +541,12 @@ function toggleGames(checked) {
   sessionStorage.setItem(SS_GAMES, String(_gamesHidden));
   _syncPush();
   toast(checked ? 'تم إظهار زر الألعاب' : 'تم إخفاء زر الألعاب');
+}
+function toggleQRMenu(checked) {
+  _qrmenuHidden = !checked;
+  sessionStorage.setItem(SS_QRMENU, String(_qrmenuHidden));
+  _syncPush();
+  toast(checked ? 'تم إظهار زر منيو الجوال' : 'تم إخفاء زر منيو الجوال');
 }
 function toggleSlide(idx, checked) {
   if (checked) _hiddenSlides.delete(String(idx));
@@ -495,13 +583,51 @@ function setBadge(key, badge, btn) {
   );
   toast(badge ? 'تم تعيين الشارة' : 'تمت إزالة الشارة');
 }
+/* ── إخفاء مؤقت ── */
+function setTempHide(key, hours) {
+  _tempHide[key] = Date.now() + hours * 3600000;
+  localStorage.setItem(LS_TEMP_HIDE, JSON.stringify(_tempHide));
+  _syncPush();
+  renderProductsTab($('dash-body'));
+  toast(`سيظهر المنتج تلقائياً بعد ${hours} ${hours === 1 ? 'ساعة' : 'ساعات'}`);
+}
+function cancelTempHide(key) {
+  delete _tempHide[key];
+  localStorage.setItem(LS_TEMP_HIDE, JSON.stringify(_tempHide));
+  _syncPush();
+  renderProductsTab($('dash-body'));
+  toast('تم إلغاء الإخفاء المؤقت');
+}
+
+/* ── تخطي في السكرول ── */
+function toggleScrollSkip(key, checked) {
+  if (checked) _scrollSkip.add(key);
+  else         _scrollSkip.delete(key);
+  localStorage.setItem(LS_SCROLL_SKIP, JSON.stringify([..._scrollSkip]));
+  _syncPush();
+  toast(checked ? 'سيتخطى السكرول هذا المنتج' : 'سيتوقف السكرول على هذا المنتج');
+}
+function toggleCatSkip(catId, checked) {
+  if (checked) _catSkip.add(catId);
+  else         _catSkip.delete(catId);
+  localStorage.setItem(LS_CAT_SKIP, JSON.stringify([..._catSkip]));
+  _syncPush();
+  const cat = menuCategories.find(c => c.id === catId);
+  toast(checked ? `سيتخطى السكرول قسم "${cat?.nameAr}"` : `سيتوقف السكرول على قسم "${cat?.nameAr}"`);
+}
+
 window.togglePhone    = togglePhone;
 window.toggleDiscount = toggleDiscount;
 window.toggleGames    = toggleGames;
+window.toggleQRMenu   = toggleQRMenu;
 window.toggleSlide    = toggleSlide;
 window.toggleItem     = toggleItem;
 window.toggleVariant  = toggleVariant;
 window.setBadge       = setBadge;
+window.setTempHide    = setTempHide;
+window.cancelTempHide = cancelTempHide;
+window.toggleScrollSkip = toggleScrollSkip;
+window.toggleCatSkip    = toggleCatSkip;
 
 /* ════════════════════════════════════════════════
    إجراءات — ضبط الشاشة
@@ -929,14 +1055,22 @@ function _applyRemoteToDashboard(v) {
     _discountHidden = !!v.discountHidden;
     _phoneHidden    = !!v.phoneHidden;
     _gamesHidden    = !!v.gamesHidden;
+    _qrmenuHidden   = !!v.qrmenuHidden;
     _badges         = v.badges || {};
+    _tempHide       = v.tempHide   || {};
+    _scrollSkip     = new Set(v.scrollSkip || []);
+    _catSkip        = new Set(v.catSkip    || []);
     sessionStorage.setItem(SS_ITEMS,    JSON.stringify([..._hiddenItems]));
     sessionStorage.setItem(SS_SLIDES,   JSON.stringify([..._hiddenSlides]));
     sessionStorage.setItem(SS_VARIANTS, JSON.stringify([..._hiddenVariants]));
     sessionStorage.setItem(SS_DISCOUNT, String(_discountHidden));
     sessionStorage.setItem(SS_PHONE,    String(_phoneHidden));
     sessionStorage.setItem(SS_GAMES,    String(_gamesHidden));
-    localStorage.setItem(LS_BADGES,     JSON.stringify(_badges));
+    sessionStorage.setItem(SS_QRMENU,  String(_qrmenuHidden));
+    localStorage.setItem(LS_BADGES,      JSON.stringify(_badges));
+    localStorage.setItem(LS_TEMP_HIDE,   JSON.stringify(_tempHide));
+    localStorage.setItem(LS_SCROLL_SKIP, JSON.stringify([..._scrollSkip]));
+    localStorage.setItem(LS_CAT_SKIP,    JSON.stringify([..._catSkip]));
     showTab(_activeTab);   // أعد رسم التبويب الحالي بالقيم الجديدة
   } catch (e) {}
 }

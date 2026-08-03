@@ -70,11 +70,18 @@
     _cats = [];
     if (typeof menuCategories === 'undefined') return;
 
-    const hidden = (typeof _devHiddenItems !== 'undefined') ? _devHiddenItems : new Set();
-    const key    = (typeof _devItemKey === 'function') ? _devItemKey : (c, n) => c + '||' + n;
+    const hidden    = (typeof _devHiddenItems  !== 'undefined') ? _devHiddenItems  : new Set();
+    const catSkip   = (typeof _devCatSkip      !== 'undefined') ? _devCatSkip      : new Set();
+    const tempHide  = (typeof _devTempHide     !== 'undefined') ? _devTempHide     : {};
+    const key       = (typeof _devItemKey === 'function') ? _devItemKey : (c, n) => c + '||' + n;
+    const now       = Date.now();
 
     menuCategories.forEach(cat => {
-      const items = (cat.items || []).filter(it => !hidden.has(key(cat.id, it.nameAr)));
+      if (catSkip.has(cat.id)) return;   // تخطّى القسم كله
+      const items = (cat.items || []).filter(it => {
+        const k = key(cat.id, it.nameAr);
+        return !hidden.has(k) && !(tempHide[k] && tempHide[k] > now);
+      });
       if (!items.length) return;
       _cats.push({
         id: cat.id, nameAr: cat.nameAr, nameEn: cat.nameEn || '',
@@ -256,6 +263,43 @@
       varWrap.innerHTML = list.map(v => `<span class="vx-variant">${v}</span>`).join('');
     }
 
+    /* المكونات (الفكرة الثالثة + الرابعة) */
+    const ingEl = $('vx-ingredients');
+    if (ingEl) {
+      if (item.ingredients?.length) {
+        ingEl.innerHTML = item.ingredients.map(ing => {
+          if (ing.removable) {
+            return `<span class="vx-ingredient vx-ingredient--removable" title="يمكن إزالته">
+                      <i class="fa-solid fa-circle-minus"></i>${ing.nameAr}
+                    </span>`;
+          }
+          return `<span class="vx-ingredient">${ing.nameAr}</span>`;
+        }).join('');
+        ingEl.style.display = 'flex';
+      } else {
+        ingEl.innerHTML = '';
+        ingEl.style.display = 'none';
+      }
+    }
+
+    /* اختيار الصوص */
+    const saucePicker = $('vx-sauce-picker');
+    const sauceBtns   = $('vx-sauce-btns');
+    if (saucePicker && sauceBtns) {
+      if (item.sauceOptions?.length) {
+        sauceBtns.innerHTML = item.sauceOptions.map((s, i) =>
+          `<button class="vx-sauce-btn${i === 0 ? ' vx-sauce-btn--on' : ''}"
+                   onclick="this.parentElement.querySelectorAll('.vx-sauce-btn').forEach(b=>b.classList.remove('vx-sauce-btn--on'));this.classList.add('vx-sauce-btn--on')">
+             ${s}
+           </button>`
+        ).join('');
+        saucePicker.style.display = 'flex';
+      } else {
+        sauceBtns.innerHTML = '';
+        saucePicker.style.display = 'none';
+      }
+    }
+
     const price = $('vx-price');
     if (price) {
       if (item.price != null && item.price !== '') {
@@ -330,8 +374,20 @@
     const cat = _cats[_catIdx];
     if (!cat) return;
 
-    if (_prodIdx + 1 < cat.items.length) {
-      _show(_prodIdx + 1);
+    const scrollSkip = (typeof _devScrollSkip !== 'undefined') ? _devScrollSkip : new Set();
+    const keyFn      = (typeof _devItemKey === 'function') ? _devItemKey : (c, n) => c + '||' + n;
+
+    // ابحث عن المنتج التالي غير المتخطَّى
+    let nextIdx  = _prodIdx + 1;
+    let attempts = 0;
+    while (nextIdx < cat.items.length && attempts < cat.items.length) {
+      if (!scrollSkip.has(keyFn(cat.id, cat.items[nextIdx].nameAr))) break;
+      nextIdx++;
+      attempts++;
+    }
+
+    if (nextIdx < cat.items.length) {
+      _show(nextIdx);
       _timer = setTimeout(_step, VX_ITEM_MS);
     } else {
       _gotoCat((_catIdx + 1) % _cats.length);

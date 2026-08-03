@@ -691,6 +691,275 @@ html,body {
 }
 .product-overlay-price-cur { font-size:21px; font-weight:400; color:rgba(255,255,255,.82); }
 
+/* ── مكونات المنتج في الـ overlay ── */
+.product-overlay-ingredients {
+  display:flex; flex-wrap:wrap; gap:10px; margin-top:20px;
+}
+.ingredient-tag {
+  font-size:22px; font-family:var(--ar); font-weight:600;
+  padding:7px 20px; border-radius:100px;
+  background:rgba(255,255,255,.10);
+  border:1.5px solid rgba(255,255,255,.22);
+  color:rgba(255,255,255,.88);
+  backdrop-filter:blur(6px);
+}
+.ingredient-tag--removable {
+  background:rgba(190,30,45,.18);
+  border-color:rgba(190,30,45,.55);
+  color:#fff;
+  display:inline-flex; align-items:center; gap:8px;
+}
+.ingredient-tag--removable i { color:var(--red); font-size:18px; }
+.ingredient-tag-hint {
+  font-size:16px; font-weight:400;
+  color:rgba(255,120,120,.85);
+  border-right:1px solid rgba(255,255,255,.18);
+  padding-right:8px; margin-right:2px;
+}
+
+/* ── اختيار الصوص في الـ overlay ── */
+.product-overlay-sauce-picker {
+  display:flex; flex-direction:column; gap:12px; margin-top:20px;
+}
+.sauce-picker-label {
+  font-size:22px; font-weight:700; color:rgba(255,255,255,.70);
+  display:flex; align-items:center; gap:8px;
+}
+.sauce-picker-label i { color:var(--red); }
+.sauce-picker-btns {
+  display:flex; flex-wrap:wrap; gap:12px;
+}
+.sauce-btn {
+  font-size:24px; font-family:var(--ar); font-weight:700;
+  padding:10px 32px; border-radius:100px;
+  background:rgba(255,255,255,.10);
+  border:2px solid rgba(255,255,255,.22);
+  color:rgba(255,255,255,.80);
+  cursor:pointer; transition:all .2s ease;
+  backdrop-filter:blur(6px);
+}
+.sauce-btn--active {
+  background:var(--red);
+  border-color:var(--red);
+  color:#fff;
+  box-shadow:0 4px 20px var(--red-glow);
+}
+
+/* ── ملاحظة المخلل على كارت المنيو (الفكرة الرابعة) ── */
+.item-removable-note {
+  font-size:18px; font-weight:600;
+  color:rgba(190,30,45,.90);
+  display:flex; align-items:center; gap:6px;
+  margin-top:8px;
+  padding:5px 12px; border-radius:8px;
+  background:rgba(190,30,45,.08);
+  border-right:3px solid var(--red);
+}
+.item-removable-note i { font-size:14px; flex-shrink:0; }
+
+/* ── ملاحظة الصوص على كارت المنيو ── */
+.item-sauce-note {
+  font-size:18px; font-weight:600;
+  color:rgba(255,255,255,.65);
+  display:flex; align-items:center; gap:6px;
+  margin-top:8px;
+}
+.item-sauce-note i { color:var(--red); font-size:14px; }
+
+/* ════════════════════════════════════════════════════════
+   زر منيو الجوال في الهيدر
+════════════════════════════════════════════════════════ */
+.header-qrmenu-btn {
+  display:flex; align-items:center; gap:9px;
+  height:62px; padding:0 22px; border-radius:var(--rp);
+  background:rgba(6,120,100,.18);
+  border:1.5px solid rgba(20,184,166,.35);
+  color:rgba(20,184,166,.90);
+  font-family:var(--ar); font-size:20px; font-weight:800;
+  white-space:nowrap; flex-shrink:0;
+  transition:background .22s, border-color .22s, color .22s, transform .15s;
+}
+.header-qrmenu-btn i    { font-size:22px; }
+.header-qrmenu-btn:active { transform:scale(.93); background:rgba(20,184,166,.22); }
+
+/* ════════════════════════════════════════════════════════
+   QR MENU OVERLAY — يغطي لوحة الشرائح
+════════════════════════════════════════════════════════ */
+.qrmenu-overlay {
+  position:absolute; inset:0; z-index:17;
+  display:none; overflow:hidden;
+  background-color:#04080c;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(190,30,45,.22) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(120,15,25,.18) 0%, transparent 60%);
+  opacity:0; pointer-events:none;
+  transition:opacity .40s ease;
+}
+.qrmenu-overlay.active { opacity:1; pointer-events:auto; }
+.qrmenu-overlay.closing {
+  opacity:0 !important; pointer-events:none;
+  transition:opacity .38s ease !important;
+}
+
+/* خلفية الهالات */
+.qrmenu-bg {
+  position:absolute; inset:0; pointer-events:none; overflow:hidden;
+}
+.qrmenu-orb {
+  position:absolute; border-radius:50%; pointer-events:none;
+}
+.qrmenu-orb-1 {
+  width:680px; height:680px; top:-240px; right:-200px;
+  background:radial-gradient(circle closest-side,
+    rgba(190,30,45,.28) 0%, rgba(190,30,45,.10) 44%, rgba(190,30,45,0) 100%);
+  animation:vxDrift1 28s ease-in-out infinite;
+}
+.qrmenu-orb-2 {
+  width:560px; height:560px; bottom:-200px; left:-160px;
+  background:radial-gradient(circle closest-side,
+    rgba(143,21,33,.30) 0%, rgba(143,21,33,.10) 44%, rgba(143,21,33,0) 100%);
+  animation:vxDrift2 34s ease-in-out infinite;
+}
+.qrmenu-sheen {
+  position:absolute; top:-30%; left:-55%;
+  width:55%; height:160%;
+  background:linear-gradient(100deg,transparent 0%,rgba(255,255,255,.022) 45%,transparent 100%);
+  transform:rotate(12deg);
+  animation:vxSheen 22s linear infinite;
+}
+
+/* زر الإغلاق */
+.qrmenu-close {
+  position:absolute; top:22px; left:22px; z-index:20;
+  width:58px; height:58px; border-radius:50%;
+  background:rgba(0,0,0,.65); backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border:1.5px solid rgba(255,255,255,.18);
+  color:#fff; font-size:22px;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .2s, transform .15s;
+}
+.qrmenu-close:active { background:var(--red); transform:scale(.88); }
+
+/* جسم المحتوى */
+.qrmenu-body {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:22px; padding:28px 56px 40px;
+  overflow:hidden; z-index:1;
+}
+
+/* البراند */
+.qrmenu-brand {
+  display:flex; align-items:center; gap:18px;
+}
+.qrmenu-logo-wrap {
+  width:72px; height:72px; border-radius:18px; flex-shrink:0;
+  background:linear-gradient(150deg,var(--red),var(--red-dk));
+  border:1.5px solid rgba(255,255,255,.15);
+  box-shadow:0 6px 22px rgba(0,0,0,.55), 0 0 18px rgba(190,30,45,.40),
+             inset 0 1px 0 rgba(255,255,255,.12);
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.qrmenu-logo-wrap img { width:100%; height:100%; object-fit:contain; padding:8px; }
+.qrmenu-logo-wrap i   { font-size:32px; color:#fff; }
+.qrmenu-brand-text    { display:flex; flex-direction:column; gap:2px; }
+.qrmenu-name-ar {
+  font-family:var(--ar); font-size:36px; font-weight:900; color:#fff; line-height:1.1;
+}
+.qrmenu-name-en {
+  font-family:var(--en); font-size:14px; font-weight:600;
+  color:rgba(255,255,255,.45); letter-spacing:3px; text-transform:uppercase;
+}
+
+/* كرت الـ QR */
+.qrmenu-card {
+  display:flex; flex-direction:column; align-items:center; gap:16px;
+  background:linear-gradient(150deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,.025) 100%);
+  border:1.5px solid rgba(255,255,255,.12);
+  border-radius:28px; padding:26px 36px;
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  box-shadow:0 20px 60px rgba(0,0,0,.70), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.qrmenu-card-label {
+  display:flex; align-items:center; gap:10px;
+  font-family:var(--ar); font-size:20px; font-weight:800;
+  color:rgba(255,255,255,.75);
+}
+.qrmenu-card-label i { color:var(--red-lt); font-size:18px; }
+
+/* إطار الـ QR */
+.qrmenu-qr-frame {
+  position:relative;
+  width:220px; height:220px;
+  border-radius:16px; overflow:hidden;
+  background:#fff;
+  box-shadow:0 8px 32px rgba(0,0,0,.60);
+}
+.qrmenu-qr-img {
+  width:100%; height:100%; object-fit:contain; display:block;
+}
+.qrmenu-qr-ph {
+  width:100%; height:100%;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:10px;
+  background:#111; color:rgba(190,30,45,.60);
+}
+.qrmenu-qr-ph i    { font-size:64px; }
+.qrmenu-qr-ph span { font-family:var(--ar); font-size:18px; font-weight:700; color:rgba(255,255,255,.55); }
+.qrmenu-qr-ph small { font-family:var(--en); font-size:13px; color:rgba(255,255,255,.28); }
+
+/* زوايا ديكورية حمراء */
+.qr-corner {
+  position:absolute; width:22px; height:22px; pointer-events:none;
+}
+.qr-corner-tl { top:0;  right:0;  border-top:3px solid var(--red); border-right:3px solid var(--red); border-radius:0 4px 0 0; }
+.qr-corner-tr { top:0;  left:0;   border-top:3px solid var(--red); border-left:3px solid var(--red);  border-radius:4px 0 0 0; }
+.qr-corner-bl { bottom:0; right:0; border-bottom:3px solid var(--red); border-right:3px solid var(--red); border-radius:0 0 0 4px; }
+.qr-corner-br { bottom:0; left:0;  border-bottom:3px solid var(--red); border-left:3px solid var(--red);  border-radius:0 0 4px 0; }
+
+.qrmenu-scan-label {
+  font-family:var(--ar); font-size:18px; font-weight:700;
+  color:rgba(255,255,255,.55);
+  display:flex; align-items:center; gap:8px;
+}
+.qrmenu-scan-label i { color:var(--red-lt); font-size:16px; }
+
+/* خطوات الاستخدام */
+.qrmenu-steps {
+  display:flex; flex-direction:column; gap:10px; width:100%; max-width:380px;
+}
+.qrmenu-step {
+  display:flex; align-items:center; gap:14px;
+  font-family:var(--ar); font-size:18px; color:rgba(255,255,255,.60);
+}
+.qrmenu-step-num {
+  width:30px; height:30px; border-radius:50%; flex-shrink:0;
+  background:rgba(190,30,45,.22); border:1.5px solid rgba(190,30,45,.45);
+  color:var(--red-lt); font-family:var(--en); font-size:14px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* ملاحظة الضريبة */
+.qrmenu-tax {
+  display:flex; align-items:center; gap:8px;
+  font-family:var(--ar); font-size:17px; color:rgba(255,255,255,.38);
+}
+.qrmenu-tax i { color:var(--red-lt); font-size:14px; }
+
+/* شريط العداد */
+.qrmenu-timer-bar {
+  position:absolute; bottom:0; right:0; left:0;
+  height:4px; background:rgba(255,255,255,.08); z-index:2;
+}
+.qrmenu-timer-fill {
+  height:100%; width:100%;
+  background:linear-gradient(90deg,var(--red-dk),var(--red-lt));
+  transform-origin:right;
+  transition:transform linear;
+}
+
 /* ════════════════════════════════════════════════════════
    REVIEW / DISCOUNT OVERLAY
 ════════════════════════════════════════════════════════ */

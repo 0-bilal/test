@@ -240,6 +240,67 @@ html, body {
 .badge-btn--new.active     { background:#16a34a; border-color:#22c55e; }
 .badge-btn--limited.active { background:#d97706; border-color:#f59e0b; }
 
+/* ── Toggle صغير (للتخطي) ── */
+.toggle--sm { transform:scale(.82); transform-origin:center; }
+
+/* ── تخطي القسم في عنوان البطاقة ── */
+.cat-skip-toggle {
+  display:flex; align-items:center; gap:8px;
+  margin-right:auto; cursor:pointer;
+}
+.cat-skip-label {
+  font-size:12px; font-weight:500; color:var(--muted);
+  display:flex; align-items:center; gap:5px;
+}
+.cat-skip-label i { font-size:11px; }
+.cat-skip-toggle input:checked ~ .slider { background:var(--red) !important; }
+
+/* ── صف عناصر التحكم لكل منتج ── */
+.item-controls-row {
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  padding:8px 8px 12px 58px;
+  border-bottom:1px solid rgba(255,255,255,.04);
+}
+
+.item-ctrl-group {
+  display:flex; align-items:center; gap:9px;
+  background:rgba(255,255,255,.04); border-radius:10px;
+  padding:6px 12px; flex-shrink:0;
+}
+.item-ctrl-group--skip { margin-right:auto; }
+
+.item-ctrl-label {
+  font-size:12.5px; color:var(--muted);
+  display:flex; align-items:center; gap:5px; white-space:nowrap;
+}
+.item-ctrl-label i { font-size:11px; }
+
+/* أزرار الإخفاء المؤقت */
+.temp-btns { display:flex; gap:6px; flex-wrap:wrap; }
+.temp-btn {
+  padding:5px 14px; border-radius:20px; font-size:13px; font-weight:700;
+  border:1.5px solid rgba(190,30,45,.35); color:rgba(190,30,45,.8);
+  background:rgba(190,30,45,.08); transition:all .15s;
+}
+.temp-btn:hover {
+  background:rgba(190,30,45,.2); border-color:var(--red); color:#fff;
+}
+
+/* الحالة النشطة (مخفي مؤقتاً) */
+.temp-active { display:flex; align-items:center; gap:8px; }
+.temp-remaining {
+  font-size:13px; font-weight:700; color:#f59e0b;
+  display:flex; align-items:center; gap:5px;
+}
+.temp-remaining i { font-size:11px; }
+.temp-cancel {
+  padding:4px 12px; border-radius:16px; font-size:12px; font-weight:600;
+  border:1.5px solid rgba(255,255,255,.2); color:rgba(255,255,255,.6);
+  background:rgba(255,255,255,.06); transition:all .15s;
+  display:flex; align-items:center; gap:5px;
+}
+.temp-cancel:hover { background:rgba(255,255,255,.14); color:#fff; }
+
 /* ════════════════════════════════════════════════
    STATS
 ════════════════════════════════════════════════ */

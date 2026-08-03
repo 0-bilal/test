@@ -341,7 +341,7 @@
 .vx-det-ar {
   flex: 1 1 0; min-width: 0;
   display: flex; flex-direction: column; justify-content: center; gap: 10px;
-  text-align: right;
+  text-align: right; overflow: hidden;
 }
 .vx-name-ar {
   height: 116px;
@@ -397,7 +397,7 @@
 .vx-price-cur { font-family: var(--ar); font-size: 21px; font-weight: 500; color: rgba(255,255,255,.85); }
 
 .vx-desc {
-  height: 149px; flex-shrink: 0;
+  flex: 1 1 0; min-height: 0;
   font-family: var(--ar); font-size: 24px; font-weight: 400; line-height: 1.55;
   color: rgba(255,255,255,.64); text-align: right;
   overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
@@ -408,6 +408,56 @@
   background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.13);
   font-family: var(--ar); font-size: 19px; font-weight: 600; color: rgba(255,255,255,.78);
   white-space: nowrap;
+}
+
+/* ── مكونات المنتج (عمودي) — في العمود الأيمن تحت الاسم ── */
+.vx-ingredients {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: flex-end; /* محاذاة يمين مع بقية العمود */
+}
+.vx-ingredient {
+  font-family: var(--ar); font-size: 17px; font-weight: 600;
+  padding: 5px 14px; border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  border: 1.5px solid rgba(255,255,255,.16);
+  color: rgba(255,255,255,.78);
+  white-space: nowrap;
+}
+.vx-ingredient--removable {
+  background: rgba(190,30,45,.20);
+  border-color: rgba(190,30,45,.60);
+  color: #fff;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.vx-ingredient--removable i { color: var(--red); font-size: 14px; flex-shrink: 0; }
+
+/* ── اختيار الصوص (عمودي) — في العمود الأيسر ── */
+.vx-sauce-picker {
+  flex-direction: column; gap: 10px;
+}
+.vx-sauce-label {
+  font-family: var(--ar); font-size: 18px; font-weight: 700;
+  color: rgba(255,255,255,.55);
+  display: flex; align-items: center; gap: 7px;
+}
+.vx-sauce-label i { color: var(--red); font-size: 15px; }
+.vx-sauce-btns {
+  display: flex; flex-wrap: wrap; gap: 10px;
+}
+.vx-sauce-btn {
+  font-family: var(--ar); font-size: 20px; font-weight: 700;
+  padding: 8px 24px; border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  border: 2px solid rgba(255,255,255,.18);
+  color: rgba(255,255,255,.75);
+  cursor: pointer; transition: all .2s ease;
+  white-space: nowrap;
+}
+.vx-sauce-btn--on {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(190,30,45,.40);
 }
 
 /* ════════════════════════════════════════════

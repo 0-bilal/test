@@ -99,4 +99,14 @@ const slides = [
     badgeColor: 'red',
     duration: 9000,
   },
+  {
+    image: 'images/slides/slide7.png',
+    titleAr: 'دبل ترافل برجر',
+    titleEn: "Today's Special",
+    descriptionAr: 'نكهة الترافل الفاخرة في كل لقمة',
+    badge: 'جديد',
+    badgeColor: 'gold',
+    price: 26,
+    duration: 7000,
+  },
  ];

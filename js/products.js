@@ -8,7 +8,7 @@ const restaurantInfo = {
   nameEn:       'DUO Burger',
   taglineAr:    'نكهة لا تُنسى في كل قضمة',
   logo:         'images/logo.ico',
-  phone:        '..قريبا',
+  phone:        '059 301 1999',
   workingHours: '12:00 م – 03:00 ص',
   workingDays:  'طوال أيام الأسبوع',
   instagram:    'duo_burger1@',

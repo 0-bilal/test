@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#be1e2d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="منيو ديو برجر — تصفح وجباتنا الشهية">
+  <title>ديو برجر | المنيو</title>
+
+  <link rel="icon" href="images/logo.ico" type="image/x-icon">
+
+  <!-- Fonts & Icons — مطابق للشاشة الرئيسية -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/menu.css">
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════
+       خلفية سينمائية — مطابقة لـ vx-bg
+  ══════════════════════════════════════ -->
+  <div class="m-bg" aria-hidden="true">
+    <span class="m-orb m-orb-1"></span>
+    <span class="m-orb m-orb-2"></span>
+    <span class="m-orb m-orb-3"></span>
+    <span class="m-sheen"></span>
+  </div>
+  <div class="m-grain" aria-hidden="true"></div>
+
+  <!-- ══════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════ -->
+  <header class="m-header">
+    <div class="m-header-logo">
+      <img id="m-logo-img" src="images/logo.ico" alt="شعار المطعم" style="display:none">
+      <span id="m-logo-ph" class="m-header-logo-ph"><i class="fa-solid fa-burger"></i></span>
+    </div>
+    <div class="m-header-text">
+      <div class="m-header-name" id="m-name">ديو برجر</div>
+      <div class="m-header-tag"  id="m-tag"></div>
+    </div>
+    <div class="m-header-hours">
+      <div class="m-hours-row">
+        <i class="fa-solid fa-clock"></i>
+        <span id="m-hours-text"></span>
+      </div>
+      <div class="m-hours-days" id="m-hours-days"></div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════
+       TABS
+  ══════════════════════════════════════ -->
+  <nav class="m-tabs-wrap" aria-label="أقسام المنيو">
+    <div class="m-tabs" id="m-tabs" role="tablist"></div>
+  </nav>
+
+  <!-- ══════════════════════════════════════
+       MAIN CONTENT
+  ══════════════════════════════════════ -->
+  <main class="m-main" id="m-main"></main>
+
+  <!-- ══════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════ -->
+  <footer class="m-footer">
+    <div class="m-footer-tax">
+      <i class="fa-solid fa-circle-info"></i>
+      <span id="m-footer-tax-text"></span>
+    </div>
+    <div class="m-footer-links">
+      <a class="m-footer-link map" id="m-map-btn" href="#" target="_blank" rel="noopener">
+        <i class="fa-solid fa-map-location-dot"></i>موقعنا
+      </a>
+      <a class="m-footer-link" id="m-insta-btn" href="#" target="_blank" rel="noopener">
+        <i class="fa-brands fa-instagram"></i>إنستقرام
+      </a>
+      <a class="m-footer-link" id="m-tiktok-btn" href="#" target="_blank" rel="noopener">
+        <i class="fa-brands fa-tiktok"></i>تيك توك
+      </a>
+    </div>
+    <!-- شريط المطور -->
+    <div class="m-credit">
+      <span class="m-credit-brand"><i class="fa-solid fa-code"></i>QB</span>
+      <span class="m-credit-sep"></span>
+      <span class="m-credit-suite">من برمجيات QB</span>
+      <span class="m-credit-sep"></span>
+      <span class="m-credit-dev">تطوير بلال الخواجة</span>
+      <span class="m-credit-sep"></span>
+      <span class="m-credit-ver">v15</span>
+    </div>
+  </footer>
+
+  <!-- ══════════════════════════════════════
+       MODAL — تفاصيل المنتج
+  ══════════════════════════════════════ -->
+  <div class="m-modal-overlay" id="m-modal-overlay" role="dialog" aria-modal="true" aria-label="تفاصيل المنتج">
+    <div class="m-modal" id="m-modal">
+      <button class="m-modal-close" id="m-modal-close" aria-label="إغلاق">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="m-modal-handle" aria-hidden="true"></div>
+      <div class="m-modal-img-area"></div>
+      <div class="m-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       زر الرجوع للأعلى
+  ══════════════════════════════════════ -->
+  <button class="m-scroll-top" id="m-scroll-top" aria-label="الرجوع للأعلى">
+    <i class="fa-solid fa-chevron-up"></i>
+  </button>
+
+  <!-- ══════════════════════════════════════
+       SCRIPTS
+  ══════════════════════════════════════ -->
+  <script src="js/products.js"></script>
+  <script src="js/menu.js"></script>
+
+</body>
+</html>

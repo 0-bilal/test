@@ -17,9 +17,41 @@ document.addEventListener('gestureend',    e => e.preventDefault(), { passive: f
 /* ══════════════════════════════════════════ */
 
 /* ── Config ── */
-const ITEM_DURATION   = 3500;  // ms per highlight step
+const ITEM_DURATION   = 3500;  // ms per highlight step (قيمة افتراضية)
 const HIGHLIGHT_DELAY = 80;    // ms to let CSS layout settle before centering
-const PAUSE_DURATION  = 12000; // ms to pause auto-scroll after user interaction
+const PAUSE_DURATION  = 12000; // ms to pause auto-scroll after user interaction (قيمة افتراضية)
+
+/* ── مفاتيح localStorage الخاصة بإعدادات السكرول الديناميكية ── */
+const LS_AUTO_SCROLL          = 'duo_auto_scroll';
+const LS_ITEM_DURATION_KEY    = 'duo_item_duration';
+const LS_PAUSE_DURATION_KEY   = 'duo_pause_duration';
+const LS_OVERLAY_DURATION_KEY = 'duo_overlay_duration';
+
+/* ── مفاتيح إعدادات Overlay وCrossfade ── */
+const LS_CROSSFADE_DUR    = 'duo_crossfade_dur';      // ms — تبديل الصورة
+const LS_OV_CHANGE_DUR    = 'duo_overlay_change_dur'; // ms — تبديل المنتج داخل overlay
+const LS_OV_CLOSE_DUR     = 'duo_overlay_close_dur';  // ms — إغلاق overlay
+
+/* ── مفاتيح الصيانة ومدة الشرائح ── */
+const LS_MAINTENANCE      = 'duo_maintenance';         // 'true'|'false'
+const LS_MAINTENANCE_MSG  = 'duo_maintenance_msg';     // نص رسالة الصيانة
+const LS_SLIDE_DURATIONS  = 'duo_slide_durations';     // JSON {idx: ms}
+
+/* ── دوال قراءة الإعدادات (تُستدعى لحظياً لضمان أحدث قيمة) ── */
+function _getItemDuration()    { return parseInt(localStorage.getItem(LS_ITEM_DURATION_KEY)    || String(ITEM_DURATION),    10); }
+function _getPauseDuration()   { return parseInt(localStorage.getItem(LS_PAUSE_DURATION_KEY)   || String(PAUSE_DURATION),   10); }
+function _getOverlayDuration() { return parseInt(localStorage.getItem(LS_OVERLAY_DURATION_KEY) || '8000',                   10); }
+function _isAutoScrollOn()     { const v = localStorage.getItem(LS_AUTO_SCROLL); return v === null ? true : v === 'true'; }
+function _getCrossfadeDur()    { return parseInt(localStorage.getItem(LS_CROSSFADE_DUR)    || '520',  10); }
+function _getOvChangeDur()     { return parseInt(localStorage.getItem(LS_OV_CHANGE_DUR)    || '260',  10); }
+function _getOvCloseDur()      { return parseInt(localStorage.getItem(LS_OV_CLOSE_DUR)     || '430',  10); }
+function _getSlideDur(idx) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_SLIDE_DURATIONS) || '{}');
+    const v = saved[String(idx)];
+    return (v !== undefined) ? parseInt(v, 10) : (slides[idx]?.duration ?? 5000);
+  } catch { return slides[idx]?.duration ?? 5000; }
+}
 
 /* ── Helpers ── */
 const $ = id => document.getElementById(id);
@@ -206,23 +238,11 @@ function pauseAutoScroll() {
 
   // Reset countdown each time user interacts
   clearTimeout(pauseTimer);
-  pauseTimer = setTimeout(resumeAutoScroll, PAUSE_DURATION);
+  pauseTimer = setTimeout(resumeAutoScroll, _getPauseDuration());
 
   if (isPaused) return; // already paused, just reset timer above
   isPaused = true;
   clearTimeout(autoTimer);
-
-  // Show paused indicator in status bar
-  const indicator = document.querySelector('.scroll-item-indicator');
-  if (indicator && !indicator.dataset.origHtml) {
-    indicator.dataset.origHtml = indicator.innerHTML;
-    indicator.innerHTML =
-      `<i class="fa-solid fa-hand-pointer" style="color:var(--red)"></i>
-       <span style="color:var(--white);font-weight:700">تصفح يدوي</span>`;
-  }
-  // Stop timer fill
-  const fill = $('scroll-timer-fill');
-  if (fill) { fill.style.transition = 'none'; fill.style.width = '0%'; }
 }
 
 function resumeAutoScroll() {
@@ -234,16 +254,11 @@ function resumeAutoScroll() {
   isPaused = false;
   clearTimeout(pauseTimer);
 
-  // Restore indicator
-  const indicator = document.querySelector('.scroll-item-indicator');
-  if (indicator && indicator.dataset.origHtml) {
-    indicator.innerHTML = indicator.dataset.origHtml;
-    delete indicator.dataset.origHtml;
-  }
-
-  // Re-highlight current item and resume stepping
+  // Re-highlight nearest visible item and resume stepping
+  const resumeIdx = _findNearestVisibleItem();
+  curIdx = resumeIdx;
   highlightItem(curIdx);
-  autoTimer = setTimeout(stepScroll, ITEM_DURATION);
+  autoTimer = setTimeout(stepScroll, _getItemDuration());
 }
 
 /* ════════════════════════════════════════════════════════
@@ -278,20 +293,18 @@ function highlightItem(idx) {
     highlightActiveTab(catId);
   }
 
-  // Timer fill
-  const fill = $('scroll-timer-fill');
-  if (fill) {
-    fill.style.transition = 'none';
-    fill.style.width = '0%';
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      fill.style.transition = `width ${ITEM_DURATION}ms linear`;
-      fill.style.width = '100%';
-    }));
-  }
 }
 
 /* ── Scroll config ── */
-const SCROLL_TOP_OFFSET = 10;   // px gap above the category heading
+const SCROLL_TOP_OFFSET = 10;   // px gap above the category heading (in element space)
+
+/* ── مقياس الشاشة الحالي (لتصحيح حسابات getBoundingClientRect) ── */
+function _getScreenScale() {
+  const screenEl = document.querySelector('.screen:not(#screen-vertical)');
+  if (!screenEl) return 1;
+  const m = screenEl.style.transform.match(/scale\(([\d.]+)\)/);
+  return m ? parseFloat(m[1]) : 1;
+}
 
 /**
  * After rendering all items, add enough padding-bottom to the scroll area
@@ -332,41 +345,99 @@ function fixScrollablePadding() {
 }
 
 /**
- * Scroll menu-items-area to the SECTION HEADING of the highlighted item's
- * category so the category name is always visible at the top.
+ * Scroll menu-items-area so that the highlighted item is fully visible
+ * and its category heading appears at the top.
  *
- * - Always anchors to the heading (not the item itself).
- * - Compares against the clamped target so same-category items don't
- *   trigger a redundant scroll call.
- * - Uses getBoundingClientRect() — always pixel-accurate.
+ * - Corrects for transform:scale() applied to .screen so the scroll
+ *   target is computed in element-space coordinates, not viewport-space.
+ * - Falls back to centering the item if the heading-at-top approach
+ *   would push the item below the visible fold.
  */
 function centerItem(el) {
   const area = $('menu-items-area');
   if (!area || !el) return;
 
+  // ── تحويل إحداثيات viewport → مساحة العنصر ──────────────
+  // getBoundingClientRect() يُعيد قيماً في مساحة viewport (بعد scale).
+  // area.scrollTop وarea.scrollTo() يعملان في مساحة العنصر (قبل scale).
+  const scale    = _getScreenScale();
+  const areaRect = area.getBoundingClientRect();
+
+  // العنوان (heading) للقسم
   const catId   = el.dataset.cat;
   const heading = area.querySelector(`.section-heading[data-cat="${catId}"]`);
   const anchor  = heading || el;
 
-  const areaRect   = area.getBoundingClientRect();
   const anchorRect = anchor.getBoundingClientRect();
+  const elRect     = el.getBoundingClientRect();
 
-  // Absolute top of the heading within the scroll content
-  const absTop  = anchorRect.top - areaRect.top + area.scrollTop;
-  const target  = Math.max(0, absTop - SCROLL_TOP_OFFSET);
+  // المسافة من أعلى المنطقة المرئية للعنصر — محوّلة لمساحة العنصر
+  const anchorDelta  = (anchorRect.top  - areaRect.top)  / scale;
+  const elTopDelta   = (elRect.top      - areaRect.top)  / scale;
+  const elBotDelta   = (elRect.bottom   - areaRect.top)  / scale;
 
-  // Clamp to the real scrollable limit (after fixScrollablePadding this should
-  // always be reachable, but guard just in case)
+  // الموضع المطلق داخل المحتوى (مساحة العنصر)
+  const anchorAbsTop = area.scrollTop + anchorDelta;
+  const elAbsTop     = area.scrollTop + elTopDelta;
+  const elAbsBot     = area.scrollTop + elBotDelta;
+
+  // الارتفاع المرئي للمنطقة (مساحة العنصر)
+  const visH = area.clientHeight;
+
+  // الهدف الأساسي: عنوان القسم عند أعلى المنطقة
+  let target = Math.max(0, anchorAbsTop - SCROLL_TOP_OFFSET);
+
+  // تحقّق: هل المنتج سيكون مرئياً كاملاً؟
+  const itemTopAfterScroll = elAbsTop - target;
+  const itemBotAfterScroll = elAbsBot - target;
+  if (itemBotAfterScroll > visH || itemTopAfterScroll < 0) {
+    // المنتج خارج المنطقة المرئية → توسيطه
+    const itemCenter = (elAbsTop + elAbsBot) / 2;
+    target = Math.max(0, itemCenter - visH / 2);
+  }
+
   const maxScroll = area.scrollHeight - area.clientHeight;
   const clamped   = Math.min(target, maxScroll);
 
-  // Skip if we're already there (same-category transition — no movement needed)
-  if (Math.abs(area.scrollTop - clamped) < 6) return;
+  // تجاهل إذا كنا في الموضع الصحيح بالفعل
+  if (Math.abs(area.scrollTop - clamped) < 4) return;
 
   progScroll = true;
   area.scrollTo({ top: clamped, behavior: 'smooth' });
-  // Reset flag after animation completes (~600ms)
-  setTimeout(() => { progScroll = false; }, 700);
+  setTimeout(() => { progScroll = false; }, 650);
+}
+
+/**
+ * يجد أقرب منتج مرئي إلى منتصف المنطقة الظاهرة على الشاشة.
+ * يُستخدم عند استئناف السكرول التلقائي بعد التصفح اليدوي
+ * حتى لا يقفز السكرول فجأة لمنتج بعيد.
+ */
+function _findNearestVisibleItem() {
+  const area = $('menu-items-area');
+  if (!area || !allItemEls.length) return curIdx;
+
+  const scale    = _getScreenScale();
+  const areaRect = area.getBoundingClientRect();
+  // منتصف المنطقة المرئية في مساحة العنصر
+  const visCenter = area.scrollTop + area.clientHeight / 2;
+
+  let bestIdx  = curIdx;
+  let bestDist = Infinity;
+
+  allItemEls.forEach((el, idx) => {
+    if (el.style.display === 'none') return;
+    const nameEl = el.querySelector('.item-name-ar');
+    const key    = _devItemKey(el.dataset.cat, nameEl?.textContent || '');
+    if (_devScrollSkip.has(key) || _devCatSkip.has(el.dataset.cat)) return;
+
+    const rect       = el.getBoundingClientRect();
+    // تحويل مركز المنتج إلى مساحة العنصر
+    const itemCenter = area.scrollTop + (rect.top + rect.height / 2 - areaRect.top) / scale;
+    const dist       = Math.abs(itemCenter - visCenter);
+    if (dist < bestDist) { bestDist = dist; bestIdx = idx; }
+  });
+
+  return bestIdx;
 }
 
 function stepScroll() {
@@ -392,20 +463,23 @@ function stepScroll() {
   const curEl  = allItemEls[curIdx];
 
   const catChanged = nextEl && curEl && nextEl.dataset.cat !== curEl.dataset.cat;
-  const delay      = catChanged ? ITEM_DURATION + 800 : ITEM_DURATION;
+  const _dur       = _getItemDuration();
+  // تأخير إضافي 3 ثوانٍ عند الانتقال من قسم لآخر
+  const delay      = catChanged ? _dur + 3000 : _dur;
 
   highlightItem(nextIdx);
   autoTimer = setTimeout(stepScroll, delay);
 }
 
 function startAutoScroll() {
+  if (!_isAutoScrollOn()) return; // السكرول التلقائي مُعطَّل من لوحة التحكم
   // ابدأ من أول منتج مرئي
   let startIdx = 0;
   while (startIdx < allItemEls.length && allItemEls[startIdx]?.style.display === 'none') {
     startIdx++;
   }
   highlightItem(startIdx % (allItemEls.length || 1));
-  autoTimer = setTimeout(stepScroll, ITEM_DURATION);
+  autoTimer = setTimeout(stepScroll, _getItemDuration());
 }
 
 /* ════════════════════════════════════════════════════════
@@ -456,8 +530,9 @@ function _crossfadeOverlayImage(newSrc) {
   img2.style.transition  = 'none';
   img2.style.opacity     = '0';
 
+  const _cfd = _getCrossfadeDur();
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    img2.style.transition = `opacity ${CROSSFADE_DURATION}ms ease`;
+    img2.style.transition = `opacity ${_cfd}ms ease`;
     img2.style.opacity    = '1';
   }));
 
@@ -468,7 +543,7 @@ function _crossfadeOverlayImage(newSrc) {
     img2.style.transition = 'none';
     img2.style.opacity    = '0';
     setTimeout(() => { img2.style.display = 'none'; }, 50);
-  }, CROSSFADE_DURATION + 30);
+  }, _cfd + 30);
 }
 
 /* ── تعبئة بيانات المنتج (نصوص + صورة) ── */
@@ -584,7 +659,7 @@ function showProductOverlay(item, idx) {
   const overlay = $('product-overlay');
 
   clearTimeout(productOverlayTimer);
-  productOverlayTimer = setTimeout(hideProductOverlay, PRODUCT_OVERLAY_DURATION);
+  productOverlayTimer = setTimeout(hideProductOverlay, _getOverlayDuration());
 
   if (overlay.classList.contains('active')) {
     /* الـ overlay مفتوح — تبديل سلس بين منتجين */
@@ -596,7 +671,7 @@ function showProductOverlay(item, idx) {
       _fillOverlayContent(item, idx);
       overlay.classList.remove('changing');
       overlayChanging = false;
-    }, OVERLAY_CHANGE_DURATION);
+    }, _getOvChangeDur());
 
   } else {
     /* فتح أول مرة — ينبثق من الأسفل */
@@ -629,7 +704,7 @@ function hideProductOverlay() {
     overlay.classList.remove('closing');
     // العودة للتمرير التلقائي بعد اكتمال الانتقال
     resumeAutoScroll();
-  }, OVERLAY_CLOSE_DURATION);
+  }, _getOvCloseDur());
 }
 window.hideProductOverlay = hideProductOverlay;
 
@@ -866,13 +941,13 @@ function goToSlide(idx, _attempt) {
   scheduleSlide();
 }
 function scheduleSlide() {
-  const dur = slides[curSlide]?.duration || 5000;
+  const dur = _getSlideDur(curSlide);
   slideTimer = setTimeout(() => goToSlide((curSlide+1) % slides.length), dur);
 }
 function fillSlideProgress() {
   const fill = $('progress-fill');
   if (!fill) return;
-  const dur = slides[curSlide]?.duration || 5000;
+  const dur = _getSlideDur(curSlide);
   fill.style.transition = 'none'; fill.style.width = '0%';
   requestAnimationFrame(() => requestAnimationFrame(() => {
     fill.style.transition = `width ${dur}ms linear`;
@@ -1186,6 +1261,25 @@ function applyRemoteSettings(v) {
     localStorage.setItem(LS_SCROLL_SKIP,JSON.stringify([..._devScrollSkip]));
     localStorage.setItem(LS_CAT_SKIP,   JSON.stringify([..._devCatSkip]));
 
+    // إعدادات السكرول الديناميكية
+    if (v.autoScroll      !== undefined) localStorage.setItem(LS_AUTO_SCROLL,          String(!!v.autoScroll));
+    if (v.itemDuration    !== undefined) localStorage.setItem(LS_ITEM_DURATION_KEY,    String(parseInt(v.itemDuration,    10) || ITEM_DURATION));
+    if (v.pauseDuration   !== undefined) localStorage.setItem(LS_PAUSE_DURATION_KEY,   String(parseInt(v.pauseDuration,   10) || PAUSE_DURATION));
+    if (v.overlayDuration !== undefined) localStorage.setItem(LS_OVERLAY_DURATION_KEY, String(parseInt(v.overlayDuration, 10) || 8000));
+    // إعدادات Overlay/Crossfade
+    if (v.crossfadeDur    !== undefined) localStorage.setItem(LS_CROSSFADE_DUR,    String(parseInt(v.crossfadeDur,    10) || 520));
+    if (v.ovChangeDur     !== undefined) localStorage.setItem(LS_OV_CHANGE_DUR,    String(parseInt(v.ovChangeDur,     10) || 260));
+    if (v.ovCloseDur      !== undefined) localStorage.setItem(LS_OV_CLOSE_DUR,     String(parseInt(v.ovCloseDur,      10) || 430));
+    // مدة الشرائح المخصصة
+    if (v.slideDurations  !== undefined) localStorage.setItem(LS_SLIDE_DURATIONS,  JSON.stringify(v.slideDurations || {}));
+    // وضع الصيانة
+    if (v.maintenanceOn !== undefined) {
+      localStorage.setItem(LS_MAINTENANCE, String(!!v.maintenanceOn));
+      if (v.maintenanceMsg !== undefined) localStorage.setItem(LS_MAINTENANCE_MSG, String(v.maintenanceMsg));
+      if (v.maintenanceOn) _showMaintenanceScreen();
+      else                 _hideMaintenanceScreen();
+    }
+
     _refreshAllBadges();
     applyDevSettings();
   } catch (e) { console.warn('[Sync] apply error:', e); }
@@ -1298,6 +1392,22 @@ const BASE_H_VL = 1920;
 const LS_SCALE_MODE = 'duo_scale_mode';   // 'auto' | 'manual'
 const LS_SCALE_VAL  = 'duo_screen_scale'; // رقم المقياس اليدوي
 const LS_LAYOUT     = 'duo_menu_layout';  // 'horizontal' | 'vertical'
+
+/* ════════════════════════════════════════════════════════
+   قفل اتجاه الشاشة بناءً على وضع العرض المختار
+   ─ يعمل على Android / Chrome تلقائياً
+   ─ على iOS: المانيفيست (orientation: any) يسمح بالدوران
+     ويتبع الجهاز اتجاه الـ iPad الفعلي
+════════════════════════════════════════════════════════ */
+function _applyOrientationLock(layout) {
+  const target = (layout === 'vertical') ? 'portrait' : 'landscape';
+  try {
+    if (screen.orientation && typeof screen.orientation.lock === 'function') {
+      screen.orientation.lock(target).catch(() => {});
+    }
+  } catch (_) {}
+}
+window._applyOrientationLock = _applyOrientationLock;
 
 function fitScreenToViewport() {
   // اختر الشاشة المرئية: العمودية إن كانت مفعّلة، وإلا الأفقية
@@ -1591,9 +1701,43 @@ function _vlRebuildIfActive() {
 /* ════════════════════════════════════════════════════════
    INIT
 ════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════
+   MAINTENANCE MODE — وضع الصيانة
+════════════════════════════════════════════════════════ */
+function _showMaintenanceScreen() {
+  const msg = localStorage.getItem(LS_MAINTENANCE_MSG) || 'نعود قريباً — We\'ll be back soon';
+  let el = document.getElementById('maintenance-screen');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'maintenance-screen';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `
+    <div class="maintenance-content">
+      <div class="maintenance-icon"><i class="fa-solid fa-wrench"></i></div>
+      <div class="maintenance-msg">${msg}</div>
+      <div class="maintenance-sub">يرجى المتابعة قريباً</div>
+    </div>`;
+  el.style.display = 'flex';
+}
+function _hideMaintenanceScreen() {
+  const el = document.getElementById('maintenance-screen');
+  if (el) el.style.display = 'none';
+}
+window._showMaintenanceScreen = _showMaintenanceScreen;
+window._hideMaintenanceScreen = _hideMaintenanceScreen;
+
 document.addEventListener('DOMContentLoaded', () => {
+  /* ── وضع الصيانة: تحقق أولاً ── */
+  if (localStorage.getItem(LS_MAINTENANCE) === 'true') {
+    _showMaintenanceScreen();
+    fitScreenToViewport();
+    // استمر في التهيئة لدعم المزامنة (إيقاف الصيانة من جهاز آخر)
+  }
+
   /* تحديد وضع العرض */
   const _layout = localStorage.getItem(LS_LAYOUT) || 'horizontal';
+  _applyOrientationLock(_layout);   // قفل اتجاه الشاشة (Android) / السماح بالدوران (iOS)
   const _screenH = document.querySelector('.screen:not(#screen-vertical)');
   const _screenV = document.getElementById('screen-vertical');
 

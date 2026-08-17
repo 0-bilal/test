@@ -1,6 +1,7 @@
 /**
- * products.js — بيانات مطعم البرجر
- * عدّل هذا الملف لإضافة منتجاتك الحقيقية
+ * products.js — بيانات منيو ديو برجر (نسخة الجوال)
+ * ═══════════════════════════════════════════════════
+ * عدّل هذا الملف لتحديث معلومات المطعم والمنتجات
  */
 
 const restaurantInfo = {
@@ -9,21 +10,31 @@ const restaurantInfo = {
   taglineAr:    'نكهة لا تُنسى في كل قضمة',
   logo:         'images/logo.ico',
   phone:        '..قريبا',
-  workingHours: '12:00 م – 03:00 ص',
+  workingHours: 'م12:00 - ص03:00',
   workingDays:  'طوال أيام الأسبوع',
-  instagram:    'duo_burger1@',
-  tiktok:       'theduoburger@',
-  address:      'مكه - حي الشوقية',
+
+  /* ─────────────────────────────────────────────────────────
+     روابط التواصل الاجتماعي
+     ضع اسم الحساب فقط بدون @ وبدون رابط كامل
+     مثال Instagram: إذا كان الرابط https://instagram.com/duo_brger1
+                    اكتب فقط:  'duo_brger1'
+     مثال TikTok:   إذا كان الرابط https://tiktok.com/@theduoburger
+                    اكتب فقط:  'theduoburger'
+  ───────────────────────────────────────────────────────── */
+  instagram:    'duo_burger1',       // ← اسم حساب الإنستقرام (بدون @)
+  tiktok:       'theduoburger',     // ← اسم حساب التيك توك  (بدون @)
+
+  address:      'مكة - حي الشوقية',
   taxNote:      'الأسعار شاملة ضريبة القيمة المضافة 15%',
-  googleMapsUrl: 'https://maps.app.goo.gl//ديو+برجر+DUO+BURGER%E2%80%AD/@21.377399,39.769425,16.83z/data=!4m6!3m5!1s0x15c21b003ee4d6c3:0xfae4e901ae19f8e0!8m2!3d21.3781865!4d39.768244!16s%2Fg%2F11zc3dx62w?entry=ttu&g_ep=EgoyMDI2MDYyOS4wIKXMDSoASAFQAw%3D%3D',   // ← ضع رابط صفحة تقييم المطعم
-  googleMapsQr:  'images/review-qr.png',
+
+  /* ─────────────────────────────────────────────────────────
+     رابط الخريطة — انسخ الرابط الكامل من Google Maps
+  ───────────────────────────────────────────────────────── */
+  googleMapsUrl: 'https://maps.app.goo.gl/vh6dvfB1u4w6f99s9',
 };
 
 const menuCategories = [
 
-  /* ──────────────────────────────────────
-     الأطباق الرئيسية
-  ────────────────────────────────────── */
   {
     id: 'main',
     nameAr: 'الأطباق الرئيسية',
@@ -32,11 +43,11 @@ const menuCategories = [
     items: [
       {
         nameAr:        'دبل ديو برجر',
-        nameEn:        'Double DUO Burder',
+        nameEn:        'Double DUO Burger',
         image:         'images/products/duo-burger.jpg',
         price:         23,
         calories:      630,
-        descriptionAr: 'برجر اسماش دبل 140 غرام من اللحم المشوي، مع صوص، يعطي لذعة حموضة',
+        descriptionAr: 'برجر اسماش دبل 140 غرام من اللحم المشوي، مع صوص يعطي لذعة حموضة',
         ingredients: [
           { nameAr: 'خبز بريوش', removable: false },
           { nameAr: 'لحم سماش دبل 140غ', removable: false },
@@ -51,7 +62,7 @@ const menuCategories = [
         image:         'images/products/origa-burger.jpg',
         price:         23,
         calories:      946,
-        descriptionAr: 'برجر اسماش دبل 140 غرام من اللحم المشوي، معصوص يعطي اللحمة بعضا من الحلاوة',
+        descriptionAr: 'برجر اسماش دبل 140 غرام من اللحم المشوي، مع صوص يعطي اللحمة بعضاً من الحلاوة',
         ingredients: [
           { nameAr: 'خبز بريوش', removable: false },
           { nameAr: 'لحم سماش دبل 140غ', removable: false },
@@ -64,7 +75,7 @@ const menuCategories = [
         nameEn:        'Double Truffle Burger',
         image:         'images/products/truffle-burger.jpg',
         price:         26,
-        descriptionAr: 'برجر اسماش دبل 140 غرام لعشاق النكهات العميقة والفريدة، ليقدم مزيجاً لا يُقاوم من المكونات الفاخرة التي تذوب في الفم وتأخذ حواسك إلى مستوى آخر',
+        descriptionAr: 'برجر اسماش دبل 140 غرام لعشاق النكهات العميقة والفريدة، يقدّم مزيجاً لا يُقاوم من المكونات الفاخرة',
         ingredients: [
           { nameAr: 'خبز بريوش', removable: false },
           { nameAr: 'لحم سماش دبل 140غ', removable: false },
@@ -73,12 +84,12 @@ const menuCategories = [
         ],
       },
       {
-        nameAr:        'أضافة شريحة لحم',
-        nameEn:        'Add a ٍٍٍٍٍٍslice Of Meat',
+        nameAr:        'إضافة شريحة لحم',
+        nameEn:        'Add a Slice of Meat',
         image:         '',
         price:         6,
-        calories:      120,        
-        descriptionAr: 'كملها بإضافة شريحة لحم على البرجر ليصبح تريبل، أو. كواردير تصل شريحة اللحم الواحدة 70 غم',
+        calories:      120,
+        descriptionAr: 'كملها بإضافة شريحة لحم على البرجر ليصبح تريبل أو كوارتر — تصل شريحة اللحم الواحدة 70 غم',
       },
       {
         nameAr:        'وجبة برجر',
@@ -86,15 +97,11 @@ const menuCategories = [
         image:         'images/products/burger-meal.jpg',
         price:         33,
         isMeal:        true,
-        descriptionAr: 'وجبة من البرجر، ديو، أو أوريغا مع البطاطس المقلية المبهرة والمشروب',
+        descriptionAr: 'وجبة من البرجر ديو أو أوريغا مع البطاطس المقلية المبهّرة والمشروب',
       },
-      
     ],
   },
 
-  /* ──────────────────────────────────────
-     الأطباق الجانبية
-  ────────────────────────────────────── */
   {
     id: 'sides',
     nameAr: 'الأطباق الجانبية',
@@ -102,7 +109,7 @@ const menuCategories = [
     icon: 'fa-bowl-food',
     items: [
       {
-        nameAr:        'بطاطس مبهرة',
+        nameAr:        'بطاطس مبهّرة',
         nameEn:        'Seasoned Potatoes',
         image:         'images/products/fries.jpg',
         price:         7,
@@ -115,22 +122,19 @@ const menuCategories = [
         image:         'images/products/corn-ribs.jpg',
         price:         14,
         calories:      200,
-        descriptionAr: '6 قطع من أضلاع، الدرة الذهبية المقلية. معصوص الكريمة والبهارات ديو',
+        descriptionAr: '6 قطع من أضلاع الذرة الذهبية المقلية مع صوص الكريمة وبهارات ديو',
       },
       {
         nameAr:        'تكساس فرايز',
         nameEn:        'Spicy Wedges',
         image:         'images/products/spicy-wedges.jpg',
         price:         19,
-        descriptionAr: 'البطاطس المقلية الذهبية معصوص ديو أو أوريغا من اختيارك و اللحم. وصوص الجبنة وقطع الهليبينو',
+        descriptionAr: 'بطاطس مقلية ذهبية مع صوص ديو أو أوريغا من اختيارك، واللحم وصوص الجبنة وقطع الهلابينو',
         sauceOptions:  ['صوص الديو', 'صوص أوريقا'],
       },
     ],
   },
 
-  /* ──────────────────────────────────────
-     المشروبات
-  ────────────────────────────────────── */
   {
     id: 'drinks',
     nameAr: 'المشروبات',
@@ -153,9 +157,6 @@ const menuCategories = [
     ],
   },
 
-  /* ──────────────────────────────────────
-     الصوصات
-  ────────────────────────────────────── */
   {
     id: 'sauces',
     nameAr: 'الصوصات',
@@ -168,7 +169,7 @@ const menuCategories = [
         image:         'images/products/duo-sauce.jpg',
         price:         3,
         calories:      105,
-        descriptionAr: 'صوص ديو لخليط سري، في نكهة. الليمون',
+        descriptionAr: 'صوص ديو بخليط سري في نكهة الليمون',
       },
       {
         nameAr:        'صوص اوريقا',
@@ -176,7 +177,7 @@ const menuCategories = [
         image:         'images/products/origa-sauce.jpg',
         price:         3,
         calories:      105,
-        descriptionAr: 'صوص ارويقا في نكهة حالية',
+        descriptionAr: 'صوص اوريقا في نكهة حلوة',
       },
       {
         nameAr:        'صوص ترافل',
@@ -185,24 +186,20 @@ const menuCategories = [
         descriptionAr: 'صوص ترافل لعشاق النكهات العميقة والفريدة',
       },
       {
-        nameAr:        'صوص جبنه',
+        nameAr:        'صوص جبنة',
         nameEn:        'Cheese Sauce',
         price:         3,
-        descriptionAr: '',
       },
       {
         nameAr:        'قطع مخلل',
-        nameEn:        'Pickled pieces',
+        nameEn:        'Pickled Pieces',
         price:         2,
-        descriptionAr: '',
       },
       {
         nameAr:        'قطع هلابينو',
         nameEn:        'Jalapeño Slices',
         price:         2,
-        descriptionAr: '',
       },
-      
     ],
   },
 

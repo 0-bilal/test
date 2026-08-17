@@ -7,7 +7,7 @@
   "start_url": "/index.html",
   "scope": "/",
   "display": "fullscreen",
-  "orientation": "landscape",
+  "orientation": "any",
   "background_color": "#000000",
   "theme_color": "#be1e2d",
   "categories": ["food", "restaurant"],

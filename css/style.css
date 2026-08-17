@@ -494,6 +494,42 @@ html,body {
 }
 .scroll-cat-label { font-size:16px; font-weight:700; color:var(--red); white-space:nowrap; }
 
+/* ════════════════════════════════════════════════
+   MAINTENANCE MODE SCREEN
+════════════════════════════════════════════════ */
+#maintenance-screen {
+  position:fixed; inset:0; z-index:9999;
+  background:rgba(7,7,7,.97);
+  display:flex; align-items:center; justify-content:center;
+  flex-direction:column;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.maintenance-content {
+  display:flex; flex-direction:column; align-items:center; gap:28px;
+  text-align:center; padding:40px;
+}
+.maintenance-icon {
+  width:100px; height:100px; border-radius:50%;
+  background:rgba(190,30,45,.12); border:2px solid rgba(190,30,45,.3);
+  display:flex; align-items:center; justify-content:center;
+  animation:maintenance-pulse 2.5s ease-in-out infinite;
+}
+.maintenance-icon i { font-size:40px; color:var(--red); }
+.maintenance-msg {
+  font-family:'Tajawal',sans-serif;
+  font-size:32px; font-weight:800; color:#fff; line-height:1.4;
+  max-width:600px;
+}
+.maintenance-sub {
+  font-size:18px; color:rgba(255,255,255,.4);
+  font-family:'Tajawal',sans-serif;
+}
+@keyframes maintenance-pulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(190,30,45,.4); }
+  50%      { box-shadow:0 0 0 20px rgba(190,30,45,0); }
+}
+
 /* ── Footer ── */
 .menu-footer {
   background:var(--s1); border-top:1px solid var(--b0);

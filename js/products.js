@@ -74,7 +74,7 @@ const menuCategories = [
       },
       {
         nameAr:        'أضافة شريحة لحم',
-        nameEn:        'Add a ٍٍٍٍٍٍslice Of Meat',
+        nameEn:        'Add Aslice Of Meat',
         image:         '',
         price:         6,
         calories:      120,        

@@ -43,6 +43,7 @@ const LS_OV_CLOSE_DUR      = 'duo_overlay_close_dur';
 const LS_MAINTENANCE       = 'duo_maintenance';
 const LS_MAINTENANCE_MSG   = 'duo_maintenance_msg';
 const LS_SLIDE_DURATIONS   = 'duo_slide_durations';      // JSON {idx: ms}
+const LS_PINNED_SLIDE      = 'duo_pinned_slide';         // رقم الشريحة المثبتة أو null
 const LS_LOCK_TIMEOUT      = 'duo_lock_timeout';         // دقائق (0 = معطّل)
 
 /* ── الحالة ── */
@@ -67,6 +68,7 @@ let _ovCloseDur      = 430;
 let _maintenanceOn   = false;
 let _maintenanceMsg  = '';
 let _slideDurations  = {};   // {idx: ms}
+let _pinnedSlide     = null; // null = لا تثبيت | رقم = الشريحة المثبتة
 let _lockTimeout     = 0;    // دقائق
 let _statsView       = 'today'; // 'today' | 'week'
 
@@ -106,12 +108,14 @@ function loadSettings() {
     _maintenanceMsg  = localStorage.getItem(LS_MAINTENANCE_MSG) || '';
     _lockTimeout     = parseInt(localStorage.getItem(LS_LOCK_TIMEOUT)          || '0',     10);
     try { _slideDurations = JSON.parse(localStorage.getItem(LS_SLIDE_DURATIONS) || '{}'); } catch { _slideDurations = {}; }
+    const _ps = localStorage.getItem(LS_PINNED_SLIDE);
+    _pinnedSlide = (_ps !== null && _ps !== '') ? parseInt(_ps, 10) : null;
   } catch (e) {
     _hiddenItems = new Set(); _hiddenSlides = new Set(); _hiddenVariants = new Set();
     _badges = {}; _tempHide = {}; _scrollSkip = new Set(); _catSkip = new Set();
     _autoScroll = true; _itemDuration = 3500; _pauseDuration = 12000; _overlayDuration = 8000;
     _crossfadeDur = 520; _ovChangeDur = 260; _ovCloseDur = 430;
-    _maintenanceOn = false; _maintenanceMsg = ''; _slideDurations = {}; _lockTimeout = 0;
+    _maintenanceOn = false; _maintenanceMsg = ''; _slideDurations = {}; _pinnedSlide = null; _lockTimeout = 0;
   }
 }
 
@@ -229,23 +233,34 @@ function renderHeaderTab(body) {
 ════════════════════════════════════════════════ */
 function renderSlidesTab(body) {
   const visCount = slides.filter((_, i) => !_hiddenSlides.has(String(i))).length;
+  const hasPinned = _pinnedSlide !== null && !isNaN(_pinnedSlide);
   let html = `<div class="card">
     <div class="card-title">
       <i class="fa-solid fa-images"></i> الشرائح الترويجية
       <span class="count">${visCount}/${slides.length}</span>
     </div>`;
+  if (hasPinned) {
+    const pinnedName = slides[_pinnedSlide]?.titleAr || ('شريحة ' + (_pinnedSlide + 1));
+    html += `<div class="slide-pin-banner">
+      <i class="fa-solid fa-thumbtack"></i>
+      مثبّتة: <strong>${pinnedName}</strong>
+      <span class="slide-pin-banner-hint">السلايدشو متوقف</span>
+    </div>`;
+  }
   slides.forEach((sl, i) => {
     const visible  = !_hiddenSlides.has(String(i));
     const defDur   = sl.duration ?? 5000;
     const curDur   = (_slideDurations[String(i)] !== undefined) ? _slideDurations[String(i)] : defDur;
     const durSec   = (curDur / 1000).toFixed(1).replace('.0', '');
     const isCustom = _slideDurations[String(i)] !== undefined;
+    const isPinned = _pinnedSlide === i;
     html += `
-    <label class="row ${visible ? '' : 'row--off'}">
-      <div class="row-icon row-icon--num">${i + 1}</div>
+    <label class="row ${visible ? '' : 'row--off'} ${isPinned ? 'row--pinned' : ''}">
+      <div class="row-icon row-icon--num">${isPinned ? '<i class="fa-solid fa-thumbtack" style="font-size:12px;color:#f5c200"></i>' : (i + 1)}</div>
       <div class="row-label">
         ${sl.titleAr || 'شريحة ' + (i + 1)}
         ${sl.titleEn ? `<small>${sl.titleEn}</small>` : ''}
+        ${isPinned ? `<small class="slide-pin-active-label"><i class="fa-solid fa-thumbtack"></i> مثبّتة</small>` : ''}
       </div>
       <span class="status ${visible ? 'status--on' : 'status--off'}">
         ${visible ? '<i class="fa-solid fa-eye"></i> ظاهر' : '<i class="fa-solid fa-eye-slash"></i> مخفي'}
@@ -264,11 +279,32 @@ function renderSlidesTab(body) {
       ${isCustom ? `<button class="slide-dur-reset" onclick="resetSlideDur(${i})" title="إعادة للافتراضي">
         <i class="fa-solid fa-rotate-left"></i>
       </button>` : ''}
+      <button class="slide-pin-btn ${isPinned ? 'slide-pin-btn--active' : ''}"
+        onclick="togglePinnedSlide(${i})"
+        title="${isPinned ? 'إلغاء التثبيت واستئناف السلايدشو' : 'تثبيت هذه الشريحة وإيقاف السلايدشو'}">
+        <i class="fa-solid fa-thumbtack"></i>
+        ${isPinned ? 'إلغاء التثبيت' : 'تثبيت'}
+      </button>
     </div>`;
   });
   html += `</div>`;
   body.innerHTML = html;
 }
+
+function togglePinnedSlide(idx) {
+  if (_pinnedSlide === idx) {
+    // إلغاء التثبيت
+    _pinnedSlide = null;
+    localStorage.removeItem(LS_PINNED_SLIDE);
+  } else {
+    // تثبيت هذه الشريحة
+    _pinnedSlide = idx;
+    localStorage.setItem(LS_PINNED_SLIDE, String(idx));
+  }
+  _syncPush();
+  renderSlidesTab($('dash-body'));
+}
+window.togglePinnedSlide = togglePinnedSlide;
 
 /* ════════════════════════════════════════════════
    تبويب: المنتجات
@@ -1206,6 +1242,7 @@ function _syncPush() {
     maintenanceOn:   _maintenanceOn,
     maintenanceMsg:  _maintenanceMsg,
     slideDurations:  _slideDurations,
+    pinnedSlide:     _pinnedSlide,
   });
 }
 
@@ -1797,6 +1834,11 @@ function _applyRemoteToDashboard(v) {
     if (v.maintenanceOn   !== undefined) { _maintenanceOn   = !!v.maintenanceOn;                       localStorage.setItem(LS_MAINTENANCE,       String(_maintenanceOn)); }
     if (v.maintenanceMsg  !== undefined) { _maintenanceMsg  = String(v.maintenanceMsg);                localStorage.setItem(LS_MAINTENANCE_MSG,   _maintenanceMsg); }
     if (v.slideDurations  !== undefined) { _slideDurations  = v.slideDurations || {};                  localStorage.setItem(LS_SLIDE_DURATIONS,   JSON.stringify(_slideDurations)); }
+    if (v.pinnedSlide     !== undefined) {
+      _pinnedSlide = (v.pinnedSlide !== null && v.pinnedSlide !== undefined) ? parseInt(v.pinnedSlide, 10) : null;
+      if (_pinnedSlide !== null) localStorage.setItem(LS_PINNED_SLIDE, String(_pinnedSlide));
+      else localStorage.removeItem(LS_PINNED_SLIDE);
+    }
     showTab(_activeTab);   // أعد رسم التبويب الحالي بالقيم الجديدة
   } catch (e) {}
 }

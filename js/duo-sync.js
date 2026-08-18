@@ -6,9 +6,11 @@
  * على الجهاز الآخر فوراً — دون الحاجة لضبط كل جهاز على حدة.
  *
  * الاستخدام:
- *   DuoSync.write(settings)   — لوحة التحكم تكتب الإعدادات عند التغيير
- *   DuoSync.listen(cb)        — المنيو يستمع للتغييرات ويطبّقها
- *   DuoSync.readOnce(cb)      — قراءة الإعدادات الحالية مرة واحدة
+ *   DuoSync.write(settings)        — لوحة التحكم / الكاشير تكتب الإعدادات عند التغيير
+ *   DuoSync.listen(cb)             — المنيو يستمع للتغييرات ويطبّقها
+ *   DuoSync.readOnce(cb)           — قراءة الإعدادات الحالية مرة واحدة
+ *   DuoSync.writeAction(action)    — الكاشير يرسل أمر فوري (إظهار منتج، لعبة…)
+ *   DuoSync.onAction(cb, sinceTs)  — المنيو يستمع للأوامر الفورية من الكاشير
  *
  * يعتمد على Firebase compat SDK + duo-config.js المحمّلَين قبله.
  */
@@ -61,5 +63,42 @@ window.DuoSync = (function () {
     catch (e) { cb(null); }
   }
 
-  return { write, listen, readOnce, init: _init, enabled };
+  /* ── مسار أوامر الكاشير الفورية (منفصل عن الإعدادات) ── */
+  function _actionRef() {
+    if (!db) return null;
+    return db.ref(`duo/${branch()}/cashier-action`);
+  }
+
+  /**
+   * يرسل أمراً فورياً من شاشة الكاشير (showProduct، launchGame…)
+   * يُضاف إليه طابع زمني ts لضمان عدم تنفيذ أوامر قديمة.
+   */
+  function writeAction(action) {
+    if (!_init()) return false;
+    try {
+      const ref = _actionRef();
+      if (!ref) return false;
+      ref.set(Object.assign({ ts: Date.now() }, action));
+      return true;
+    } catch (e) { console.warn('[DuoSync] writeAction error:', e); return false; }
+  }
+
+  /**
+   * يستمع لأوامر الكاشير الفورية على شاشة المنيو.
+   * sinceTs: يتجاهل الأوامر القديمة قبل وقت بدء الصفحة.
+   */
+  function onAction(cb, sinceTs) {
+    if (!_init()) return;
+    const _since = sinceTs || Date.now();
+    try {
+      const ref = _actionRef();
+      if (!ref) return;
+      ref.on('value', s => {
+        const v = s.val();
+        if (v && v.ts && v.ts > _since) cb(v);
+      });
+    } catch (e) { console.warn('[DuoSync] onAction error:', e); }
+  }
+
+  return { write, listen, readOnce, writeAction, onAction, init: _init, enabled };
 })();

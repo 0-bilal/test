@@ -36,6 +36,7 @@ const LS_OV_CLOSE_DUR     = 'duo_overlay_close_dur';  // ms — إغلاق overl
 const LS_MAINTENANCE      = 'duo_maintenance';         // 'true'|'false'
 const LS_MAINTENANCE_MSG  = 'duo_maintenance_msg';     // نص رسالة الصيانة
 const LS_SLIDE_DURATIONS  = 'duo_slide_durations';     // JSON {idx: ms}
+const LS_PINNED_SLIDE     = 'duo_pinned_slide';        // رقم الشريحة المثبتة أو null
 
 /* ── دوال قراءة الإعدادات (تُستدعى لحظياً لضمان أحدث قيمة) ── */
 function _getItemDuration()    { return parseInt(localStorage.getItem(LS_ITEM_DURATION_KEY)    || String(ITEM_DURATION),    10); }
@@ -924,23 +925,27 @@ function renderSlides() {
   scheduleSlide();
 }
 
-function goToSlide(idx, _attempt) {
+function goToSlide(idx, _attempt, _pinned) {
   _attempt = _attempt || 0;
   const slideEls = document.querySelectorAll('.slide');
-  // تخطّى الشرائح المخفية
-  if (_attempt < slides.length && slideEls[idx]?.dataset.devHidden === 'true') {
-    return goToSlide((idx + 1) % slides.length, _attempt + 1);
+  // إذا كانت الشريحة مثبتة لا تتخطّ للشريحة المخفية — فقط اعرضها
+  if (!_pinned) {
+    if (_attempt < slides.length && slideEls[idx]?.dataset.devHidden === 'true') {
+      return goToSlide((idx + 1) % slides.length, _attempt + 1);
+    }
+    if (_attempt === slides.length) return; // كل الشرائح مخفية
   }
-  if (_attempt === slides.length) return; // كل الشرائح مخفية
 
   slideEls.forEach((s,i) => s.classList.toggle('active', i===idx));
   document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===idx));
   curSlide = idx;
   clearTimeout(slideTimer);
   fillSlideProgress();
-  scheduleSlide();
+  if (!_pinned) scheduleSlide();
 }
 function scheduleSlide() {
+  // لا تجدول إذا كانت هناك شريحة مثبتة
+  if (_devPinnedSlide !== null && !isNaN(_devPinnedSlide)) return;
   const dur = _getSlideDur(curSlide);
   slideTimer = setTimeout(() => goToSlide((curSlide+1) % slides.length), dur);
 }
@@ -1089,6 +1094,7 @@ let _devHiddenSlides   = new Set();
 let _devHiddenVariants = new Set();
 let _devDiscountHidden = false;
 let _devPhoneHidden    = false;
+let _devPinnedSlide    = null; // null = لا تثبيت | رقم = الشريحة المثبتة
 let _devGamesHidden    = false;
 let _devQRMenuHidden   = false;
 let _devBadges         = {};   // { "catId||nameAr": "popular"|"new"|"limited"|"" }
@@ -1142,10 +1148,13 @@ function _devLoadSettings() {
     try { _devTempHide = JSON.parse(localStorage.getItem(LS_TEMP_HIDE) || '{}'); } catch { _devTempHide = {}; }
     _devScrollSkip = new Set(JSON.parse(localStorage.getItem(LS_SCROLL_SKIP) || '[]'));
     _devCatSkip    = new Set(JSON.parse(localStorage.getItem(LS_CAT_SKIP)    || '[]'));
+    const _ps = localStorage.getItem(LS_PINNED_SLIDE);
+    _devPinnedSlide = (_ps !== null && _ps !== '') ? parseInt(_ps, 10) : null;
   } catch(e) {
     _devHiddenItems = new Set(); _devHiddenSlides = new Set();
     _devHiddenVariants = new Set(); _devDiscountHidden = false; _devPhoneHidden = false;
     _devTempHide = {}; _devScrollSkip = new Set(); _devCatSkip = new Set();
+    _devPinnedSlide = null;
   }
 }
 
@@ -1191,10 +1200,18 @@ function applyDevSettings() {
     if (_devHiddenSlides.has(String(i))) el.dataset.devHidden = 'true';
     else delete el.dataset.devHidden;
   });
-  // انتقل للشريحة التالية إذا كانت الحالية مخفية
-  const slideEls = document.querySelectorAll('.slide');
-  if (slideEls[curSlide]?.dataset.devHidden === 'true') {
-    goToSlide((curSlide + 1) % slides.length);
+
+  // تثبيت الشريحة — إذا كانت هناك شريحة مثبتة، انتقل إليها وأوقف السلايدشو
+  if (_devPinnedSlide !== null && !isNaN(_devPinnedSlide)) {
+    clearTimeout(slideTimer);
+    slideTimer = null;
+    goToSlide(_devPinnedSlide, 0, true /* pinned — لا تجدول الانتقال التالي */);
+  } else {
+    // انتقل للشريحة التالية إذا كانت الحالية مخفية
+    const slideEls = document.querySelectorAll('.slide');
+    if (slideEls[curSlide]?.dataset.devHidden === 'true') {
+      goToSlide((curSlide + 1) % slides.length);
+    }
   }
 
   // الخيارات / الأنواع (variants)
@@ -1272,6 +1289,12 @@ function applyRemoteSettings(v) {
     if (v.ovCloseDur      !== undefined) localStorage.setItem(LS_OV_CLOSE_DUR,     String(parseInt(v.ovCloseDur,      10) || 430));
     // مدة الشرائح المخصصة
     if (v.slideDurations  !== undefined) localStorage.setItem(LS_SLIDE_DURATIONS,  JSON.stringify(v.slideDurations || {}));
+    // تثبيت الشريحة
+    if (v.pinnedSlide !== undefined) {
+      _devPinnedSlide = (v.pinnedSlide !== null && v.pinnedSlide !== undefined) ? parseInt(v.pinnedSlide, 10) : null;
+      if (_devPinnedSlide !== null) localStorage.setItem(LS_PINNED_SLIDE, String(_devPinnedSlide));
+      else localStorage.removeItem(LS_PINNED_SLIDE);
+    }
     // وضع الصيانة
     if (v.maintenanceOn !== undefined) {
       localStorage.setItem(LS_MAINTENANCE, String(!!v.maintenanceOn));
@@ -1285,6 +1308,62 @@ function applyRemoteSettings(v) {
   } catch (e) { console.warn('[Sync] apply error:', e); }
 }
 window.applyRemoteSettings = applyRemoteSettings;
+
+/* ════════════════════════════════════════════════════════
+   أوامر الكاشير الفورية — تُنفَّذ على شاشة المنيو عند ورودها من شاشة الكاشير
+════════════════════════════════════════════════════════ */
+function _executeCashierAction(v) {
+  if (!v || !v.type) return;
+  try {
+    switch (v.type) {
+
+      case 'showProduct': {
+        // إظهار overlay تفاصيل منتج معيّن (كأن العميل ضغط عليه)
+        const cat  = menuCategories.find(c => c.id === v.catId);
+        const item = cat?.items.find(i => i.nameAr === v.nameAr);
+        if (item) showProductOverlay(item, -1);
+        break;
+      }
+
+      case 'hideOverlay':
+        // إغلاق أي نافذة مفتوحة على الشاشة
+        hideProductOverlay();
+        if (typeof window.hideReviewOverlay  === 'function') window.hideReviewOverlay();
+        if (typeof window.hideQRMenuOverlay  === 'function') window.hideQRMenuOverlay();
+        if (typeof window.hideGamesHub       === 'function') window.hideGamesHub();
+        break;
+
+      case 'showDiscount':
+        // عرض نافذة الخصم / التقييم
+        if (typeof window.showReviewOverlay === 'function') window.showReviewOverlay();
+        break;
+
+      case 'showQRMenu':
+        // عرض QR منيو الجوال
+        if (typeof window.showQRMenuOverlay === 'function') window.showQRMenuOverlay();
+        break;
+
+      case 'showGames':
+        // فتح شاشة الألعاب
+        if (typeof window.showGamesHub === 'function') window.showGamesHub();
+        break;
+
+      case 'launchGame':
+        // بدء لعبة مباشرةً
+        if (v.game === 'xo') {
+          if (typeof launchXO === 'function') launchXO();
+        } else {
+          if (typeof launchDuoGame === 'function') launchDuoGame();
+        }
+        break;
+
+      case 'goToSlide':
+        // الانتقال لشريحة معيّنة
+        if (typeof goToSlide === 'function') goToSlide(parseInt(v.idx, 10) || 0);
+        break;
+    }
+  } catch(e) { console.warn('[CashierAction] error:', e); }
+}
 
 /* تحديث شارات كل البطاقات بحسب _devBadges */
 function _refreshAllBadges() {
@@ -1825,6 +1904,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const dx = e.changedTouches[0].clientX - swipeStartX;
         const dy = e.changedTouches[0].clientY - swipeStartY;
         if (Math.abs(dx) < 40 || Math.abs(dy) > Math.abs(dx)) return;
+        // لا تسمح بالسحب إذا كانت شريحة مثبتة
+        if (_devPinnedSlide !== null && !isNaN(_devPinnedSlide)) return;
         if (dx < 0) goToSlide((curSlide + 1) % slides.length);
         else        goToSlide((curSlide - 1 + slides.length) % slides.length);
       }, { passive: true });
@@ -1847,6 +1928,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // تحديث العرض العمودي إن كان مفعّلاً
       if (typeof window._vxRebuild === 'function') window._vxRebuild();
     });
+  }
+
+  // أوامر الكاشير الفورية (عرض منتج، لعبة، إغلاق نافذة…)
+  if (window.DuoSync && typeof window.DuoSync.onAction === 'function') {
+    const _cashierStartTs = Date.now();
+    window.DuoSync.onAction(v => _executeCashierAction(v), _cashierStartTs);
   }
 
   // مؤشر البطارية (مشترك)

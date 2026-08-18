@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>كاشير | DUO Burger</title>
+  <link rel="icon" href="images/logo.ico">
+  <link rel="stylesheet" href="css/cashier.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- نمط شبكة الخلفية -->
+<div class="grid-bg" aria-hidden="true"></div>
+
+<div id="cashier-app">
+
+  <!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
+  <aside id="sidebar" class="sidebar">
+
+    <!-- هوية العلامة -->
+    <div class="sb-head">
+      <div class="sb-brand-block">
+        <div class="sb-logo-ring">
+          <img src="images/logo.ico" alt="DUO" class="sb-logo-img">
+        </div>
+        <div class="sb-brand-text">
+          <span class="sb-name" id="h-rest-name">ديو برجر</span>
+          <span class="sb-role" id="h-role-label">شاشة الكاشير</span>
+        </div>
+      </div>
+      <button class="sb-toggle" id="sidebar-toggle" onclick="cToggleSidebar()" title="طي القائمة">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+
+    <!-- الساعة والتاريخ -->
+    <div class="sb-clock">
+      <span class="sb-time" id="ch-time">--:--</span>
+      <span class="sb-date" id="ch-date">--</span>
+    </div>
+
+    <!-- شارات الحالة -->
+    <div class="sb-status-row">
+      <div id="conn-status" class="conn-badge">
+        <span class="conn-dot" id="conn-dot"></span>
+        <span class="conn-label" id="conn-label">جاري الاتصال</span>
+      </div>
+      <div class="hbadge" id="battery-badge">
+        <i class="fa-solid fa-bolt hbadge-charge hidden" id="battery-bolt"></i>
+        <div class="battery-wrap">
+          <div class="battery-shell">
+            <div class="battery-fill" id="battery-fill"></div>
+          </div>
+          <div class="battery-nub"></div>
+        </div>
+        <span class="hbadge-val" id="battery-pct">--%</span>
+      </div>
+    </div>
+
+    <!-- فاصل -->
+    <div class="sb-divider"><span>القائمة</span></div>
+
+    <!-- التنقل -->
+    <nav class="sb-nav">
+      <button class="snav-item active" data-tab="products" onclick="cShowTab('products')">
+        <div class="snav-icon"><i class="fa-solid fa-burger"></i></div>
+        <span class="snav-label" id="t-products">المنتجات</span>
+      </button>
+      <button class="snav-item" data-tab="slides" onclick="cShowTab('slides')">
+        <div class="snav-icon"><i class="fa-solid fa-images"></i></div>
+        <span class="snav-label" id="t-slides">الشرائح</span>
+      </button>
+      <button class="snav-item" data-tab="actions" onclick="cShowTab('actions')">
+        <div class="snav-icon"><i class="fa-solid fa-hand-pointer"></i></div>
+        <span class="snav-label" id="t-actions">إجراءات</span>
+      </button>
+      <button class="snav-item" data-tab="settings" onclick="cShowTab('settings')">
+        <div class="snav-icon"><i class="fa-solid fa-sliders"></i></div>
+        <span class="snav-label" id="t-settings">إعدادات</span>
+      </button>
+    </nav>
+
+    <!-- فاصل الأجهزة -->
+    <div class="sb-divider"><span>الأجهزة</span></div>
+
+    <!-- الأجهزة -->
+    <div class="sb-devices-panel">
+      <div class="sb-panel-head">
+        <div class="sb-panel-icon"><i class="fa-solid fa-tv"></i></div>
+        <span class="sb-panel-title" id="t-devices">الأجهزة المتصلة</span>
+        <span class="sb-dev-badge" id="sb-dev-count">0</span>
+      </div>
+      <div class="sb-devs-list" id="sb-devs-list"></div>
+    </div>
+
+    <!-- تذييل -->
+    <div class="sb-foot">
+      <button class="lang-btn" id="lang-btn" onclick="cToggleLang()">
+        <i class="fa-solid fa-earth-americas"></i>
+        <span>English</span>
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ═══════════════════════ المنطقة الرئيسية ═══════════════════════ -->
+  <div id="main-area">
+
+    <!-- شريط الإحصائيات العلوي -->
+    <header id="cashier-stats">
+      <div class="spill spill--branch">
+        <i class="fa-solid fa-code-branch"></i>
+        <span id="sp-branch-txt">Branch01</span>
+      </div>
+      <div class="stats-sep"></div>
+      <div class="spill spill--items">
+        <i class="fa-solid fa-eye-slash"></i>
+        <span id="sp-items-txt">0 مخفي</span>
+      </div>
+      <div class="spill spill--slides">
+        <i class="fa-solid fa-film"></i>
+        <span id="sp-slides-txt">0 شريحة</span>
+      </div>
+      <div class="spill spill--pin" id="spill-pin">
+        <i class="fa-solid fa-thumbtack"></i>
+        <span id="sp-pin-txt">لا تثبيت</span>
+      </div>
+      <div class="spill spill--maint" id="spill-maint">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span id="sp-maint-txt">صيانة: إيقاف</span>
+      </div>
+      <div class="stats-sep"></div>
+      <div class="spill spill--sync">
+        <i class="fa-solid fa-rotate" id="sp-sync-icon"></i>
+        <span id="sp-sync-txt">—</span>
+      </div>
+    </header>
+
+    <!-- المحتوى -->
+    <main id="cashier-content">
+      <section id="tab-products" class="csection active">
+        <div id="cat-filter" class="cat-filter-bar"></div>
+        <div id="products-grid"></div>
+      </section>
+      <section id="tab-slides" class="csection">
+        <div id="slides-list"></div>
+      </section>
+      <section id="tab-actions" class="csection">
+        <div id="actions-grid"></div>
+      </section>
+      <section id="tab-devices" class="csection">
+        <div id="devices-grid"></div>
+      </section>
+      <section id="tab-settings" class="csection">
+        <div id="settings-content"></div>
+      </section>
+    </main>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="cashier-toast" class="cashier-toast">
+  <i class="ct-icon fa-solid fa-circle-check" id="toast-icon"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<script src="js/products.js"></script>
+<script src="js/slides.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="js/duo-config.js"></script>
+<script src="js/duo-sync.js"></script>
+<script src="js/cashier.js"></script>
+</body>
+</html>

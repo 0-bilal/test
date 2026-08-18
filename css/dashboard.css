@@ -704,6 +704,48 @@ html, body {
 }
 .slide-dur-reset:hover { background:rgba(248,113,113,.15); color:#f87171; }
 
+/* ── زر تثبيت الشريحة ── */
+.slide-pin-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 10px; border-radius:8px; border:none;
+  background:rgba(255,255,255,.07); color:var(--muted);
+  font-size:12px; font-weight:600; cursor:pointer;
+  margin-right: auto;
+  transition:all .18s;
+}
+.slide-pin-btn i { font-size:11px; transition:transform .2s; }
+.slide-pin-btn:hover { background:rgba(245,194,0,.15); color:#f5c200; }
+.slide-pin-btn--active {
+  background:rgba(245,194,0,.18);
+  color:#f5c200;
+  border:1px solid rgba(245,194,0,.35);
+}
+.slide-pin-btn--active i { transform:rotate(-45deg); }
+
+/* ── صف الشريحة المثبتة ── */
+.row--pinned { border-right:3px solid #f5c200 !important; }
+.slide-pin-active-label {
+  display:inline-flex; align-items:center; gap:4px;
+  color:#f5c200; font-size:11px; font-weight:700;
+  background:rgba(245,194,0,.1); border-radius:4px;
+  padding:1px 6px; margin-right:4px;
+}
+
+/* ── بانر الشريحة المثبتة (أعلى القسم) ── */
+.slide-pin-banner {
+  display:flex; align-items:center; gap:8px;
+  padding:9px 14px;
+  background:rgba(245,194,0,.1);
+  border-bottom:1px solid rgba(245,194,0,.22);
+  color:#f5c200; font-size:13px; font-weight:600;
+}
+.slide-pin-banner i { font-size:12px; }
+.slide-pin-banner strong { color:#fff; }
+.slide-pin-banner-hint {
+  margin-right:auto; font-size:11px; color:rgba(245,194,0,.7);
+  font-weight:400;
+}
+
 /* ════════════════════════════════════════════════
    STATS TAB — view toggle + week bars
 ════════════════════════════════════════════════ */

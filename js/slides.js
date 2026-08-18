@@ -17,11 +17,11 @@
 const slides = [
   {
     image: 'images/slides/slide6.png',
-    titleAr: '',
-    titleEn: "",
+    titleAr: 'دبل ترافل برجر',
+    titleEn: "new",
     descriptionAr: '',
-    badge: null,
-    badgeColor: null,
+    badge: 'جديد',
+    badgeColor: 'gold',
     price: null,
     duration: 10000,
   },

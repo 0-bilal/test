@@ -43,12 +43,23 @@ let _lastSyncTs     = null;
 let _devices        = [];      /* أجهزة العملاء المتصلة */
 let _sidebarOpen    = true;    /* حالة الشريط الجانبي */
 
+/* تقسيم الفاتورة */
+let _splitPeople  = '';
+let _splitAmount  = '';
+let _splitField   = 'people';  /* الحقل النشط للوحة الأرقام: people | amount */
+let _splitResult  = null;
+
 const _ikey = (catId, nameAr) => catId + '||' + nameAr;
 
 /* ══════════ i18n ══════════ */
 const T = {
   ar: {
     products: 'المنتجات', slides: 'الشرائح', actions: 'إجراءات', settings: 'الإعدادات',
+    productsSubtitle: 'تحكم بظهور المنتجات على شاشة العميل فوراً',
+    slidesSubtitle: 'ترتيب وتشغيل شرائح العرض الترويجي',
+    settingsSubtitle: 'أزرار الشاشة، الصيانة، ومعلومات الجهاز',
+    itemsCount: n => `${n} منتج`, slidesCountStat: n => `${n} شريحة`,
+    actionsGroupCustomer: 'تفاعل العميل', actionsGroupGames: 'ألعاب سريعة', actionsGroupControl: 'تحكم عام',
     allCats: 'الكل', visible: 'ظاهر', hidden: 'مخفي',
     showCustomer: 'عرض للعميل', pinSlide: 'تثبيت', unpinSlide: 'إلغاء التثبيت',
     showSlide: 'تشغيل', pinnedBanner: 'الشريحة المثبّتة — السلايدشو متوقف',
@@ -91,9 +102,31 @@ const T = {
     devOnline: 'متصل', devOffline: 'غير متصل',
     devBattery: 'البطارية', devNetwork: 'الشبكة', devPlatform: 'الجهاز',
     devLastSeen: n => `آخر ظهور: ${n}`,
+    devRename: 'إعادة تسمية', devRenamePrompt: 'اسم الشاشة:',
+    devRemove: 'فصل', devRemoveConfirm: n => `فصل "${n}" نهائياً من القائمة؟`,
+    devRenamed: 'تم تغيير الاسم ✓', devRemoved: 'تم فصل الجهاز',
+    devicesCountStat: n => `${n} جهاز`,
+    split: 'تقسيم الفاتورة', splitSubtitle: 'قسّم مبلغ الفاتورة بالتساوي بين عدد من الأشخاص',
+    splitPeopleLabel: 'عدد الأشخاص', splitAmountLabel: 'مبلغ الفاتورة',
+    splitCalc: 'احسب القسمة', splitReset: 'تقسيم جديد',
+    splitEnterBoth: 'أدخل عدد الأشخاص ومبلغ الفاتورة',
+    splitPerPerson: 'للشخص الواحد', splitTotalLabel: n => `الإجمالي ${n} ريال`,
+    splitPeopleShort: n => `${n} ${n === 1 ? 'شخص' : 'أشخاص'}`,
+    splitPersonLabel: n => `شخص ${n}`,
+    splitBreakdown: (extraCount, extraAmt, baseCount, baseAmt) => {
+      const parts = [];
+      if (extraCount > 0) parts.push(`${extraCount} × ${extraAmt} ريال`);
+      if (baseCount  > 0) parts.push(`${baseCount} × ${baseAmt} ريال`);
+      return parts.join(' + ');
+    },
   },
   en: {
     products: 'Products', slides: 'Slides', actions: 'Actions', settings: 'Settings',
+    productsSubtitle: 'Control what appears on the customer screen instantly',
+    slidesSubtitle: 'Order and play promotional slides',
+    settingsSubtitle: 'Screen buttons, maintenance, and device info',
+    itemsCount: n => `${n} items`, slidesCountStat: n => `${n} slides`,
+    actionsGroupCustomer: 'Customer Engagement', actionsGroupGames: 'Quick Games', actionsGroupControl: 'General Control',
     allCats: 'All', visible: 'Visible', hidden: 'Hidden',
     showCustomer: 'Show to Customer', pinSlide: 'Pin', unpinSlide: 'Unpin',
     showSlide: 'Play', pinnedBanner: 'Pinned slide — Slideshow paused',
@@ -136,6 +169,23 @@ const T = {
     devOnline: 'Online', devOffline: 'Offline',
     devBattery: 'Battery', devNetwork: 'Network', devPlatform: 'Device',
     devLastSeen: n => `Last seen: ${n}`,
+    devRename: 'Rename', devRenamePrompt: 'Screen name:',
+    devRemove: 'Unlink', devRemoveConfirm: n => `Unlink "${n}" permanently?`,
+    devRenamed: 'Renamed ✓', devRemoved: 'Device unlinked',
+    devicesCountStat: n => `${n} device${n === 1 ? '' : 's'}`,
+    split: 'Split Bill', splitSubtitle: 'Split the bill amount evenly between a number of people',
+    splitPeopleLabel: 'Number of People', splitAmountLabel: 'Bill Amount',
+    splitCalc: 'Calculate', splitReset: 'New Split',
+    splitEnterBoth: 'Enter the number of people and the bill amount',
+    splitPerPerson: 'Per Person', splitTotalLabel: n => `Total ${n} SAR`,
+    splitPeopleShort: n => `${n} ${n === 1 ? 'person' : 'people'}`,
+    splitPersonLabel: n => `Person ${n}`,
+    splitBreakdown: (extraCount, extraAmt, baseCount, baseAmt) => {
+      const parts = [];
+      if (extraCount > 0) parts.push(`${extraCount} × ${extraAmt} SAR`);
+      if (baseCount  > 0) parts.push(`${baseCount} × ${baseAmt} SAR`);
+      return parts.join(' + ');
+    },
   }
 };
 const t  = k  => (T[_lang]?.[k]  ?? T.ar[k]  ?? k);
@@ -226,6 +276,7 @@ function _updateStaticLabels() {
   _setText('t-products',  t('products'));
   _setText('t-slides',    t('slides'));
   _setText('t-actions',   t('actions'));
+  _setText('t-split',     t('split'));
   _setText('t-devices',   t('devices'));
   _setText('t-settings',  t('settings'));
   _setText('h-role-label', t('cashierRole'));
@@ -255,6 +306,7 @@ function _rerenderTab() {
     case 'products': _renderProducts(); break;
     case 'slides':   _renderSlides();   break;
     case 'actions':  _renderActions();  break;
+    case 'split':    _renderSplit();    break;
     case 'devices':  _renderDevices();  break;
     case 'settings': _renderSettings(); break;
   }
@@ -288,7 +340,16 @@ function _renderProductGrid() {
   const el = document.getElementById('products-grid');
   if (!el || typeof menuCategories === 'undefined') return;
   const cats = _activeCat ? menuCategories.filter(c => c.id === _activeCat) : menuCategories;
-  let html = '';
+  const totalAll = menuCategories.reduce((n, c) => n + c.items.length, 0);
+
+  let html = `<div class="section-head">
+    <div class="section-head-icon"><i class="fa-solid fa-burger"></i></div>
+    <div class="section-head-text">
+      <div class="section-head-title">${t('products')}</div>
+      <div class="section-head-sub">${t('productsSubtitle')}</div>
+    </div>
+    <div class="section-head-stat">${tf('itemsCount', totalAll)}</div>
+  </div>`;
   cats.forEach(cat => {
     const total  = cat.items.length;
     const hidden = cat.items.filter(item => _hiddenItems.has(_ikey(cat.id, item.nameAr))).length;
@@ -296,7 +357,7 @@ function _renderProductGrid() {
       <div class="pcat-header">
         <div class="pcat-icon"><i class="fa-solid ${cat.icon}"></i></div>
         <div class="pcat-title">${_lang === 'ar' ? cat.nameAr : (cat.nameEn || cat.nameAr)}</div>
-        <div class="pcat-count">${hidden > 0 ? `${hidden}/${total} مخفي` : `${total}`}</div>
+        <div class="pcat-count">${hidden > 0 ? `${hidden}/${total} ${t('hidden')}` : `${total}`}</div>
       </div>
       <div class="pcat-row">`;
     cat.items.forEach(item => {
@@ -321,11 +382,10 @@ function _renderProductGrid() {
           <button class="btn-show-cust" onclick="cSendShowProduct('${cat.id}','${safe}')">
             <i class="fa-solid fa-eye"></i> ${t('showCustomer')}
           </button>
-          <button class="btn-toggle-item ${isHid ? 'btn-toggle-item--off' : ''}" onclick="cToggleItem('${cat.id}','${safe}')">
-            ${isHid
-              ? `<i class="fa-solid fa-eye-slash"></i> ${t('hidden')}`
-              : `<i class="fa-solid fa-eye"></i> ${t('visible')}`}
-          </button>
+          <label class="mini-toggle" title="${isHid ? t('hidden') : t('visible')}">
+            <input type="checkbox" ${!isHid ? 'checked' : ''} onchange="cToggleItem('${cat.id}','${safe}')">
+            <span class="mt-slider"></span>
+          </label>
         </div>
       </div>`;
     });
@@ -353,7 +413,14 @@ function _renderSlides() {
   const el = document.getElementById('slides-list');
   if (!el || typeof slides === 'undefined') return;
   const hasPinned = _pinnedSlide !== null && !isNaN(_pinnedSlide);
-  let html = '';
+  let html = `<div class="section-head">
+    <div class="section-head-icon"><i class="fa-solid fa-images"></i></div>
+    <div class="section-head-text">
+      <div class="section-head-title">${t('slides')}</div>
+      <div class="section-head-sub">${t('slidesSubtitle')}</div>
+    </div>
+    <div class="section-head-stat">${tf('slidesCountStat', slides.length)}</div>
+  </div>`;
   if (hasPinned) {
     const ps   = slides[_pinnedSlide];
     const pName = _lang === 'ar'
@@ -429,33 +496,41 @@ function _renderActions() {
   const el = document.getElementById('actions-grid');
   if (!el) return;
 
-  const actions = [
-    { icon:'fa-percent',      color:'green',  key:'showDiscount',   subKey:'showDiscountSub',   fn:`cAction('showDiscount')` },
-    { icon:'fa-qrcode',       color:'purple', key:'showQR',         subKey:'showQRSub',         fn:`cAction('showQRMenu')` },
-    { icon:'fa-gamepad',      color:'teal',   key:'openGames',      subKey:'openGamesSub',      fn:`cAction('showGames')` },
-    { icon:'fa-bolt',         color:'gold',   key:'launchReaction', subKey:'launchReactionSub', fn:`cAction('launchGame','reaction')` },
-    { icon:'fa-hashtag',      color:'red',    key:'launchXO',       subKey:'launchXOSub',       fn:`cAction('launchGame','xo')` },
-    { icon:'fa-circle-xmark', color:'gray',   key:'closePanel',     subKey:'closePanelSub',     fn:`cAction('hideOverlay')` },
+  const groups = [
+    { labelKey: 'actionsGroupCustomer', items: [
+      { icon:'fa-percent', color:'green',  key:'showDiscount', subKey:'showDiscountSub', fn:`cAction('showDiscount')` },
+      { icon:'fa-qrcode',  color:'purple', key:'showQR',       subKey:'showQRSub',       fn:`cAction('showQRMenu')` },
+      { icon:'fa-gamepad', color:'teal',   key:'openGames',    subKey:'openGamesSub',    fn:`cAction('showGames')` },
+    ]},
+    { labelKey: 'actionsGroupGames', items: [
+      { icon:'fa-bolt',    color:'gold', key:'launchReaction', subKey:'launchReactionSub', fn:`cAction('launchGame','reaction')` },
+      { icon:'fa-hashtag', color:'red',  key:'launchXO',       subKey:'launchXOSub',       fn:`cAction('launchGame','xo')` },
+    ]},
+    { labelKey: 'actionsGroupControl', items: [
+      { icon:'fa-circle-xmark', color:'gray', key:'closePanel', subKey:'closePanelSub', fn:`cAction('hideOverlay')` },
+    ]},
   ];
 
-  let html = `<div class="actions-header">
-    <div class="actions-title">
-      <div class="actions-title-icon"><i class="fa-solid fa-hand-pointer"></i></div>
-      ${t('actionsTitle')}
+  let html = `<div class="section-head">
+    <div class="section-head-icon"><i class="fa-solid fa-hand-pointer"></i></div>
+    <div class="section-head-text">
+      <div class="section-head-title">${t('actionsTitle')}</div>
+      <div class="section-head-sub">${t('actionsSubtitle')}</div>
     </div>
-    <div class="actions-subtitle">${t('actionsSubtitle')}</div>
-  </div>
-  <div class="action-cards">`;
+  </div>`;
 
-  actions.forEach(a => {
-    html += `<button class="acard acard--${a.color}" onclick="${a.fn}">
-      <div class="acard-icon"><i class="fa-solid ${a.icon}"></i></div>
-      <div class="acard-label">${t(a.key)}</div>
-      <div class="acard-sub">${t(a.subKey)}</div>
-    </button>`;
+  groups.forEach(g => {
+    html += `<div class="group-label">${t(g.labelKey)}</div><div class="action-cards">`;
+    g.items.forEach(a => {
+      html += `<button class="acard acard--${a.color}" onclick="${a.fn}">
+        <div class="acard-icon"><i class="fa-solid ${a.icon}"></i></div>
+        <div class="acard-label">${t(a.key)}</div>
+        <div class="acard-sub">${t(a.subKey)}</div>
+      </button>`;
+    });
+    html += `</div>`;
   });
 
-  html += `</div>`;
   el.innerHTML = html;
 }
 
@@ -465,6 +540,161 @@ function cAction(type, game) {
   sendAction(action);
 }
 window.cAction = cAction;
+
+/* ══════════ TAB 4 — تقسيم الفاتورة ══════════ */
+
+/**
+ * يقسّم مبلغاً صحيحاً بالتساوي بين عدد من الأشخاص دون كسور:
+ * الأساس = المبلغ ÷ العدد (لأسفل)، والباقي يُوزَّع ريالاً واحداً إضافياً
+ * على أقل عدد ممكن من الأشخاص حتى يتطابق المجموع مع المبلغ الأصلي تماماً.
+ * مثال: 134 على 4 أشخاص → أساس 33، الباقي 2 → شخصان يدفعان 34 وشخصان يدفعان 33.
+ */
+function _computeSplit(amount, people) {
+  amount = Math.max(0, Math.round(amount));
+  people = Math.max(1, Math.round(people));
+  const base       = Math.floor(amount / people);
+  const extraCount = amount - base * people;
+  const baseCount  = people - extraCount;
+  return { amount, people, base, extra: base + 1, extraCount, baseCount };
+}
+
+function _renderSplit() {
+  const el = document.getElementById('split-content');
+  if (!el) return;
+
+  const peopleVal = _splitPeople || '0';
+  const amountVal = _splitAmount || '0';
+
+  const keys = [1,2,3,4,5,6,7,8,9].map(n =>
+    `<button class="split-key" onclick="cSplitKey('${n}')">${n}</button>`).join('');
+
+  let html = `<div class="section-head">
+    <div class="section-head-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+    <div class="section-head-text">
+      <div class="section-head-title">${t('split')}</div>
+      <div class="section-head-sub">${t('splitSubtitle')}</div>
+    </div>
+  </div>
+
+  <div class="split-layout">
+    <div class="split-panel">
+      <div class="split-fields">
+        <button class="split-field ${_splitField === 'people' ? 'split-field--active' : ''}" onclick="cSplitSetField('people')">
+          <span class="split-field-label"><i class="fa-solid fa-users"></i> ${t('splitPeopleLabel')}</span>
+          <span class="split-field-value">${peopleVal}</span>
+        </button>
+        <button class="split-field ${_splitField === 'amount' ? 'split-field--active' : ''}" onclick="cSplitSetField('amount')">
+          <span class="split-field-label"><i class="fa-solid fa-sack-dollar"></i> ${t('splitAmountLabel')}</span>
+          <span class="split-field-value">${amountVal} <span class="split-field-unit">${t('sar')}</span></span>
+        </button>
+      </div>
+
+      <div class="split-numpad">
+        ${keys}
+        <button class="split-key split-key--action" onclick="cSplitClear()" title="${t('splitReset')}"><i class="fa-solid fa-rotate-left"></i></button>
+        <button class="split-key" onclick="cSplitKey('0')">0</button>
+        <button class="split-key split-key--action" onclick="cSplitBackspace()"><i class="fa-solid fa-delete-left"></i></button>
+      </div>
+
+      <button class="split-calc-btn" onclick="cSplitCalc()">
+        <i class="fa-solid fa-calculator"></i> ${t('splitCalc')}
+      </button>
+    </div>
+
+    <div class="split-result-panel">
+      ${_splitResult ? _splitResultHtml(_splitResult) : `
+        <div class="split-empty">
+          <i class="fa-solid fa-scale-balanced"></i>
+          <p>${t('splitEnterBoth')}</p>
+        </div>`}
+    </div>
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+function _splitResultHtml(r) {
+  const breakdown = tf('splitBreakdown', r.extraCount, r.extra, r.baseCount, r.base);
+
+  let cardsHtml = '';
+  let idx = 1;
+  for (let i = 0; i < r.extraCount; i++, idx++) {
+    cardsHtml += `<div class="split-person-card split-person-card--extra">
+      <div class="split-person-num">${tf('splitPersonLabel', idx)}</div>
+      <div class="split-person-amt">${r.extra}<span>${t('sar')}</span></div>
+    </div>`;
+  }
+  for (let i = 0; i < r.baseCount; i++, idx++) {
+    cardsHtml += `<div class="split-person-card">
+      <div class="split-person-num">${tf('splitPersonLabel', idx)}</div>
+      <div class="split-person-amt">${r.base}<span>${t('sar')}</span></div>
+    </div>`;
+  }
+
+  return `
+    <div class="split-summary">
+      <div class="split-summary-row">
+        <span class="split-summary-total">${tf('splitTotalLabel', r.amount)}</span>
+        <span class="split-summary-people">${tf('splitPeopleShort', r.people)}</span>
+      </div>
+      <div class="split-summary-breakdown">${breakdown}</div>
+    </div>
+    <div class="split-people-grid">${cardsHtml}</div>
+    <button class="split-reset-btn" onclick="cSplitReset()">
+      <i class="fa-solid fa-rotate-right"></i> ${t('splitReset')}
+    </button>`;
+}
+
+function cSplitSetField(f) { _splitField = f; _renderSplit(); }
+window.cSplitSetField = cSplitSetField;
+
+function cSplitKey(d) {
+  const maxLen = _splitField === 'people' ? 3 : 7;
+  if (_splitField === 'people') {
+    if (_splitPeople.length >= maxLen) return;
+    _splitPeople = (_splitPeople === '0' ? '' : _splitPeople) + d;
+  } else {
+    if (_splitAmount.length >= maxLen) return;
+    _splitAmount = (_splitAmount === '0' ? '' : _splitAmount) + d;
+  }
+  _splitResult = null;
+  _renderSplit();
+}
+window.cSplitKey = cSplitKey;
+
+function cSplitBackspace() {
+  if (_splitField === 'people') _splitPeople = _splitPeople.slice(0, -1);
+  else _splitAmount = _splitAmount.slice(0, -1);
+  _splitResult = null;
+  _renderSplit();
+}
+window.cSplitBackspace = cSplitBackspace;
+
+function cSplitClear() {
+  if (_splitField === 'people') _splitPeople = '';
+  else _splitAmount = '';
+  _splitResult = null;
+  _renderSplit();
+}
+window.cSplitClear = cSplitClear;
+
+function cSplitCalc() {
+  const people = parseInt(_splitPeople, 10);
+  const amount = parseInt(_splitAmount, 10);
+  if (!people || people < 1 || !amount || amount < 1) {
+    cToast(t('splitEnterBoth'), 'warn');
+    return;
+  }
+  _splitResult = _computeSplit(amount, people);
+  _renderSplit();
+}
+window.cSplitCalc = cSplitCalc;
+
+function cSplitReset() {
+  _splitPeople = ''; _splitAmount = ''; _splitResult = null; _splitField = 'people';
+  _renderSplit();
+}
+window.cSplitReset = cSplitReset;
 
 /* ══════════ الشريط الجانبي — بطاقات الأجهزة ══════════ */
 function _renderSidebarDevices() {
@@ -477,10 +707,10 @@ function _renderSidebarDevices() {
   function _ago(ts) {
     if (!ts) return '—';
     const s = Math.round((now - ts) / 1000);
-    if (s < 60) return `${s}s`;
+    if (s < 60) return _lang === 'ar' ? `${s} ث` : `${s}s`;
     const m = Math.round(s / 60);
-    if (m < 60) return `${m}m`;
-    return `${Math.round(m/60)}h`;
+    if (m < 60) return _lang === 'ar' ? `${m} د` : `${m}m`;
+    return _lang === 'ar' ? `${Math.round(m/60)} س` : `${Math.round(m/60)}h`;
   }
 
   function _battClass(pct) {
@@ -523,6 +753,7 @@ function _renderSidebarDevices() {
     const net       = d.netType || '—';
     const platform  = d.platform || '—';
     const shortId   = (d.devId || '').replace('dev_', '').toUpperCase().slice(0, 5);
+    const name      = _esc(d.name || platform || (idx + 1));
     const bc        = _battClass(pct);
 
     const battRow = pct !== null ? `
@@ -545,9 +776,12 @@ function _renderSidebarDevices() {
       <div class="sdev-top">
         <div class="sdev-icon"><i class="fa-solid ${platformIcon(platform)}"></i></div>
         <div class="sdev-info">
-          <div class="sdev-name">${platform}</div>
-          <div class="sdev-id">#${shortId || (idx + 1)}</div>
+          <div class="sdev-name" title="${name}">${name}</div>
+          <div class="sdev-id">${platform}${shortId ? ' · #' + shortId : ''}</div>
         </div>
+        <button class="sdev-rename-btn" onclick="event.stopPropagation();cRenameDevice('${d.devId}')" title="${t('devRename')}">
+          <i class="fa-solid fa-pen"></i>
+        </button>
         <div class="sdev-status-dot"></div>
       </div>
       ${battRow}
@@ -585,9 +819,12 @@ function _renderDevices() {
 
   if (!_devices || _devices.length === 0) {
     el.innerHTML = `
-      <div class="devices-header">
-        <div class="devices-title">${t('devicesTitle')}</div>
-        <div class="devices-subtitle">${t('devicesSubtitle')}</div>
+      <div class="section-head">
+        <div class="section-head-icon"><i class="fa-solid fa-tv"></i></div>
+        <div class="section-head-text">
+          <div class="section-head-title">${t('devicesTitle')}</div>
+          <div class="section-head-sub">${t('devicesSubtitle')}</div>
+        </div>
       </div>
       <div class="devices-empty">
         <i class="fa-solid fa-tv"></i>
@@ -614,9 +851,13 @@ function _renderDevices() {
   };
 
   let html = `
-    <div class="devices-header">
-      <div class="devices-title">${t('devicesTitle')}</div>
-      <div class="devices-subtitle">${t('devicesSubtitle')} — ${sorted.length} ${_lang === 'ar' ? 'جهاز' : 'device(s)'}</div>
+    <div class="section-head">
+      <div class="section-head-icon"><i class="fa-solid fa-tv"></i></div>
+      <div class="section-head-text">
+        <div class="section-head-title">${t('devicesTitle')}</div>
+        <div class="section-head-sub">${t('devicesSubtitle')}</div>
+      </div>
+      <div class="section-head-stat">${tf('devicesCountStat', sorted.length)}</div>
     </div>
     <div class="devices-cards">`;
 
@@ -629,6 +870,7 @@ function _renderDevices() {
     const lastSeen= _ago(d.ts);
     const battColor = _battColor(pct);
     const shortId  = (d.devId || '').replace('dev_', '').toUpperCase().slice(0, 6);
+    const name     = _esc(d.name || platform || (idx + 1));
 
     let battHtml = '';
     if (pct !== null) {
@@ -646,7 +888,7 @@ function _renderDevices() {
         <div class="dcard-top">
           <div class="dcard-device-icon"><i class="fa-solid ${platformIcon(platform)}"></i></div>
           <div class="dcard-info">
-            <div class="dcard-name">${platform} <span class="dcard-id">#${shortId || (idx + 1)}</span></div>
+            <div class="dcard-name" title="${name}">${name}</div>
             <div class="dcard-status ${online ? 'online' : 'offline'}">
               <i class="fa-solid fa-circle" style="font-size:7px"></i>
               ${online ? t('devOnline') : t('devOffline')}
@@ -659,17 +901,55 @@ function _renderDevices() {
             ${battHtml}
           </div>
           <div class="dcard-row">
+            <span class="dcard-row-label"><i class="fa-solid fa-mobile-screen-button"></i> ${t('devPlatform')}</span>
+            <span class="dcard-row-val">${platform}${shortId ? ` <span class="dcard-id">#${shortId}</span>` : ''}</span>
+          </div>
+          <div class="dcard-row">
             <span class="dcard-row-label"><i class="fa-solid fa-wifi"></i> ${t('devNetwork')}</span>
             <span class="dcard-row-val">${net}</span>
           </div>
         </div>
-        <div class="dcard-last-seen">${tf('devLastSeen', lastSeen)}</div>
+        <div class="dcard-foot">
+          <div class="dcard-last-seen">${tf('devLastSeen', lastSeen)}</div>
+          <div class="dcard-actions">
+            <button class="dcard-btn" onclick="cRenameDevice('${d.devId}')" title="${t('devRename')}">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button class="dcard-btn dcard-btn--danger" onclick="cRemoveDevice('${d.devId}')" title="${t('devRemove')}">
+              <i class="fa-solid fa-link-slash"></i>
+            </button>
+          </div>
+        </div>
       </div>`;
   });
 
   html += `</div>`;
   el.innerHTML = html;
 }
+
+function _findDevice(devId) { return _devices.find(d => d.devId === devId); }
+
+function cRenameDevice(devId) {
+  const d = _findDevice(devId);
+  const current = d ? (d.name || '') : '';
+  const name = prompt(t('devRenamePrompt'), current);
+  if (name === null) return;
+  const trimmed = name.trim();
+  if (!trimmed || !_syncOk() || typeof window.DuoSync.renameDevice !== 'function') return;
+  window.DuoSync.renameDevice(devId, trimmed.slice(0, 40));
+  cToast(t('devRenamed'), 'ok');
+}
+window.cRenameDevice = cRenameDevice;
+
+function cRemoveDevice(devId) {
+  const d = _findDevice(devId);
+  const name = d ? (d.name || d.platform || devId) : devId;
+  if (!confirm(tf('devRemoveConfirm', name))) return;
+  if (!_syncOk() || typeof window.DuoSync.removeDevice !== 'function') return;
+  window.DuoSync.removeDevice(devId);
+  cToast(t('devRemoved'), 'ok');
+}
+window.cRemoveDevice = cRemoveDevice;
 
 /* ══════════ TAB 5 — إعدادات ══════════ */
 function _renderSettings() {
@@ -710,6 +990,14 @@ function _renderSettings() {
   ];
 
   let html = `
+  <div class="section-head">
+    <div class="section-head-icon"><i class="fa-solid fa-sliders"></i></div>
+    <div class="section-head-text">
+      <div class="section-head-title">${t('settings')}</div>
+      <div class="section-head-sub">${t('settingsSubtitle')}</div>
+    </div>
+  </div>
+
   <!-- معلومات الجهاز -->
   <div class="set-card">
     <div class="set-card-title"><i class="fa-solid fa-circle-info"></i>
@@ -954,6 +1242,9 @@ function cToast(msg, type) {
 
 /* ══════════ DOM helpers ══════════ */
 function _setText(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
+function _esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
 /* ══════════ التهيئة ══════════ */
 document.addEventListener('DOMContentLoaded', () => {

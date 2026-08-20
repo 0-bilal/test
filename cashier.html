@@ -79,6 +79,10 @@
         <div class="snav-icon"><i class="fa-solid fa-hand-pointer"></i></div>
         <span class="snav-label" id="t-actions">إجراءات</span>
       </button>
+      <button class="snav-item" data-tab="split" onclick="cShowTab('split')">
+        <div class="snav-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+        <span class="snav-label" id="t-split">تقسيم الفاتورة</span>
+      </button>
       <button class="snav-item" data-tab="settings" onclick="cShowTab('settings')">
         <div class="snav-icon"><i class="fa-solid fa-sliders"></i></div>
         <span class="snav-label" id="t-settings">إعدادات</span>
@@ -152,6 +156,9 @@
       </section>
       <section id="tab-actions" class="csection">
         <div id="actions-grid"></div>
+      </section>
+      <section id="tab-split" class="csection">
+        <div id="split-content"></div>
       </section>
       <section id="tab-devices" class="csection">
         <div id="devices-grid"></div>

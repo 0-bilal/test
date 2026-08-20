@@ -1318,10 +1318,23 @@ function _executeCashierAction(v) {
     switch (v.type) {
 
       case 'showProduct': {
-        // إظهار overlay تفاصيل منتج معيّن (كأن العميل ضغط عليه)
+        // إظهار overlay تفاصيل منتج معيّن وتحديده في القائمة (كأن العميل ضغط عليه)
         const cat  = menuCategories.find(c => c.id === v.catId);
         const item = cat?.items.find(i => i.nameAr === v.nameAr);
-        if (item) showProductOverlay(item, -1);
+        if (item) {
+          // احسب الفهرس الحقيقي للمنتج داخل allItemEls (نفس ترتيب بنائها في
+          // renderAllCategories: تصنيف تلو الآخر، ثم منتجات كل تصنيف بالترتيب)
+          let idx = -1;
+          if (cat) {
+            idx = 0;
+            for (const c of menuCategories) {
+              if (c.id === cat.id) { idx += c.items.indexOf(item); break; }
+              idx += c.items.length;
+            }
+          }
+          pauseAutoScroll();
+          showProductOverlay(item, idx);
+        }
         break;
       }
 
@@ -1348,14 +1361,22 @@ function _executeCashierAction(v) {
         if (typeof window.showGamesHub === 'function') window.showGamesHub();
         break;
 
-      case 'launchGame':
-        // بدء لعبة مباشرةً
+      case 'launchGame': {
+        // الألعاب تتزامن بين شاشتين عبر DuoConnect بدورين (يسار/يمين):
+        // شاشة واحدة فقط تصبح "المضيف" وترسل طلب الفتح لشريكتها. أمر
+        // الكاشير يصل لكل الشاشات المتصلة بنفس الفرع في آنٍ واحد، فلو
+        // شغّلنا اللعبة على الشاشتين معاً ستصبح كل واحدة "مضيفاً" مستقلاً
+        // ويختل التزامن بينهما تماماً. لذلك تبدأ الشاشة اليسرى فقط اللعبة
+        // فعلياً، وتصل اللعبة للشاشة اليمنى عبر رسالة "open" العادية.
+        const myRole = (localStorage.getItem('duo_pair_role') || 'left').trim();
+        if (myRole !== 'left') break;
         if (v.game === 'xo') {
           if (typeof launchXO === 'function') launchXO();
         } else {
           if (typeof launchDuoGame === 'function') launchDuoGame();
         }
         break;
+      }
 
       case 'goToSlide':
         // الانتقال لشريحة معيّنة
@@ -1938,7 +1959,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // مؤشر البطارية (مشترك)
   initBattery();
+
+  // تسجيل حضور هذه الشاشة لدى الكاشير (اسم + بطارية + شبكة)
+  _initDevicePresence();
 });
+
+/* ════════════════════════════════════════════════════════
+   DEVICE PRESENCE — تسجيل هذه الشاشة لدى الكاشير
+════════════════════════════════════════════════════════ */
+function _duoDeviceId() {
+  let id = localStorage.getItem('duo_device_id');
+  if (!id) {
+    id = 'dev_' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('duo_device_id', id);
+  }
+  return id;
+}
+
+function _duoDevicePlatform() {
+  const ua = navigator.userAgent || '';
+  if (/iPad/i.test(ua))    return 'iPad';
+  if (/iPhone/i.test(ua))  return 'iPhone';
+  if (/Android/i.test(ua)) return 'Android';
+  return 'Desktop';
+}
+
+function _duoNetType() {
+  const c = navigator.connection || navigator.webkitConnection || navigator.mozConnection;
+  return c && c.effectiveType ? c.effectiveType.toUpperCase() : '—';
+}
+
+let _presBattery = null, _presCharging = false;
+
+function _initDevicePresence() {
+  if (!window.DuoSync || typeof window.DuoSync.presenceStart !== 'function') return;
+  window.DuoSync.presenceStart(_duoDeviceId(), {
+    platform: _duoDevicePlatform(),
+    netType:  _duoNetType(),
+    battery:  _presBattery,
+    batteryCharging: _presCharging,
+  });
+  // نبضة دورية لتحديث "آخر ظهور" وحالة الشبكة حتى دون تغيّر البطارية
+  setInterval(() => {
+    if (!window.DuoSync || typeof window.DuoSync.presenceUpdate !== 'function') return;
+    window.DuoSync.presenceUpdate({
+      battery: _presBattery, batteryCharging: _presCharging,
+      netType: _duoNetType(), online: true,
+    });
+  }, 25000);
+}
 
 /* ════════════════════════════════════════════════════════
    BATTERY STATUS
@@ -1957,6 +2026,12 @@ function initBattery() {
 function _updateBattery(bat) {
   const pct      = Math.round(bat.level * 100);
   const charging = bat.charging;
+
+  _presBattery  = pct;
+  _presCharging = charging;
+  if (window.DuoSync && typeof window.DuoSync.presenceUpdate === 'function') {
+    window.DuoSync.presenceUpdate({ battery: pct, batteryCharging: charging });
+  }
 
   // لون حسب الحالة
   const color =

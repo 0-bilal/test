@@ -100,5 +100,121 @@ window.DuoSync = (function () {
     } catch (e) { console.warn('[DuoSync] onAction error:', e); }
   }
 
-  return { write, listen, readOnce, writeAction, onAction, init: _init, enabled };
+  /* ══════════════════════════════════════════════════════════════
+     أجهزة العملاء المتصلة — حضور + بطارية + اسم قابل للتعديل
+     المسار: duo/{branch}/devices/{devId}
+     { name, platform, netType, battery, batteryCharging, online, ts }
+
+     الاستقرار: نراقب duo`.info/connected` باستمرار (مثل duo-connect.js
+     تماماً) — في كل مرة يعود الاتصال بفايربيس (بعد انقطاع شبكة، أو رجوع
+     الآيباد من وضع السكون) نُعيد كتابة الحضور **ونعيد تسجيل** onDisconnect
+     من جديد. تسجيله لمرة واحدة فقط عند فتح الصفحة غير كافٍ: onDisconnect
+     يرتبط باتصال (socket) معيّن، فبعد أي انقطاع واتصال جديد يجب إعادة
+     ضبطه وإلا لن يعمل بشكل صحيح في المرة التالية، وقد تبقى الشاشة تظهر
+     "غير متصل" أو العكس رغم أنها تعمل فعلياً.
+  ══════════════════════════════════════════════════════════════ */
+  let _presRef     = null;   // مرجع عقدة هذا الجهاز
+  let _presConnRef = null;   // مرجع .info/connected
+  let _presInfo    = {};     // آخر بيانات معروفة (منصّة/شبكة/بطارية)
+  let _presName    = null;   // الاسم بعد تحديده أول مرة — يُعاد استخدامه دائماً
+
+  function _devicesRef() { return db.ref(`duo/${branch()}/devices`); }
+
+  /** يكتب حالة الحضور الحالية ويُعيد ضبط onDisconnect — يُستدعى عند كل اتصال/إعادة اتصال */
+  function _presWrite() {
+    if (!_presRef) return;
+    const payload = Object.assign({
+      platform:        _presInfo.platform || '—',
+      netType:         _presInfo.netType  || '—',
+      battery:         (_presInfo.battery === undefined ? null : _presInfo.battery),
+      batteryCharging: !!_presInfo.batteryCharging,
+      online:          true,
+      ts:              firebase.database.ServerValue.TIMESTAMP,
+    }, _presName ? { name: _presName } : {});
+    _presRef.update(payload).catch(() => {});
+    try {
+      _presRef.onDisconnect().update({ online: false, ts: firebase.database.ServerValue.TIMESTAMP });
+    } catch (e) {}
+  }
+
+  /** يحدّد اسماً تسلسلياً فريداً أول مرة فقط (أو يعيد استخدام اسم محفوظ سلفاً) ثم يكتب */
+  function _presAssignNameThenWrite() {
+    _presRef.once('value').then(snap => {
+      const v = snap.val();
+      if (v && v.name) { _presName = v.name; _presWrite(); return; }
+      db.ref(`duo/${branch()}/deviceSeq`).transaction(cur => (cur || 0) + 1)
+        .then(res => {
+          const n = (res && res.committed && res.snapshot) ? res.snapshot.val() : null;
+          _presName = n ? `شاشة ${n}` : 'شاشة العميل';
+          _presWrite();
+        })
+        .catch(() => { _presName = _presName || 'شاشة العميل'; _presWrite(); });
+    }).catch(() => { _presName = _presName || 'شاشة العميل'; _presWrite(); });
+  }
+
+  /**
+   * يسجّل حضور هذا الجهاز (شاشة عميل) في Firebase ويراقب اتصاله باستمرار.
+   */
+  function presenceStart(devId, info) {
+    if (!enabled() || !_init() || !devId) return;
+    _presInfo = info || {};
+    _presRef  = db.ref(`duo/${branch()}/devices/${devId}`);
+
+    if (_presConnRef) { try { _presConnRef.off(); } catch (e) {} }
+    _presConnRef = db.ref('.info/connected');
+    _presConnRef.on('value', snap => {
+      if (snap.val() !== true) return;   // انقطاع — onDisconnect المسجَّل سابقاً يتكفّل بالتحديث
+      if (_presName) _presWrite();               // لدينا اسم بالفعل — أعِد الكتابة وأعِد ضبط onDisconnect
+      else            _presAssignNameThenWrite(); // أول اتصال — حدّد الاسم أولاً
+    });
+  }
+
+  /** تحديث دوري لبيانات الجهاز (بطارية، شبكة…) — يحافظ دائماً على الاسم حتى لو حُذفت العقدة */
+  function presenceUpdate(partial) {
+    if (!_presRef) return;
+    _presInfo = Object.assign({}, _presInfo, partial);
+    const payload = Object.assign({}, partial, { ts: firebase.database.ServerValue.TIMESTAMP });
+    if (_presName) payload.name = _presName;
+    try { _presRef.update(payload).catch(() => {}); } catch (e) {}
+  }
+
+  /* استرجاع سريع عند رجوع التبويب للواجهة أو رجوع الشبكة — لا ننتظر
+     اكتشاف فايربيس التلقائي للانقطاع، بل نُعيد الكتابة فوراً */
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => { if (_presRef) _presWrite(); });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && _presRef) _presWrite();
+    });
+  }
+
+  /** الكاشير: يستمع لقائمة الأجهزة المتصلة بهذا الفرع */
+  function watchDevices(cb) {
+    if (!enabled() || !_init()) return;
+    try {
+      _devicesRef().on('value', snap => {
+        const v = snap.val() || {};
+        const arr = Object.keys(v).map(k => Object.assign({ devId: k }, v[k]));
+        cb(arr);
+      });
+    } catch (e) { console.warn('[DuoSync] watchDevices error:', e); }
+  }
+
+  /** الكاشير: إعادة تسمية جهاز */
+  function renameDevice(devId, name) {
+    if (!enabled() || !_init() || !devId) return;
+    try { db.ref(`duo/${branch()}/devices/${devId}`).update({ name }).catch(() => {}); }
+    catch (e) {}
+  }
+
+  /** الكاشير: إزالة جهاز من القائمة (فصل نهائي) */
+  function removeDevice(devId) {
+    if (!enabled() || !_init() || !devId) return;
+    try { db.ref(`duo/${branch()}/devices/${devId}`).remove().catch(() => {}); }
+    catch (e) {}
+  }
+
+  return {
+    write, listen, readOnce, writeAction, onAction, init: _init, enabled,
+    presenceStart, presenceUpdate, watchDevices, renameDevice, removeDevice,
+  };
 })();

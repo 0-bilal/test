@@ -51,7 +51,7 @@ const menuCategories = [
         image:         'images/products/origa-burger.jpg',
         price:         23,
         calories:      946,
-        descriptionAr: 'برجر اسماش دبل 140 غرام من اللحم المشوي، معصوص يعطي اللحمة بعضا من الحلاوة',
+        descriptionAr: 'برجر سماش دبل 140 غرام من اللحم المشوي، مع صوص فيه نسبه حلاوه بسيطة',
         ingredients: [
           { nameAr: 'خبز بريوش', removable: false },
           { nameAr: 'لحم سماش دبل 140غ', removable: false },

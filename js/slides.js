@@ -17,11 +17,11 @@
 const slides = [
   {
     image: 'images/slides/slide6.png',
-    titleAr: 'دبل ترافل برجر',
-    titleEn: "new",
+    titleAr: '',
+    titleEn: "",
     descriptionAr: '',
-    badge: 'جديد',
-    badgeColor: 'gold',
+    badge: null,
+    badgeColor: null,
     price: null,
     duration: 10000,
   },
@@ -98,5 +98,15 @@ const slides = [
     badge: 'اكسب لتدفع',
     badgeColor: 'red',
     duration: 9000,
+  },
+  {
+    image: 'images/slides/slide7.png',
+    titleAr: 'دبل ترافل برجر',
+    titleEn: "لعشاق الترافل",
+    descriptionAr: '',
+    badge: 'جديد',
+    badgeColor: 'green',
+    price: null,
+    duration: 10000,
   },
  ];

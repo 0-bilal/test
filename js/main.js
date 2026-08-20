@@ -863,6 +863,7 @@ function _startReviewTimer() {
 ════════════════════════════════════════════════════════ */
 let curSlide  = 0;
 let slideTimer = null;
+let _lastAppliedPin = undefined; // آخر شريحة مثبّتة طُبِّقت فعلياً — راجع applyDevSettings
 
 function renderSlides() {
   const wrapper = $('slides-wrapper');
@@ -1202,11 +1203,18 @@ function applyDevSettings() {
   });
 
   // تثبيت الشريحة — إذا كانت هناك شريحة مثبتة، انتقل إليها وأوقف السلايدشو
+  // فقط عند تغيّر التثبيت فعلياً؛ applyDevSettings تُستدعى مع أي مزامنة
+  // إعدادات (حتى لو لا علاقة لها بالشرائح)، وكانت تُعيد تشغيل شريط تقدّم
+  // الشريحة المثبّتة من الصفر في كل مرة — وميض غير مبرر أمام العميل.
   if (_devPinnedSlide !== null && !isNaN(_devPinnedSlide)) {
-    clearTimeout(slideTimer);
-    slideTimer = null;
-    goToSlide(_devPinnedSlide, 0, true /* pinned — لا تجدول الانتقال التالي */);
+    if (_devPinnedSlide !== _lastAppliedPin) {
+      clearTimeout(slideTimer);
+      slideTimer = null;
+      goToSlide(_devPinnedSlide, 0, true /* pinned — لا تجدول الانتقال التالي */);
+      _lastAppliedPin = _devPinnedSlide;
+    }
   } else {
+    _lastAppliedPin = null;
     // انتقل للشريحة التالية إذا كانت الحالية مخفية
     const slideEls = document.querySelectorAll('.slide');
     if (slideEls[curSlide]?.dataset.devHidden === 'true') {
@@ -1454,6 +1462,8 @@ function closeDevModal() {
 function checkDevPassword() {
   if (_devPinValue === DEV_PASSWORD) {
     closeDevModal();
+    // أثبت الهوية لهذه الجلسة حتى لا يُطلَب الرقم السري مرة ثانية عند وصول لوحة التحكم
+    try { sessionStorage.setItem('duo_admin_ok', '1'); } catch (e) {}
     // فتح صفحة الداشبورد المنفصلة
     window.location.href = 'dashboard.html';
   } else {
@@ -1548,255 +1558,6 @@ window.fitScreenToViewport = fitScreenToViewport;
 window.addEventListener('resize', fitScreenToViewport);
 window.addEventListener('orientationchange', fitScreenToViewport);
 
-/* ════════════════════════════════════════════════════════
-   VERTICAL LAYOUT — Liquid Glass  (النسخة القديمة — غير مستخدمة)
-   ─────────────────────────────────────────────────────────
-   ⚠️ استُبدل هذا المحرّك بالعرض السينمائي في vmenu.js.
-   الكود أدناه لم يعد يُستدعى من أي مكان، ومُبقى مؤقتاً
-   للرجوع إليه فقط — يمكن حذفه بأمان (حتى نهاية
-   الدالة _vlRebuildIfActive).
-════════════════════════════════════════════════════════ */
-let _vlCats       = [];   // [{id, nameAr, icon, visItems:[…]}]
-let _vlCurCatIdx  = 0;    // القسم الحالي
-let _vlCurProdIdx = 0;    // المنتج الحالي داخل القسم
-let _vlTimer      = null;
-let _vlPaused     = false;
-let _vlPauseTimer2 = null;
-let _vlCurImgSrc  = '';
-let _vlImgFadeTimer = null;
-
-function _vlInit() {
-  /* هيدر */
-  const logo  = restaurantInfo.logo;
-  const vImg  = document.getElementById('vl-logo-img');
-  const vPh   = document.getElementById('vl-logo-ph');
-  if (logo && vImg) {
-    vImg.src = logo;
-    vImg.style.display = 'block';
-    if (vPh) vPh.style.display = 'none';
-  }
-  setText('vl-name-ar',    restaurantInfo.nameAr    || '');
-  setText('vl-name-en',    restaurantInfo.nameEn    || '');
-  setText('vl-tagline',    restaurantInfo.taglineAr || '');
-  setText('vl-tax-text',   restaurantInfo.taxNote   || '');
-  setText('vl-phone-value', restaurantInfo.phone    || '');
-
-  /* إخفاء زر الخصم إذا لم يكن هناك رابط Google Maps */
-  if (!restaurantInfo.googleMapsUrl || restaurantInfo.googleMapsUrl.includes('YOUR_LINK')) {
-    const vDisc = $('vl-discount-btn');
-    if (vDisc) vDisc.style.display = 'none';
-  }
-
-  _vlBuildCats();
-  setTimeout(_vlStart, 900);
-
-  /* إيقاف مؤقت عند لمس قسم المنتجات */
-  const sectDisplay = document.getElementById('vl-section-display');
-  if (sectDisplay) {
-    sectDisplay.addEventListener('touchstart', _vlPause, { passive: true });
-  }
-}
-
-/* بناء قائمة الأقسام من menuCategories */
-function _vlBuildCats() {
-  _vlCats = [];
-  menuCategories.forEach(cat => {
-    const visItems = cat.items.filter(it =>
-      !_devHiddenItems.has(_devItemKey(cat.id, it.nameAr))
-    );
-    if (!visItems.length) return;
-    _vlCats.push({ id: cat.id, nameAr: cat.nameAr, icon: cat.icon, visItems });
-  });
-}
-
-/* تصيير قسم بعينه: رأس + صفوف + زر التالي */
-function _vlRenderCategory(catIdx) {
-  const cat = _vlCats[catIdx];
-  if (!cat) return;
-
-  /* رأس القسم */
-  const sectHeader = $('vl-sect-header');
-  if (sectHeader) {
-    sectHeader.innerHTML =
-      `<i class="fa-solid ${cat.icon} vl-sect-header-icon"></i>` +
-      `<span class="vl-sect-header-name">${cat.nameAr}</span>`;
-  }
-
-  /* شارة فوق الصورة */
-  setText('vl-cat-badge', cat.nameAr);
-
-  /* صفوف المنتجات */
-  const sectRows = $('vl-sect-rows');
-  if (!sectRows) return;
-  sectRows.innerHTML = '';
-
-  cat.visItems.forEach((item, idx) => {
-    const row = document.createElement('div');
-    row.className = 'vl-row';
-    row.dataset.image = item.image || '';
-    row.dataset.price = item.price != null ? String(item.price) : '';
-
-    const num       = String(idx + 1).padStart(2, '0');
-    const priceHtml = item.price != null
-      ? `<span class="vl-row-price">${item.price} ريال</span>` : '';
-
-    row.innerHTML =
-      `<span class="vl-row-num">${num}</span>` +
-      `<div class="vl-row-names">` +
-        `<span class="vl-row-name-ar">${item.nameAr}</span>` +
-        `<span class="vl-row-name-en">${item.nameEn || ''}</span>` +
-      `</div>` +
-      priceHtml;
-
-    row.addEventListener('click', () => { _vlPause(); _vlHighlight(idx); });
-    sectRows.appendChild(row);
-  });
-
-  /* زر القسم التالي — يعرض اسم القسم القادم */
-  const nextLabel = $('vl-next-btn-label');
-  if (nextLabel && _vlCats.length > 1) {
-    const nextCat = _vlCats[(_vlCurCatIdx + 1) % _vlCats.length];
-    if (nextCat) nextLabel.textContent = nextCat.nameAr;
-  }
-}
-
-/* تحديث التمييز + الصورة */
-function _vlHighlight(prodIdx) {
-  const cat = _vlCats[_vlCurCatIdx];
-  if (!cat || !cat.visItems.length) return;
-
-  prodIdx = ((prodIdx % cat.visItems.length) + cat.visItems.length) % cat.visItems.length;
-  _vlCurProdIdx = prodIdx;
-
-  const rows = document.querySelectorAll('#vl-sect-rows .vl-row');
-  rows.forEach((r, i) => r.classList.toggle('vl-active', i === prodIdx));
-
-  const item = cat.visItems[prodIdx];
-  if (!item) return;
-
-  /* الصورة */
-  const newSrc = item.image || '';
-  const imgEl  = document.getElementById('vl-prod-img');
-  const phEl   = document.getElementById('vl-prod-ph');
-  const bgEl   = document.getElementById('vl-glass-bg');
-
-  if (newSrc && newSrc !== _vlCurImgSrc) {
-    _vlCurImgSrc = newSrc;
-    clearTimeout(_vlImgFadeTimer);
-    if (imgEl) {
-      imgEl.classList.remove('vl-img-visible');
-      _vlImgFadeTimer = setTimeout(() => {
-        imgEl.src = newSrc;
-        imgEl.style.display = 'block';
-        if (phEl) phEl.style.display = 'none';
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-          imgEl.classList.add('vl-img-visible');
-        }));
-      }, 200);
-    }
-    if (bgEl) bgEl.style.backgroundImage = `url('${newSrc}')`;
-  } else if (!newSrc) {
-    _vlCurImgSrc = '';
-    if (imgEl) { imgEl.classList.remove('vl-img-visible'); imgEl.style.display = 'none'; }
-    if (phEl)  phEl.style.display = 'flex';
-    if (bgEl)  bgEl.style.backgroundImage = '';
-  }
-
-  /* السعر */
-  const priceBadge  = $('vl-price-badge');
-  const priceBadgeN = $('vl-price-badge-num');
-  if (priceBadge) {
-    if (item.price != null) {
-      if (priceBadgeN) priceBadgeN.textContent = item.price;
-      priceBadge.style.display = 'inline-flex';
-    } else {
-      priceBadge.style.display = 'none';
-    }
-  }
-}
-
-function _vlStart() {
-  if (!_vlCats.length) return;
-  _vlCurCatIdx  = 0;
-  _vlCurProdIdx = 0;
-  _vlRenderCategory(0);
-  _vlHighlight(0);
-  _vlTimer = setTimeout(_vlStep, ITEM_DURATION);
-}
-
-function _vlStep() {
-  clearTimeout(_vlTimer);
-  if (_vlPaused) return;
-
-  const cat = _vlCats[_vlCurCatIdx];
-  if (!cat) return;
-
-  const nextProdIdx = _vlCurProdIdx + 1;
-
-  if (nextProdIdx >= cat.visItems.length) {
-    /* انتهت منتجات هذا القسم → انتظر ثم انتقل للتالي */
-    _vlTimer = setTimeout(_vlNextCat, ITEM_DURATION + 1200);
-  } else {
-    _vlHighlight(nextProdIdx);
-    _vlTimer = setTimeout(_vlStep, ITEM_DURATION);
-  }
-}
-
-/* الانتقال للقسم التالي (يُستدعى من الزر أو تلقائياً) */
-function _vlNextCat() {
-  if (!_vlCats.length) return;
-  clearTimeout(_vlTimer);
-
-  _vlCurCatIdx  = (_vlCurCatIdx + 1) % _vlCats.length;
-  _vlCurProdIdx = 0;
-  _vlCurImgSrc  = '';
-
-  const sectDisplay = $('vl-section-display');
-  if (sectDisplay) {
-    sectDisplay.style.opacity   = '0';
-    sectDisplay.style.transform = 'translateY(18px)';
-    setTimeout(() => {
-      _vlRenderCategory(_vlCurCatIdx);
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        sectDisplay.style.opacity   = '1';
-        sectDisplay.style.transform = 'translateY(0)';
-        _vlHighlight(0);
-      }));
-    }, 360);
-  } else {
-    _vlRenderCategory(_vlCurCatIdx);
-    _vlHighlight(0);
-  }
-
-  if (!_vlPaused) {
-    _vlTimer = setTimeout(_vlStep, ITEM_DURATION + 1000);
-  }
-}
-window._vlNextCat = _vlNextCat;
-
-function _vlPause() {
-  _vlPaused = true;
-  clearTimeout(_vlTimer);
-  clearTimeout(_vlPauseTimer2);
-  _vlPauseTimer2 = setTimeout(_vlResume, PAUSE_DURATION);
-}
-
-function _vlResume() {
-  _vlPaused = false;
-  clearTimeout(_vlPauseTimer2);
-  _vlHighlight(_vlCurProdIdx);
-  _vlTimer = setTimeout(_vlStep, ITEM_DURATION);
-}
-
-/* إعادة بناء عند تغيير الإعدادات من الريموت */
-function _vlRebuildIfActive() {
-  const vl = document.getElementById('screen-vertical');
-  if (vl && vl.style.display !== 'none') {
-    clearTimeout(_vlTimer);
-    _vlBuildCats();
-    _vlStart();
-  }
-}
 
 /* ════════════════════════════════════════════════════════
    INIT
@@ -1804,6 +1565,10 @@ function _vlRebuildIfActive() {
 /* ════════════════════════════════════════════════════════
    MAINTENANCE MODE — وضع الصيانة
 ════════════════════════════════════════════════════════ */
+function _escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function _showMaintenanceScreen() {
   const msg = localStorage.getItem(LS_MAINTENANCE_MSG) || 'نعود قريباً — We\'ll be back soon';
   let el = document.getElementById('maintenance-screen');
@@ -1815,7 +1580,7 @@ function _showMaintenanceScreen() {
   el.innerHTML = `
     <div class="maintenance-content">
       <div class="maintenance-icon"><i class="fa-solid fa-wrench"></i></div>
-      <div class="maintenance-msg">${msg}</div>
+      <div class="maintenance-msg">${_escHtml(msg)}</div>
       <div class="maintenance-sub">يرجى المتابعة قريباً</div>
     </div>`;
   el.style.display = 'flex';

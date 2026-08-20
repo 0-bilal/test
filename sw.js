@@ -4,39 +4,58 @@
  * Bump CACHE_NAME to force an update on all clients.
  */
 
-const CACHE_NAME = 'duo-menu-v21';
+const CACHE_NAME = 'duo-menu-v23';
 
-/* Core assets cached on install */
+/* Core assets cached on install — مسارات نسبية (بلا "/" بادئة) عمداً:
+   تُحسَب داخل Service Worker بالنسبة لموقع sw.js نفسه، فتعمل صحيحة سواء
+   كان الموقع منشوراً على جذر الدومين أو داخل مجلد فرعي (subpath). كانت
+   النسخة السابقة تستخدم مسارات جذر مطلقة (/index.html...) تُخطئ الموقع
+   الحقيقي لأي نشر ليس على جذر الدومين مباشرة — وهو على الأرجح سبب فتح
+   التطبيق المثبَّت لصفحة خاطئة بدل صفحة المنيو. */
 const PRECACHE = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/vmenu.css',
-  '/game.css',
-  '/game-xo.css',
-  '/main.js',
-  '/vmenu.js',
-  '/products.js',
-  '/slides.js',
-  '/game.js',
-  '/game-xo.js',
-  '/games-hub.js',
-  '/dashboard.html',
-  '/dashboard.css',
-  '/dashboard.js',
-  '/duo-config.js',
-  '/duo-connect.js',
-  '/duo-sync.js',
-  '/manifest.json',
-  '/icons/logo.ico',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  /* slide images */
-  '/images/slides/slide1.jpg',
-  '/images/slides/slide2.jpg',
-  '/images/slides/slide3.jpg',
-  '/images/slides/slide4.jpg',
-  '/images/slides/slide5.jpg',
+  './',
+  './index.html',
+  './cashier.html',
+  './dashboard.html',
+  './manifest.json',
+  './css/style.css',
+  './css/vmenu.css',
+  './css/game.css',
+  './css/game-xo.css',
+  './css/cashier.css',
+  './css/dashboard.css',
+  './js/main.js',
+  './js/vmenu.js',
+  './js/products.js',
+  './js/slides.js',
+  './js/game.js',
+  './js/game-xo.js',
+  './js/games-hub.js',
+  './js/dashboard.js',
+  './js/cashier.js',
+  './js/duo-config.js',
+  './js/duo-connect.js',
+  './js/duo-sync.js',
+  './js/duo-auth.js',
+  './icons/logo.ico',
+  './icons/icon.svg',
+  './icons/icon-72.png',
+  './icons/icon-96.png',
+  './icons/icon-128.png',
+  './icons/icon-144.png',
+  './icons/icon-152.png',
+  './icons/icon-192.png',
+  './icons/icon-384.png',
+  './icons/icon-512.png',
+  './images/logo.ico',
+  /* صور الشرائح — 7 شرائح PNG فعلية */
+  './images/slides/slide1.png',
+  './images/slides/slide2.png',
+  './images/slides/slide3.png',
+  './images/slides/slide4.png',
+  './images/slides/slide5.png',
+  './images/slides/slide6.png',
+  './images/slides/slide7.png',
 ];
 
 /* ── Install: pre-cache core assets ── */

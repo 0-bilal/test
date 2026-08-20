@@ -5,11 +5,3 @@ At B:\Users\pc-bilal\Documents\Visual Studio Code\DUO\local-server\pshttp.ps1:6 
     + CategoryInfo          : InvalidData: (:) [Add-Type], InvalidOperationException
     + FullyQualifiedErrorId : ASSEMBLY_LOAD_ERRORS,Microsoft.PowerShell.Commands.AddTypeCommand
  
-Exception calling "Start" with "0" argument(s): "Failed to listen on prefix 'http://127.0.0.1:8123/' because it 
-conflicts with an existing registration on the machine."
-At B:\Users\pc-bilal\Documents\Visual Studio Code\DUO\local-server\pshttp.ps1:10 char:1
-+ $listener.Start()
-+ ~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (:) [], MethodInvocationException
-    + FullyQualifiedErrorId : HttpListenerException
- 

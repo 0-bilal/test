@@ -1007,7 +1007,10 @@ function _setupAutoLock() {
   if (_lockTimeout <= 0) return;
   const reset = () => {
     clearTimeout(_lockTimer);
-    _lockTimer = setTimeout(() => { window.location.href = 'index.html'; }, _lockTimeout * 60000);
+    _lockTimer = setTimeout(() => {
+      try { sessionStorage.removeItem('duo_admin_ok'); } catch (e) {}
+      window.location.href = 'index.html';
+    }, _lockTimeout * 60000);
   };
   ['mousedown', 'touchstart', 'keydown', 'scroll', 'click'].forEach(ev =>
     document.addEventListener(ev, reset, { passive: true, once: false })

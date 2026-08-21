@@ -373,7 +373,7 @@ input{font-family:inherit}
   transition: opacity .2s, width .28s var(--ease);
 }
 .sidebar.collapsed .snav-label { opacity: 0; width: 0; pointer-events: none; overflow: hidden; }
-.sidebar.collapsed .snav-item  { justify-content: center; padding: 10px; }
+.sidebar.collapsed .snav-item  { justify-content: center; padding: 10px; gap: 0; }
 .sidebar.collapsed .snav-item.active::before { display: block; }
 
 /* ── الأجهزة ── */
@@ -396,7 +396,8 @@ input{font-family:inherit}
   flex: 1; white-space: nowrap; overflow: hidden;
   transition: opacity .2s;
 }
-.sidebar.collapsed .sb-panel-title { opacity: 0; width: 0; pointer-events: none; overflow: hidden; }
+.sidebar.collapsed .sb-panel-head  { justify-content: center; gap: 0; }
+.sidebar.collapsed .sb-panel-title { opacity: 0; width: 0; flex: none; pointer-events: none; overflow: hidden; }
 
 .sb-dev-badge {
   background: var(--sky-10); color: var(--sky); border: 1px solid var(--sky-28);
@@ -404,7 +405,7 @@ input{font-family:inherit}
   padding: 2px 8px; border-radius: var(--r-xs); flex-shrink: 0;
   min-width: 22px; text-align: center; transition: opacity .2s;
 }
-.sidebar.collapsed .sb-dev-badge { opacity: 0; width: 0; padding: 0; border: none; overflow: hidden; }
+.sidebar.collapsed .sb-dev-badge { opacity: 0; width: 0; min-width: 0; padding: 0; border: none; overflow: hidden; }
 
 .sb-devs-list {
   flex: 1; overflow-y: auto; padding: 0 10px 10px;
@@ -496,9 +497,12 @@ input{font-family:inherit}
   font-size: 10px; font-weight: 700; color: var(--c-tx3);
 }
 .sdev-np-label i { font-size: 10px; color: var(--amber2); }
-.set-toggle--sm { width: 34px; height: 19px; }
-.set-toggle--sm .set-slider::before { width: 13px; height: 13px; }
-.set-toggle--sm input:checked + .set-slider::before { transform: translateX(15px); }
+/* .set-toggle.set-toggle--sm (بدل .set-toggle--sm وحدها) لرفع الخصوصية فوق
+   قواعد .set-toggle الأساسية بلا شرط ترتيبها في الملف — وإلا تُطبَّق قواعد
+   .set-toggle العادية (48×26) رغم هذا التصغير لتساوي الخصوصية وتأخر تعريفها */
+.set-toggle.set-toggle--sm { width: 34px; height: 19px; }
+.set-toggle.set-toggle--sm .set-slider::before { width: 13px; height: 13px; }
+.set-toggle.set-toggle--sm input:checked + .set-slider::before { transform: translateX(15px); }
 
 /* مطوي */
 .sidebar.collapsed .sb-devs-list { padding: 0 7px 8px; }
@@ -1206,7 +1210,7 @@ input{font-family:inherit}
   .sidebar .snav-item { justify-content: center; padding: 10px; }
   .sidebar .sb-clock { padding: 8px 4px; }
   .sidebar .sb-time  { font-size: 11px; letter-spacing: 0; }
-  .sidebar .sdev-info,.sidebar .sdev-batt-row,.sidebar .sdev-meta,.sidebar .sdev-last,.sidebar .sdev-rename-btn { display: none; }
+  .sidebar .sdev-info,.sidebar .sdev-batt-row,.sidebar .sdev-meta,.sidebar .sdev-last,.sidebar .sdev-rename-btn,.sidebar .sdev-np-row { display: none; }
   .sidebar .sdev-card { padding: 5px; flex-direction: column; align-items: center; border-right: none; }
   .sidebar .lang-btn { padding: 8px; border-radius: var(--r-sm); width: 34px; height: 34px; justify-content: center; }
   .sidebar .lang-btn span { display: none; }

@@ -4,7 +4,7 @@
  * Bump CACHE_NAME to force an update on all clients.
  */
 
-const CACHE_NAME = 'duo-menu-v27';
+const CACHE_NAME = 'duo-menu-v31';
 
 /* Core assets cached on install — مسارات نسبية (بلا "/" بادئة) عمداً:
    تُحسَب داخل Service Worker بالنسبة لموقع sw.js نفسه، فتعمل صحيحة سواء

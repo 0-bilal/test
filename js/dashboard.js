@@ -143,6 +143,7 @@ const TAB_TITLES = {
   device:   'إدارة الجهاز',
   screen:   'ضبط الشاشة',
   pairing:  'ربط الأجهزة',
+  newproducts: 'منتجات جديدة',
 };
 let _activeTab = 'header';
 
@@ -170,6 +171,7 @@ function showTab(tab) {
     case 'device':   renderDeviceTab(body);   break;
     case 'screen':   renderScreenTab(body);   break;
     case 'pairing':  renderPairingTab(body);  break;
+    case 'newproducts': renderNewProductsTab(body); break;
   }
 }
 window.showTab = showTab;
@@ -1682,6 +1684,120 @@ function pairReset() {
   renderPairingTab($('dash-body'));
 }
 window.pairReset = pairReset;
+
+/* ════════════════════════════════════════════════
+   تبويب: منتجات جديدة (صورة فوق المنيو — خاصة بهذا الجهاز فقط)
+   يُفتح دائماً من لوحة التحكم *على نفس جهاز شاشة العميل* المطلوب
+   تفعيلها عليه — وليس عن بُعد لجهاز آخر.
+════════════════════════════════════════════════ */
+/* نفس معرّف الجهاز المستخدم في main.js (localStorage: duo_device_id)
+   حتى تُطابق عقدة الحضور نفسها في Firebase */
+function _dashDeviceId() {
+  let id = localStorage.getItem('duo_device_id');
+  if (!id) {
+    id = 'dev_' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('duo_device_id', id);
+  }
+  return id;
+}
+
+let _npVisible       = false;  // ظاهرة الآن على هذا الجهاز؟ — التحكم الأساسي هنا في لوحة التحكم
+let _npWatchStarted  = false;
+
+function renderNewProductsTab(body) {
+  const pairOn = localStorage.getItem('duo_pair_enabled') === 'true';
+
+  if (!pairOn) {
+    body.innerHTML = `
+      <div class="screen-note">
+        <i class="fa-solid fa-circle-info"></i>
+        <div>
+          <strong>فعّل ربط الأجهزة أولاً على هذا الجهاز</strong>
+          هذه الميزة تعمل عبر الاتصال المباشر (Firebase). اذهب لتبويب «ربط الأجهزة» وفعّل
+          الربط التلقائي على <b>هذا الجهاز تحديداً</b> (نفس الآيباد) قبل استخدام هذا التبويب.
+        </div>
+      </div>`;
+    return;
+  }
+
+  _startNpWatch();
+  body.innerHTML = _npCardHtml();
+}
+
+function _npCardHtml() {
+  return `
+    <div class="screen-note">
+      <i class="fa-solid fa-circle-info"></i>
+      <div>
+        <strong>صورة "منتجات جديدة" فوق المنيو</strong>
+        هذا هو <b>التحكم الأساسي</b> — يُظهر أو يُخفي الصورة فوراً على هذا الجهاز فقط (الآيباد الذي
+        تفتح منه لوحة التحكم الآن). شاشة الكاشير تملك نفس المفتاح كتحكم ثانوي سريع دون الحاجة للعودة هنا.
+        الصورة نفسها: <code>images/new-products/new.jpg</code>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-image"></i> هذا الجهاز</div>
+      <label class="row">
+        <div class="row-icon"><i class="fa-solid fa-tablet-screen-button"></i></div>
+        <div class="row-label">
+          إظهار صورة المنتجات الجديدة على هذا الجهاز
+          <small>${_npVisible ? 'ظاهرة الآن' : 'مخفية الآن'}</small>
+        </div>
+        <span class="toggle">
+          <input type="checkbox" ${_npVisible ? 'checked' : ''} onchange="npToggleHere(this.checked)">
+          <span class="slider"></span>
+        </span>
+      </label>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> إعادة الإظهار التلقائي</div>
+      <p class="pair-adv-note" style="margin-top:0">
+        عندما يضغط العميل على الصورة أو زر «عرض المنيو» تختفي الصورة ويظهر المنيو. حدّد هنا بعد كم
+        ثانية تعود الصورة للظهور تلقائياً على هذا الجهاز — اتركها <b>0</b> لتبقى مخفية حتى تُشغَّل يدوياً
+        من هنا أو من شاشة الكاشير.
+      </p>
+      <div class="screen-manual">
+        <div class="field">
+          <label>ثوانٍ قبل إعادة الظهور</label>
+          <input type="number" id="np-reshow-sec" min="0" max="3600" step="5"
+                 value="${_npReshowSec()}" onchange="npSetReshowSec(this.value)">
+        </div>
+      </div>
+    </div>`;
+}
+
+function _npReshowSec() {
+  const n = parseInt(localStorage.getItem('duo_np_reshow_delay') || '0', 10);
+  return (isNaN(n) || n < 0) ? 0 : n;
+}
+
+function npSetReshowSec(val) {
+  let n = parseInt(val, 10);
+  if (isNaN(n) || n < 0) n = 0;
+  if (n > 3600) n = 3600;
+  localStorage.setItem('duo_np_reshow_delay', String(n));
+  toast(n > 0 ? `سيُعاد إظهار الصورة تلقائياً بعد ${n} ثانية` : 'إعادة الإظهار التلقائي معطّلة');
+}
+window.npSetReshowSec = npSetReshowSec;
+
+function npToggleHere(checked) {
+  if (!window.DuoSync || typeof window.DuoSync.setDeviceFlag !== 'function') return;
+  _npVisible = checked;
+  window.DuoSync.setDeviceFlag(_dashDeviceId(), { newProductsVisible: checked });
+  toast(checked ? 'تم إظهار الصورة على هذا الجهاز' : 'تم إخفاء الصورة عن هذا الجهاز');
+  if (_activeTab === 'newproducts') $('dash-body').innerHTML = _npCardHtml();
+}
+window.npToggleHere = npToggleHere;
+
+function _startNpWatch() {
+  if (_npWatchStarted) return;
+  if (!window.DuoSync || typeof window.DuoSync.watchDevice !== 'function') return;
+  _npWatchStarted = true;
+  window.DuoSync.watchDevice(_dashDeviceId(), v => {
+    _npVisible = !!(v && v.newProductsVisible);
+    if (_activeTab === 'newproducts') $('dash-body').innerHTML = _npCardHtml();
+  });
+}
 
 /* تحديث حالة الاتصال (مرآة من صفحة المنيو عبر localStorage) */
 let _pairPollTimer = null;

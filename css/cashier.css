@@ -486,11 +486,25 @@ input{font-family:inherit}
 .sdev-pill.warn { background: var(--rose-10); color: var(--rose); border-color: var(--rose-28); }
 .sdev-last { font-size: 9px; color: var(--c-tx3); margin-top: 4px; font-family: var(--font-en); opacity: .6; }
 
+/* مفتاح صورة المنتجات الجديدة — صف مضغوط داخل كرت الجهاز في الشريط الجانبي */
+.sdev-np-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--c-edge);
+}
+.sdev-np-label {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 700; color: var(--c-tx3);
+}
+.sdev-np-label i { font-size: 10px; color: var(--amber2); }
+.set-toggle--sm { width: 34px; height: 19px; }
+.set-toggle--sm .set-slider::before { width: 13px; height: 13px; }
+.set-toggle--sm input:checked + .set-slider::before { transform: translateX(15px); }
+
 /* مطوي */
 .sidebar.collapsed .sb-devs-list { padding: 0 7px 8px; }
 .sidebar.collapsed .sdev-card { padding: 5px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 3px; border-right: none; border-radius: var(--r-xs); }
 .sidebar.collapsed .sdev-top { margin: 0; }
-.sidebar.collapsed .sdev-info,.sidebar.collapsed .sdev-batt-row,.sidebar.collapsed .sdev-meta,.sidebar.collapsed .sdev-last,.sidebar.collapsed .sdev-rename-btn { display: none; }
+.sidebar.collapsed .sdev-info,.sidebar.collapsed .sdev-batt-row,.sidebar.collapsed .sdev-meta,.sidebar.collapsed .sdev-last,.sidebar.collapsed .sdev-rename-btn,.sidebar.collapsed .sdev-np-row { display: none; }
 .sidebar.collapsed .sdev-icon { width: 26px; height: 26px; font-size: 11px; }
 .sidebar.collapsed .sdev-status-dot { width: 5px; height: 5px; }
 

@@ -106,6 +106,9 @@ const T = {
     devRemove: 'فصل', devRemoveConfirm: n => `فصل "${n}" نهائياً من القائمة؟`,
     devRenamed: 'تم تغيير الاسم ✓', devRemoved: 'تم فصل الجهاز',
     devicesCountStat: n => `${n} جهاز`,
+    devNewProducts: 'صورة منتجات جديدة',
+    devNewProductsShown: 'تم إظهار الصورة على هذا الجهاز',
+    devNewProductsHidden: 'تم إخفاء الصورة عن هذا الجهاز',
     split: 'تقسيم الفاتورة', splitSubtitle: 'قسّم مبلغ الفاتورة بالتساوي بين عدد من الأشخاص',
     splitPeopleLabel: 'عدد الأشخاص', splitAmountLabel: 'مبلغ الفاتورة',
     splitCalc: 'احسب القسمة', splitReset: 'تقسيم جديد',
@@ -173,6 +176,9 @@ const T = {
     devRemove: 'Unlink', devRemoveConfirm: n => `Unlink "${n}" permanently?`,
     devRenamed: 'Renamed ✓', devRemoved: 'Device unlinked',
     devicesCountStat: n => `${n} device${n === 1 ? '' : 's'}`,
+    devNewProducts: 'New Products Image',
+    devNewProductsShown: 'Image shown on this device',
+    devNewProductsHidden: 'Image hidden on this device',
     split: 'Split Bill', splitSubtitle: 'Split the bill amount evenly between a number of people',
     splitPeopleLabel: 'Number of People', splitAmountLabel: 'Bill Amount',
     splitCalc: 'Calculate', splitReset: 'New Split',
@@ -786,6 +792,14 @@ function _renderSidebarDevices() {
       </div>
       ${battRow}
       <div class="sdev-meta">${onlinePill}${netPill}</div>
+      <div class="sdev-np-row" onclick="event.stopPropagation()">
+        <span class="sdev-np-label"><i class="fa-solid fa-image"></i> ${t('devNewProducts')}</span>
+        <label class="set-toggle set-toggle--sm">
+          <input type="checkbox" ${d.newProductsVisible ? 'checked' : ''}
+            onchange="cToggleDeviceNewProducts('${d.devId}', this.checked)">
+          <span class="set-slider"></span>
+        </label>
+      </div>
       <div class="sdev-last">${_ago(d.ts)}</div>
     </div>`;
   });
@@ -908,6 +922,14 @@ function _renderDevices() {
             <span class="dcard-row-label"><i class="fa-solid fa-wifi"></i> ${t('devNetwork')}</span>
             <span class="dcard-row-val">${net}</span>
           </div>
+          <div class="dcard-row">
+            <span class="dcard-row-label"><i class="fa-solid fa-image"></i> ${t('devNewProducts')}</span>
+            <label class="set-toggle">
+              <input type="checkbox" ${d.newProductsVisible ? 'checked' : ''}
+                onchange="cToggleDeviceNewProducts('${d.devId}', this.checked)">
+              <span class="set-slider"></span>
+            </label>
+          </div>
         </div>
         <div class="dcard-foot">
           <div class="dcard-last-seen">${tf('devLastSeen', lastSeen)}</div>
@@ -928,6 +950,13 @@ function _renderDevices() {
 }
 
 function _findDevice(devId) { return _devices.find(d => d.devId === devId); }
+
+function cToggleDeviceNewProducts(devId, checked) {
+  if (!_syncOk() || !window.DuoSync || typeof window.DuoSync.setDeviceFlag !== 'function') return;
+  window.DuoSync.setDeviceFlag(devId, { newProductsVisible: checked });
+  cToast(checked ? t('devNewProductsShown') : t('devNewProductsHidden'), 'ok');
+}
+window.cToggleDeviceNewProducts = cToggleDeviceNewProducts;
 
 function cRenameDevice(devId) {
   const d = _findDevice(devId);

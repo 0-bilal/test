@@ -213,8 +213,31 @@ window.DuoSync = (function () {
     catch (e) {}
   }
 
+  /**
+   * تحديث حقول مخصّصة على عقدة جهاز معيّن دون المساس بباقي بياناته
+   * (تُستخدم مثلاً من لوحة التحكم/الكاشير لضبط ميزات خاصة بجهاز واحد فقط،
+   * كصورة "منتجات جديدة" التي قد تُفعَّل على جهاز وتُخفى عن آخر).
+   */
+  function setDeviceFlag(devId, patch) {
+    if (!enabled() || !_init() || !devId || !patch) return;
+    try {
+      db.ref(`duo/${branch()}/devices/${devId}`)
+        .update(Object.assign({}, patch, { ts: firebase.database.ServerValue.TIMESTAMP }))
+        .catch(() => {});
+    } catch (e) { console.warn('[DuoSync] setDeviceFlag error:', e); }
+  }
+
+  /** يستمع فقط لعقدة جهاز واحد — تستخدمه شاشة المنيو لمراقبة إعداداتها الخاصة */
+  function watchDevice(devId, cb) {
+    if (!enabled() || !_init() || !devId) return;
+    try {
+      db.ref(`duo/${branch()}/devices/${devId}`).on('value', s => cb(s.val() || {}));
+    } catch (e) { console.warn('[DuoSync] watchDevice error:', e); }
+  }
+
   return {
     write, listen, readOnce, writeAction, onAction, init: _init, enabled,
     presenceStart, presenceUpdate, watchDevices, renameDevice, removeDevice,
+    setDeviceFlag, watchDevice,
   };
 })();

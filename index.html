@@ -358,6 +358,15 @@
 
 </div><!-- /screen -->
 
+<!-- ══ صورة المنتجات الجديدة — غطاء كامل الشاشة فوق المنيو ══ -->
+<div id="new-products-overlay" class="new-products-overlay" style="display:none" onclick="dismissNewProductsOverlay()">
+  <img id="new-products-img" class="new-products-img" src="images/new-products/new.jpg" alt="منتجات جديدة">
+  <button class="new-products-menu-btn" onclick="event.stopPropagation();dismissNewProductsOverlay()">
+    <i class="fa-solid fa-utensils"></i>
+    <span>عرض المنيو</span>
+  </button>
+</div>
+
 <!-- ══ Dev: Password Modal ══ -->
 <div id="dev-pwd-modal" style="display:none;position:fixed;inset:0;z-index:99990;
      background:rgba(0,0,0,.90);align-items:center;justify-content:center;

@@ -1727,6 +1727,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // تسجيل حضور هذه الشاشة لدى الكاشير (اسم + بطارية + شبكة)
   _initDevicePresence();
+
+  // صورة المنتجات الجديدة — تُفعَّل/تُخفى لهذا الجهاز تحديداً من التحكم/الكاشير
+  _initNewProductsOverlay();
 });
 
 /* ════════════════════════════════════════════════════════
@@ -1772,6 +1775,58 @@ function _initDevicePresence() {
       netType: _duoNetType(), online: true,
     });
   }, 25000);
+}
+
+/* ════════════════════════════════════════════════════════
+   NEW PRODUCTS OVERLAY — صورة فوق المنيو، خاصة بهذا الجهاز
+   التحكم الأساسي: لوحة التحكم على نفس هذا الجهاز (newProductsVisible)
+   التحكم الثانوي السريع: نفس الحقل من شاشة الكاشير عن بُعد
+════════════════════════════════════════════════════════ */
+let _npOverlayOn   = null; // آخر حالة فعلية معروفة — لتفادي إعادة العرض عند كل نبضة حضور دورية
+let _npReshowTimer = null; // مؤقّت إعادة الإظهار التلقائي بعد ضغط العميل
+
+function showNewProductsOverlay() {
+  const el = document.getElementById('new-products-overlay');
+  if (!el) return;
+  clearTimeout(_npReshowTimer);
+  el.classList.remove('closing');
+  el.style.display = 'flex';
+}
+
+function hideNewProductsOverlay() {
+  const el = document.getElementById('new-products-overlay');
+  if (!el || el.style.display === 'none') return;
+  el.classList.add('closing');
+  setTimeout(() => { el.style.display = 'none'; el.classList.remove('closing'); }, 300);
+}
+window.showNewProductsOverlay = showNewProductsOverlay;
+window.hideNewProductsOverlay = hideNewProductsOverlay;
+
+/* يُستدعى عند ضغط العميل (على الصورة أو زر "عرض المنيو") — يخفيها، وإن كانت
+   "مدة إعادة الإظهار" مضبوطة من لوحة التحكم (> 0) يعيدها تلقائياً بعد تلك المدة،
+   طالما لم يُطفئها الكاشير/لوحة التحكم عن بُعد في هذه الأثناء */
+function dismissNewProductsOverlay() {
+  hideNewProductsOverlay();
+  clearTimeout(_npReshowTimer);
+  const delaySec = parseInt(localStorage.getItem('duo_np_reshow_delay') || '0', 10) || 0;
+  if (delaySec > 0) {
+    _npReshowTimer = setTimeout(() => {
+      if (_npOverlayOn) showNewProductsOverlay();
+    }, delaySec * 1000);
+  }
+}
+window.dismissNewProductsOverlay = dismissNewProductsOverlay;
+
+function _initNewProductsOverlay() {
+  if (!window.DuoSync || typeof window.DuoSync.watchDevice !== 'function') return;
+  window.DuoSync.watchDevice(_duoDeviceId(), v => {
+    const on = !!(v && v.newProductsVisible);
+    if (on === _npOverlayOn) return;   // لم تتغيّر الحالة فعلياً (مجرد تحديث حضور دوري) — تجاهل
+    _npOverlayOn = on;
+    clearTimeout(_npReshowTimer);      // أي أمر عن بُعد (كاشير/تحكم) يُلغي مؤقّت إعادة الإظهار المحلي
+    if (on) showNewProductsOverlay();
+    else    hideNewProductsOverlay();
+  });
 }
 
 /* ════════════════════════════════════════════════════════

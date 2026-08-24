@@ -49,7 +49,13 @@ window.DuoPrinter = (function () {
     'TM-T88V', 'TM-m30II', 'TM-m30', 'TM-m10', 'TM-P20II', 'TM-U220',
   ];
 
-  const DEFAULT_CONFIG = { ip: '192.168.0.147', model: SUPPORTED_MODELS[0] };
+  /* ── عروض الورق المدعومة (نقطة = بيكسل الصورة عند طباعتها) ── */
+  const SUPPORTED_PAPER_WIDTHS = [
+    { value: 576, label: '80mm (576 نقطة)' },
+    { value: 384, label: '58mm (384 نقطة)' },
+  ];
+
+  const DEFAULT_CONFIG = { ip: '192.168.0.147', model: SUPPORTED_MODELS[0], paperWidth: 576 };
 
   let _eposDevice    = null; // كائن الاتصال بالشبكة (epson.ePOSDevice)
   let _printerDevice = null; // كائن الطابعة بعد createDevice (epson.ePOSPrint)
@@ -65,7 +71,7 @@ window.DuoPrinter = (function () {
     ERROR_NOT_OPENED: 'لم يتم فتح اتصال بالطابعة بعد.',
     ERROR_ALREADY_OPENED: 'يوجد اتصال قائم بالفعل بالطابعة.',
     ERROR_SYSTEM: 'خطأ نظام أثناء الاتصال بالطابعة.',
-    SchemaError: 'الطابعة رفضت محتوى أمر الطباعة. إن كان الاتصال بالطابعة ينجح لكن الطباعة الفعلية تفشل بهذا الخطأ، فالسبب الأرجح أن فيرموير الطابعة لا يدعم وسم اللغة العربية (lang="ar") المُرسَل مع النص. جرّب "طباعة صفحة اختبار (نص إنجليزي فقط)" من الإعدادات: إن نجحت فالمشكلة تحديداً في دعم العربية على هذه الطابعة وتحتاج طباعة النص العربي كصورة بدل نص مباشر. غير ذلك، تأكد من عدم إرسال أمر طباعة آخر متزامن وأعد تشغيل الطابعة.',
+    SchemaError: 'الطابعة رفضت محتوى أمر الطباعة. تأكد من عدم إرسال أمر طباعة آخر متزامن، وأعد تشغيل الطابعة إذا تكرر الخطأ.',
     PrintSystemError: 'خطأ داخلي في نظام الطباعة بالطابعة. أعد تشغيل الطابعة وحاول مجدداً.',
     EPTR_COVER_OPEN: 'غطاء الطابعة مفتوح.',
     EPTR_REC_EMPTY: 'نفد ورق الطابعة.',
@@ -98,6 +104,70 @@ window.DuoPrinter = (function () {
   }
 
   function getSupportedModels() { return SUPPORTED_MODELS.slice(); }
+  function getSupportedPaperWidths() { return SUPPORTED_PAPER_WIDTHS.slice(); }
+
+  /* ══════════ رسم نص عربي/مختلط كصورة — يتجاوز محدودية خط الطابعة ══════════
+     خطوط الطابعات الحرارية غالباً لا تدعم "ربط" الحروف العربية (كل حرف
+     يُطبع منفصلاً بشكله المعزول)، لأن الطابعة لا تُشكِّل الحروف حسب موقعها
+     في الكلمة. المتصفح نفسه يُشكِّل العربية بشكل صحيح عبر Canvas، لذلك
+     نرسم النص في المتصفح ونطبعه كصورة (بكسلات) بدل إرساله كنص للطابعة. */
+  function _renderLines(lines, widthPx) {
+    const PAD = 10;
+    const canvas = document.createElement('canvas');
+    canvas.width = widthPx;
+    const ctx = canvas.getContext('2d');
+    const fontStack = '"Tahoma","Segoe UI","Arial",sans-serif';
+    const fontPxFor = size => Math.round(22 * (size || 1));
+
+    const rows = [];
+    let y = PAD;
+
+    lines.forEach(line => {
+      if (line.rule) { rows.push({ rule: true, y: y + 8 }); y += 20; return; }
+      const fontPx = fontPxFor(line.size);
+      ctx.font = (line.bold ? 'bold ' : '') + fontPx + 'px ' + fontStack;
+      const lineHeight = Math.round(fontPx * 1.5);
+      const words = String(line.text == null ? '' : line.text).split(' ');
+      const wrapped = [];
+      let cur = '';
+      words.forEach(w => {
+        const test = cur ? cur + ' ' + w : w;
+        if (cur && ctx.measureText(test).width > widthPx - PAD * 2) { wrapped.push(cur); cur = w; }
+        else cur = test;
+      });
+      if (cur) wrapped.push(cur);
+      wrapped.forEach(t => {
+        y += lineHeight;
+        rows.push({ text: t, y: y - lineHeight * 0.3, fontPx, bold: line.bold, align: line.align || 'center' });
+      });
+      y += (line.spacing || 4);
+    });
+
+    canvas.height = y + PAD;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#000';
+    ctx.direction = 'rtl';
+
+    rows.forEach(r => {
+      if (r.rule) { ctx.fillRect(PAD, r.y, widthPx - PAD * 2, 2); return; }
+      ctx.font = (r.bold ? 'bold ' : '') + r.fontPx + 'px ' + fontStack;
+      ctx.textAlign = r.align;
+      const x = r.align === 'center' ? widthPx / 2 : (r.align === 'right' ? widthPx - PAD : PAD);
+      ctx.fillText(r.text, x, r.y);
+    });
+
+    return { ctx, width: canvas.width, height: canvas.height };
+  }
+
+  /* يضيف كتلة نص (مصفوفة أسطر) كصورة إلى builder — يستبدل addTextLang('ar')+addText
+     غير الموثوقة على أغلب طابعات ESC/POS الحرارية للنصوص العربية. */
+  function addImageBlock(builder, lines) {
+    const { paperWidth } = getConfig();
+    const { ctx, width, height } = _renderLines(lines, paperWidth || 576);
+    builder.addImage(ctx, 0, 0, width, height, builder.COLOR_1, builder.MODE_MONO);
+    return builder;
+  }
 
   /* ══════════ 1) الاتصال بالطابعة ══════════ */
   function connectPrinter(onSuccess, onError) {
@@ -181,6 +251,6 @@ window.DuoPrinter = (function () {
 
   return {
     connectPrinter, createPrinterDevice, buildReceipt, sendPrint,
-    getConfig, setConfig, getSupportedModels,
+    getConfig, setConfig, getSupportedModels, getSupportedPaperWidths, addImageBlock,
   };
 })();

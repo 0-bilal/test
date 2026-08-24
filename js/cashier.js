@@ -203,7 +203,7 @@ const T = {
     printDone: 'تمت الطباعة ✓', printFailed: 'فشلت الطباعة',
     printerLibMissing: 'مكتبة الطابعة غير محمَّلة',
     printerSettingsTitle: 'إعدادات الطابعة', printerIpLabel: 'عنوان IP الخاص بالطابعة',
-    printerModelLabel: 'موديل الطابعة', printerSaveBtn: 'حفظ الإعدادات',
+    printerModelLabel: 'موديل الطابعة', printerPaperLabel: 'عرض ورق الطابعة', printerSaveBtn: 'حفظ الإعدادات',
     printerSavedOk: 'تم حفظ إعدادات الطابعة ✓', printerIpInvalid: 'عنوان IP غير صحيح',
     printerTestBtn: 'اختبار الاتصال بالطابعة', printerTesting: 'جارٍ اختبار الاتصال…',
     printerTestOk: ms => `نجح الاتصال بالطابعة ✓ (${ms} مللي ثانية)`,
@@ -323,7 +323,7 @@ const T = {
     printDone: 'Printed ✓', printFailed: 'Print failed',
     printerLibMissing: 'Printer library not loaded',
     printerSettingsTitle: 'Printer Settings', printerIpLabel: 'Printer IP Address',
-    printerModelLabel: 'Printer Model', printerSaveBtn: 'Save Settings',
+    printerModelLabel: 'Printer Model', printerPaperLabel: 'Paper Width', printerSaveBtn: 'Save Settings',
     printerSavedOk: 'Printer settings saved ✓', printerIpInvalid: 'Invalid IP address',
     printerTestBtn: 'Test Printer Connection', printerTesting: 'Testing connection…',
     printerTestOk: ms => `Connected to printer ✓ (${ms} ms)`,
@@ -1271,6 +1271,9 @@ function _renderPrinting() {
   const modelOptions = DuoPrinter.getSupportedModels().map(m =>
     `<option value="${_esc(m)}" ${m === pCfg.model ? 'selected' : ''}>${_esc(m)}</option>`
   ).join('');
+  const paperOptions = DuoPrinter.getSupportedPaperWidths().map(p =>
+    `<option value="${p.value}" ${p.value === pCfg.paperWidth ? 'selected' : ''}>${_esc(p.label)}</option>`
+  ).join('');
 
   const settingsPopover = _printerSettingsOpen ? `
   <div class="printer-settings-popover">
@@ -1282,6 +1285,9 @@ function _renderPrinting() {
 
       <div class="print-field-label">${t('printerModelLabel')}</div>
       <select class="set-input" id="printer-model-input">${modelOptions}</select>
+
+      <div class="print-field-label">${t('printerPaperLabel')}</div>
+      <select class="set-input" id="printer-paper-input">${paperOptions}</select>
 
       <button class="print-action-btn" id="printer-settings-save-btn" onclick="cSavePrinterSettings()">
         <i class="fa-solid fa-check"></i>
@@ -1389,6 +1395,7 @@ window.cTogglePrinterSettings = cTogglePrinterSettings;
 function cSavePrinterSettings() {
   const ipInput    = document.getElementById('printer-ip-input');
   const modelInput = document.getElementById('printer-model-input');
+  const paperInput = document.getElementById('printer-paper-input');
   const ip = (ipInput?.value || '').trim();
 
   const ipPattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
@@ -1396,7 +1403,7 @@ function cSavePrinterSettings() {
   const valid = m && m.slice(1).every(n => Number(n) >= 0 && Number(n) <= 255);
   if (!valid) { cToast(t('printerIpInvalid'), 'err'); return; }
 
-  DuoPrinter.setConfig({ ip, model: modelInput?.value });
+  DuoPrinter.setConfig({ ip, model: modelInput?.value, paperWidth: Number(paperInput?.value) || 576 });
   cToast(t('printerSavedOk'), 'ok');
   _printerSettingsOpen = false;
   _renderPrinting();
@@ -1462,30 +1469,23 @@ function _buildCouponBuilder(pct, name, expiryDays, code) {
   })();
 
   const b = new epson.ePOSBuilder();
-  b.addTextLang('ar');
-  b.addTextAlign(b.ALIGN_CENTER);
-
-  b.addTextSize(2, 2);
-  b.addText(restaurantInfo.nameAr + '\n');
-  b.addTextSize(1, 1);
-  b.addText(restaurantInfo.address + '\n');
-  b.addText('--------------------------------\n');
-
-  b.addText('كوبون خصم\n');
-  b.addTextSize(4, 4);
-  b.addText(pct + '%\n');
-  b.addTextSize(1, 1);
-  b.addText(name + '\n');
-  b.addText('--------------------------------\n');
-
-  b.addText('كود الكوبون\n');
-  b.addTextSize(2, 1);
-  b.addText(code + '\n');
-  b.addTextSize(1, 1);
-  b.addText('--------------------------------\n');
-
-  b.addText('تاريخ الإصدار: ' + _fmtDateTime(issue) + '\n');
-  b.addText('صالح حتى: ' + _fmtDate(expiry) + '\n');
+  /* النص يُطبع كصورة (Canvas) وليس كنص مباشر: خطوط أغلب الطابعات الحرارية
+     لا تُشكِّل الحروف العربية (تطبعها منفصلة/غير متصلة)، بينما رسم النص في
+     المتصفح يُنتج تشكيلاً صحيحاً للحروف دائماً بغض النظر عن دعم الطابعة. */
+  DuoPrinter.addImageBlock(b, [
+    { text: restaurantInfo.nameAr, size: 2, bold: true },
+    { text: restaurantInfo.address, size: 1 },
+    { rule: true },
+    { text: 'كوبون خصم', size: 1 },
+    { text: pct + '%', size: 4, bold: true },
+    { text: name, size: 1 },
+    { rule: true },
+    { text: 'كود الكوبون', size: 1 },
+    { text: code, size: 2, bold: true },
+    { rule: true },
+    { text: 'تاريخ الإصدار: ' + _fmtDateTime(issue), size: 1 },
+    { text: 'صالح حتى: ' + _fmtDate(expiry), size: 1 },
+  ]);
 
   b.addFeed();
   b.addCut(b.CUT_FEED);
@@ -1510,16 +1510,13 @@ function _buildTestPrintBuilder() {
 /* بناء فاتورة رسالة نصية بسيطة للعميل */
 function _buildMessageBuilder(msg) {
   const b = new epson.ePOSBuilder();
-  b.addTextLang('ar');
-  b.addTextAlign(b.ALIGN_CENTER);
-
-  b.addTextSize(2, 2);
-  b.addText(restaurantInfo.nameAr + '\n');
-  b.addTextSize(1, 1);
-  b.addText('--------------------------------\n');
-  b.addText(msg + '\n');
-  b.addText('--------------------------------\n');
-  b.addText(new Date().toLocaleString('ar-SA') + '\n');
+  DuoPrinter.addImageBlock(b, [
+    { text: restaurantInfo.nameAr, size: 2, bold: true },
+    { rule: true },
+    { text: msg, size: 1 },
+    { rule: true },
+    { text: new Date().toLocaleString('ar-SA'), size: 1 },
+  ]);
 
   b.addFeed();
   b.addCut(b.CUT_FEED);

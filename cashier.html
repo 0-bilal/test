@@ -196,5 +196,34 @@
 <script src="assets/epos-2.27.0.js"></script>
 <script src="js/printer.js"></script>
 <script src="js/cashier.js"></script>
+
+<!-- ══ PWA Service Worker Registration ══ -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('sw.js', { scope: './' })
+        .then(reg => {
+          console.log('[PWA] Service Worker registered:', reg.scope);
+
+          // Notify user when a new version is available
+          reg.addEventListener('updatefound', () => {
+            const worker = reg.installing;
+            worker.addEventListener('statechange', () => {
+              if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('[PWA] New version available — reload to update.');
+                // For a kiosk/signage display, auto-reload after a delay
+                setTimeout(() => {
+                  worker.postMessage('SKIP_WAITING');
+                  window.location.reload();
+                }, 5000);
+              }
+            });
+          });
+        })
+        .catch(err => console.warn('[PWA] SW registration failed:', err));
+    });
+  }
+</script>
 </body>
 </html>

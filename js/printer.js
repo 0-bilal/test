@@ -124,21 +124,26 @@ window.DuoPrinter = (function () {
      في الكلمة. المتصفح نفسه يُشكِّل العربية بشكل صحيح عبر Canvas، لذلك
      نرسم النص في المتصفح ونطبعه كصورة (بكسلات) بدل إرساله كنص للطابعة. */
   function _renderLines(lines, widthPx) {
-    const PAD = 10;
+    const PAD = 14;
     const canvas = document.createElement('canvas');
     canvas.width = widthPx;
     const ctx = canvas.getContext('2d');
     const fontStack = '"Tahoma","Segoe UI","Arial",sans-serif';
-    const fontPxFor = size => Math.round(22 * (size || 1));
+    /* حجم أساسي أكبر ووزن شبه-عريض دائماً (حتى للأسطر العادية) — الخطوط
+       الرفيعة (regular) تُطبع باهتة/غير واضحة على الطابعات الحرارية لأن
+       رأس الطباعة الحراري يحتاج سماكة خط كافية ليُسخِّن الورق بشكل متصل،
+       فتظهر الحروف الرفيعة متقطّعة أو خفيفة جداً. */
+    const fontPxFor = size => Math.round(34 * (size || 1));
+    const weightFor = bold => bold ? '700' : '600';
 
     const rows = [];
     let y = PAD;
 
     lines.forEach(line => {
-      if (line.rule) { rows.push({ rule: true, y: y + 8 }); y += 20; return; }
+      if (line.rule) { rows.push({ rule: true, y: y + 10 }); y += 26; return; }
       const fontPx = fontPxFor(line.size);
-      ctx.font = (line.bold ? 'bold ' : '') + fontPx + 'px ' + fontStack;
-      const lineHeight = Math.round(fontPx * 1.5);
+      ctx.font = weightFor(line.bold) + ' ' + fontPx + 'px ' + fontStack;
+      const lineHeight = Math.round(fontPx * 1.55);
       const words = String(line.text == null ? '' : line.text).split(' ');
       const wrapped = [];
       let cur = '';
@@ -152,7 +157,7 @@ window.DuoPrinter = (function () {
         y += lineHeight;
         rows.push({ text: t, y: y - lineHeight * 0.3, fontPx, bold: line.bold, align: line.align || 'center' });
       });
-      y += (line.spacing || 4);
+      y += (line.spacing || 6);
     });
 
     canvas.height = y + PAD;
@@ -162,8 +167,8 @@ window.DuoPrinter = (function () {
     ctx.direction = 'rtl';
 
     rows.forEach(r => {
-      if (r.rule) { ctx.fillRect(PAD, r.y, widthPx - PAD * 2, 2); return; }
-      ctx.font = (r.bold ? 'bold ' : '') + r.fontPx + 'px ' + fontStack;
+      if (r.rule) { ctx.fillRect(PAD, r.y, widthPx - PAD * 2, 3); return; }
+      ctx.font = weightFor(r.bold) + ' ' + r.fontPx + 'px ' + fontStack;
       ctx.textAlign = r.align;
       const x = r.align === 'center' ? widthPx / 2 : (r.align === 'right' ? widthPx - PAD : PAD);
       ctx.fillText(r.text, x, r.y);
@@ -177,6 +182,10 @@ window.DuoPrinter = (function () {
   function addImageBlock(builder, lines) {
     const { paperWidth } = getConfig();
     const { ctx, width, height } = _renderLines(lines, paperWidth || 576);
+    /* HALFTONE_THRESHOLD (أبيض/أسود صريح) بدل التظليل الافتراضي (Dither) —
+       التظليل مصمَّم للصور الفوتوغرافية ويجعل حواف النص مرقّطة وغير واضحة؛
+       أما النص فيحتاج حدوداً حادة صريحة لطباعة أوضح. */
+    builder.halftone = builder.HALFTONE_THRESHOLD;
     builder.addImage(ctx, 0, 0, width, height, builder.COLOR_1, builder.MODE_MONO);
     return builder;
   }

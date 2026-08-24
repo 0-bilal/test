@@ -170,7 +170,13 @@ window.DuoPrinter = (function () {
     printerDevice.onerror = function () {
       onError && onError('خطأ في الاتصال بالطابعة أثناء الطباعة');
     };
-    printerDevice.send(builder.toString());
+    /* ⚠️ printerDevice.send(xml) في هذا الإصدار من الـ SDK لا يقبل XML كوسيط أول —
+       عند استدعائه بوسيط واحد يُعامله كـ printjobid ويطبع محتوى printerDevice
+       الداخلي (الفارغ) بدل محتوى builder، فيسبب SchemaError من الطابعة دائماً.
+       لذلك نَنسخ محتوى builder المبني إلى printerDevice نفسه، ثم نستدعي send()
+       بلا أي وسائط — وهو الاستدعاء الوحيد الذي يُرسل محتوى الطابعة الداخلي فعلياً. */
+    printerDevice.message = builder.message;
+    printerDevice.send();
   }
 
   return {

@@ -376,151 +376,23 @@ input{font-family:inherit}
 .sidebar.collapsed .snav-item  { justify-content: center; padding: 10px; gap: 0; }
 .sidebar.collapsed .snav-item.active::before { display: block; }
 
-/* ── الأجهزة ── */
-.sb-devices-panel {
-  display: flex; flex-direction: column;
-  flex: 1; min-height: 0; overflow: hidden;
-}
-.sb-panel-head {
-  display: flex; align-items: center; gap: 8px;
-  padding: 4px 13px 8px; flex-shrink: 0;
-}
-.sb-panel-icon {
-  width: 26px; height: 26px; border-radius: var(--r-xs);
-  background: var(--sky-10); border: 1px solid var(--sky-28);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; color: var(--sky); flex-shrink: 0;
-}
-.sb-panel-title {
-  font-size: 11px; font-weight: 800; color: var(--c-tx3);
-  flex: 1; white-space: nowrap; overflow: hidden;
-  transition: opacity .2s;
-}
-.sidebar.collapsed .sb-panel-head  { justify-content: center; gap: 0; }
-.sidebar.collapsed .sb-panel-title { opacity: 0; width: 0; flex: none; pointer-events: none; overflow: hidden; }
-
-.sb-dev-badge {
-  background: var(--sky-10); color: var(--sky); border: 1px solid var(--sky-28);
+/* شارة عدد الأجهزة داخل زر التنقل */
+.snav-badge {
+  background: var(--c-card2); color: var(--c-tx3); border: 1px solid var(--c-edge2);
   font-size: 11px; font-weight: 900; font-family: var(--font-en);
   padding: 2px 8px; border-radius: var(--r-xs); flex-shrink: 0;
-  min-width: 22px; text-align: center; transition: opacity .2s;
+  min-width: 20px; text-align: center; transition: all .2s;
 }
-.sidebar.collapsed .sb-dev-badge { opacity: 0; width: 0; min-width: 0; padding: 0; border: none; overflow: hidden; }
-
-.sb-devs-list {
-  flex: 1; overflow-y: auto; padding: 0 10px 10px;
-  scrollbar-width: thin; scrollbar-color: var(--c-edge) transparent;
-}
-.sb-devs-list::-webkit-scrollbar { width: 3px; }
-.sb-devs-list::-webkit-scrollbar-thumb { background: var(--c-edge2); border-radius: 2px; }
-
-/* بطاقة جهاز */
-.sdev-card {
-  background: var(--c-card); border: 1px solid var(--c-edge);
-  border-radius: var(--r); padding: 10px 11px; margin-bottom: 6px;
-  position: relative; overflow: hidden; transition: border-color .25s;
-  border-right: 3px solid transparent;
-}
-.sdev-card.is-online  { border-right-color: var(--emr); }
-.sdev-card.is-offline { border-right-color: var(--rose); opacity: .55; }
-[dir="ltr"] .sdev-card { border-right: 1px solid var(--c-edge); border-left: 3px solid transparent; }
-[dir="ltr"] .sdev-card.is-online  { border-left-color: var(--emr); }
-[dir="ltr"] .sdev-card.is-offline { border-left-color: var(--rose); }
-
-.sdev-card::before { display: none; }
-
-.sdev-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.sdev-icon {
-  width: 30px; height: 30px; border-radius: var(--r-xs);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; flex-shrink: 0;
-  background: var(--c-card2); color: var(--c-tx3); border: 1px solid var(--c-edge);
-}
-.sdev-card.is-online .sdev-icon { color: var(--sky); background: var(--sky-10); border-color: var(--sky-28); }
-
-.sdev-info { flex: 1; min-width: 0; }
-.sdev-name { font-size: 12px; font-weight: 900; color: var(--c-tx); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sdev-id   { font-size: 9.5px; color: var(--c-tx3); font-family: var(--font-en); margin-top: 1px; }
-
-.sdev-rename-btn {
-  width: 22px; height: 22px; border-radius: var(--r-xs); flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; color: var(--c-tx3);
-  background: var(--c-card2); border: 1px solid var(--c-edge);
-  transition: all .15s;
-}
-.sdev-rename-btn:hover  { background: var(--c-raised); border-color: var(--a-35); color: var(--amber2); }
-.sdev-rename-btn:active { transform: scale(.9); }
-
-.sdev-status-dot {
-  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--c-tx3); transition: all .3s;
-}
-.sdev-card.is-online .sdev-status-dot { background: var(--emr); box-shadow: 0 0 0 2px var(--emr-10), 0 0 8px var(--emr-glow); animation: blink-dot 2.5s ease infinite; }
-.sdev-card.is-offline .sdev-status-dot { background: var(--rose); }
-
-.sdev-batt-row { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
-.sdev-batt-bar { flex: 1; height: 4px; border-radius: 3px; background: var(--c-raised); overflow: hidden; position: relative; }
-.sdev-batt-fill { position: absolute; inset: 0; border-radius: 3px; background: var(--emr); transition: width .5s, background .4s; }
-.sdev-batt-fill.lvl-low  { background: var(--rose); }
-.sdev-batt-fill.lvl-mid  { background: var(--org); }
-.sdev-batt-fill.lvl-ok   { background: var(--warn); }
-.sdev-batt-fill.lvl-good { background: var(--emr); }
-.sdev-batt-fill.charging { background: linear-gradient(90deg,var(--emr),var(--warn)); animation: pulse-charge .9s ease infinite alternate; }
-
-.sdev-batt-pct { font-size: 10.5px; font-weight: 900; color: var(--c-tx2); font-family: var(--font-en); flex-shrink: 0; min-width: 28px; text-align: end; }
-.sdev-batt-pct.lvl-low  { color: var(--rose); }
-.sdev-batt-pct.lvl-mid  { color: var(--org); }
-.sdev-batt-pct.lvl-ok   { color: var(--warn); }
-.sdev-batt-pct.lvl-good { color: var(--emr); }
-
-.sdev-bolt { font-size: 8px; color: var(--amber); animation: flash-bolt 1.4s ease infinite; flex-shrink: 0; }
-
-.sdev-meta { display: flex; gap: 4px; flex-wrap: wrap; }
-.sdev-pill {
-  display: inline-flex; align-items: center; gap: 3px;
-  font-size: 9.5px; font-weight: 700; padding: 2px 6px;
-  border-radius: var(--r-xs); background: var(--c-card2); border: 1px solid var(--c-edge);
-  color: var(--c-tx3);
-}
-.sdev-pill i { font-size: 8px; }
-.sdev-pill.good { background: var(--emr-10); color: var(--emr); border-color: var(--emr-28); }
-.sdev-pill.warn { background: var(--rose-10); color: var(--rose); border-color: var(--rose-28); }
-.sdev-last { font-size: 9px; color: var(--c-tx3); margin-top: 4px; font-family: var(--font-en); opacity: .6; }
-
-/* مفتاح صورة المنتجات الجديدة — صف مضغوط داخل كرت الجهاز في الشريط الجانبي */
-.sdev-np-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 6px;
-  margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--c-edge);
-}
-.sdev-np-label {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 10px; font-weight: 700; color: var(--c-tx3);
-}
-.sdev-np-label i { font-size: 10px; color: var(--amber2); }
-/* .set-toggle.set-toggle--sm (بدل .set-toggle--sm وحدها) لرفع الخصوصية فوق
-   قواعد .set-toggle الأساسية بلا شرط ترتيبها في الملف — وإلا تُطبَّق قواعد
-   .set-toggle العادية (48×26) رغم هذا التصغير لتساوي الخصوصية وتأخر تعريفها */
-.set-toggle.set-toggle--sm { width: 34px; height: 19px; }
-.set-toggle.set-toggle--sm .set-slider::before { width: 13px; height: 13px; }
-.set-toggle.set-toggle--sm input:checked + .set-slider::before { transform: translateX(15px); }
-
-/* مطوي */
-.sidebar.collapsed .sb-devs-list { padding: 0 7px 8px; }
-.sidebar.collapsed .sdev-card { padding: 5px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 3px; border-right: none; border-radius: var(--r-xs); }
-.sidebar.collapsed .sdev-top { margin: 0; }
-.sidebar.collapsed .sdev-info,.sidebar.collapsed .sdev-batt-row,.sidebar.collapsed .sdev-meta,.sidebar.collapsed .sdev-last,.sidebar.collapsed .sdev-rename-btn,.sidebar.collapsed .sdev-np-row { display: none; }
-.sidebar.collapsed .sdev-icon { width: 26px; height: 26px; font-size: 11px; }
-.sidebar.collapsed .sdev-status-dot { width: 5px; height: 5px; }
-
-.sdev-empty { text-align: center; padding: 18px 8px; color: var(--c-tx3); font-size: 11px; font-weight: 600; line-height: 1.7; }
-.sdev-empty i { font-size: 24px; opacity: .25; display: block; margin-bottom: 8px; }
-.sidebar.collapsed .sdev-empty span { display: none; }
+.snav-badge.has-online { background: var(--sky-10); color: var(--sky); border-color: var(--sky-28); }
+.snav-item.active .snav-badge { background: var(--a-20); color: var(--amber2); border-color: var(--a-35); }
+.sidebar.collapsed .snav-badge { opacity: 0; width: 0; min-width: 0; padding: 0; border: none; overflow: hidden; }
 
 /* ── تذييل ── */
 .sb-foot {
   padding: 10px 12px;
   border-top: 1px solid var(--c-edge);
   display: flex; justify-content: center; flex-shrink: 0;
+  margin-top: auto;
 }
 .lang-btn {
   display: flex; align-items: center; gap: 7px;
@@ -616,6 +488,16 @@ input{font-family:inherit}
   background: var(--c-card); border: 1px solid var(--c-edge2);
   padding: 6px 13px; border-radius: 20px; flex-shrink: 0;
 }
+.section-head-btn {
+  width: 40px; height: 40px; border-radius: var(--r-sm); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; color: var(--c-tx3);
+  background: var(--c-card2); border: 1px solid var(--c-edge2);
+  transition: all .16s;
+}
+.section-head-btn:hover  { background: var(--c-raised); color: var(--amber2); border-color: var(--a-35); }
+.section-head-btn:active { transform: scale(.92); }
+.section-head-btn.is-active { background: var(--a-10); color: var(--amber); border-color: var(--a-35); }
 
 /* ── تسمية مجموعة فرعية داخل تبويب (مثال: أقسام الإجراءات) ── */
 .group-label {
@@ -1315,6 +1197,22 @@ input{font-family:inherit}
 .btn-reset:active { background: rgba(248,113,113,.2); }
 .btn-reset--confirm { background: var(--rose-10); color: var(--c-tx); font-size: 12.5px; }
 
+.btn-update {
+  width: 100%; padding: 14px 16px; font-size: 13.5px; font-weight: 800;
+  color: var(--sky); display: flex; align-items: center; gap: 12px;
+  transition: background .16s;
+}
+.btn-update:hover:not(:disabled) { background: var(--sky-10); }
+.btn-update:active:not(:disabled) { background: rgba(56,189,248,.2); }
+.btn-update i { font-size: 16px; flex-shrink: 0; }
+.btn-update span { display: flex; flex-direction: column; gap: 2px; text-align: start; }
+.btn-update span div { color: var(--c-tx); }
+.btn-update span small { font-size: 11px; font-weight: 500; color: var(--c-tx3); }
+.btn-update:disabled { opacity: .7; cursor: default; }
+.btn-update.is-success i { color: var(--emr); }
+.btn-update.is-error   i { color: var(--rose); }
+.btn-update.is-error   span div { color: var(--rose); }
+
 /* ══════════════════════════════════════════════════════════════
    TAB: DEVICES
 ══════════════════════════════════════════════════════════════ */
@@ -1384,6 +1282,110 @@ input{font-family:inherit}
 .dcard-btn:active   { transform: scale(.9); }
 
 /* ══════════════════════════════════════════════════════════════
+   TAB: PRINTING
+══════════════════════════════════════════════════════════════ */
+#printing-content { display: flex; flex-direction: column; gap: 16px; padding-bottom: 28px; }
+.print-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.print-field-label {
+  font-size: 11px; font-weight: 800; color: var(--c-tx3);
+  text-transform: uppercase; letter-spacing: .8px; margin-top: 4px;
+}
+.print-field-label:first-child { margin-top: 0; }
+
+.pct-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pct-chip {
+  padding: 10px 18px; border-radius: var(--r-sm);
+  background: var(--c-card2); border: 1px solid var(--c-edge2);
+  color: var(--c-tx2); font-size: 14px; font-weight: 800; font-family: var(--font-en);
+  transition: all .15s;
+}
+.pct-chip:hover { border-color: var(--a-35); color: var(--amber2); }
+.pct-chip--active {
+  background: var(--a-10); color: var(--amber); border-color: var(--a-35);
+  box-shadow: 0 0 0 1px var(--a-20) inset;
+}
+
+.msg-preset-list { display: flex; flex-direction: column; gap: 8px; }
+.msg-preset {
+  text-align: start; padding: 10px 14px; border-radius: var(--r-sm);
+  background: var(--c-card2); border: 1px solid var(--c-edge2);
+  color: var(--c-tx2); font-size: 12.5px; font-weight: 600; line-height: 1.5;
+  transition: all .15s;
+}
+.msg-preset:hover { border-color: var(--sky-28); color: var(--c-tx); }
+.msg-preset--active { background: var(--sky-10); color: var(--sky); border-color: var(--sky-28); }
+
+.print-textarea { min-height: 84px; resize: vertical; font-family: inherit; line-height: 1.6; }
+
+.print-action-btn {
+  width: 100%; padding: 14px 16px; margin-top: 4px; border-radius: var(--r-sm);
+  background: var(--a-10); border: 1px solid var(--a-20);
+  color: var(--amber); font-size: 13.5px; font-weight: 800;
+  display: flex; align-items: center; gap: 12px; transition: all .16s;
+}
+.print-action-btn:hover:not(:disabled) { background: var(--a-20); }
+.print-action-btn:active:not(:disabled) { transform: scale(.99); }
+.print-action-btn i { font-size: 16px; flex-shrink: 0; }
+.print-action-btn span { display: flex; flex-direction: column; gap: 2px; text-align: start; }
+.print-action-btn span div { color: inherit; }
+.print-action-btn span small { font-size: 11px; font-weight: 500; color: var(--c-tx3); }
+.print-action-btn:disabled { opacity: .5; cursor: default; }
+.print-action-btn.is-success { background: var(--emr-10); border-color: var(--emr-28); color: var(--emr); }
+.print-action-btn.is-error   { background: var(--rose-10); border-color: var(--rose-28); color: var(--rose); }
+
+/* ── قائمة إعدادات الطابعة العائمة ── */
+.printer-settings-wrap { position: relative; }
+
+.popover-backdrop { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.2); }
+
+.printer-settings-popover {
+  position: absolute; top: calc(100% + 12px); left: 0;
+  z-index: 60; width: 280px; max-width: calc(100vw - 40px);
+  background: var(--c-card); border: 1px solid var(--c-edge2); border-radius: var(--r);
+  box-shadow: 0 16px 44px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.05);
+  overflow: hidden; animation: popover-in .16s ease;
+}
+[dir="ltr"] .printer-settings-popover { left: auto; right: 0; }
+.printer-settings-popover::before {
+  content: ''; position: absolute; top: -6px; left: 20px;
+  width: 12px; height: 12px; background: var(--c-card);
+  border-top: 1px solid var(--c-edge2); border-left: 1px solid var(--c-edge2);
+  transform: rotate(45deg);
+}
+[dir="ltr"] .printer-settings-popover::before { left: auto; right: 20px; }
+@keyframes popover-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── كوبون الخصم: نموذج + معاينة جنباً إلى جنب ── */
+.coupon-layout {
+  display: grid; grid-template-columns: 1fr minmax(220px, 260px);
+  gap: 4px; align-items: start;
+}
+@media (max-width: 700px) {
+  .coupon-layout { grid-template-columns: 1fr; }
+}
+.coupon-preview { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.coupon-receipt-mock {
+  background: #fdfaf1; color: #1a1a1a; border-radius: 4px;
+  padding: 18px 14px 22px; font-family: var(--font-en), 'Tajawal', sans-serif;
+  text-align: center; box-shadow: 0 6px 24px rgba(0,0,0,.35);
+  position: relative;
+}
+.crm-name  { font-size: 15px; font-weight: 900; }
+.crm-addr  { font-size: 10.5px; opacity: .65; margin-top: 2px; }
+.crm-sep   { border-top: 1px dashed #1a1a1a55; margin: 10px 0; }
+.crm-title { font-size: 11px; font-weight: 800; letter-spacing: .5px; }
+.crm-pct   { font-size: 34px; font-weight: 900; line-height: 1.2; margin-top: 2px; }
+.crm-dname { font-size: 12.5px; font-weight: 700; margin-top: 2px; }
+.crm-code-label { font-size: 9.5px; opacity: .6; text-transform: uppercase; letter-spacing: 1px; }
+.crm-code  { font-size: 18px; font-weight: 900; letter-spacing: 1.5px; margin-top: 2px; }
+.crm-row   { display: flex; justify-content: space-between; font-size: 10.5px; padding: 2px 2px; }
+.crm-cut   {
+  height: 8px; margin: 10px -14px -22px;
+  background: repeating-linear-gradient(-45deg, transparent 0 4px, var(--c-card) 4px 8px);
+}
+
+/* ══════════════════════════════════════════════════════════════
    TOAST
 ══════════════════════════════════════════════════════════════ */
 .cashier-toast {
@@ -1427,13 +1429,10 @@ input{font-family:inherit}
   .sidebar .hbadge-val,
   .sidebar .hbadge-charge,
   .sidebar .snav-label,
-  .sidebar .sb-panel-title,
-  .sidebar .sb-dev-badge { opacity: 0; width: 0; overflow: hidden; pointer-events: none; }
+  .sidebar .snav-badge { opacity: 0; width: 0; overflow: hidden; pointer-events: none; }
   .sidebar .snav-item { justify-content: center; padding: 10px; }
   .sidebar .sb-clock { padding: 8px 4px; }
   .sidebar .sb-time  { font-size: 11px; letter-spacing: 0; }
-  .sidebar .sdev-info,.sidebar .sdev-batt-row,.sidebar .sdev-meta,.sidebar .sdev-last,.sidebar .sdev-rename-btn,.sidebar .sdev-np-row { display: none; }
-  .sidebar .sdev-card { padding: 5px; flex-direction: column; align-items: center; border-right: none; }
   .sidebar .lang-btn { padding: 8px; border-radius: var(--r-sm); width: 34px; height: 34px; justify-content: center; }
   .sidebar .lang-btn span { display: none; }
   .sb-divider { padding: 4px 8px; }

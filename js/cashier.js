@@ -63,6 +63,31 @@ function _balDefaultState() {
   };
 }
 let _bal        = _balDefaultState();
+
+/* الطباعة */
+const DISCOUNT_PERCENTS = [5, 10, 15, 20, 30];
+/* أسماء الخصومات — عدّلها لاحقاً لتطابق الأسماء الفعلية المستخدمة في الفرع */
+const DISCOUNT_NAMES = [
+  'خصم عشان عيونك',
+  'خصم عزيمة ديو',
+  'خصم أنت الـ VIP',
+  'خصم عربون محبة',
+  'خصم ابتسامتك تكفي',
+  'خصم عشانك غالي',
+];
+const MESSAGE_PRESETS = [
+  'شكراً لزيارتكم، بانتظاركم دائماً',
+  'نتمنى لكم وجبة شهية',
+  'يسعدنا استقبال ملاحظاتكم واقتراحاتكم',
+];
+const COUPON_EXPIRY_DAYS = [1, 3, 7, 15, 30]; /* خيارات مدة صلاحية الكوبون بالأيام */
+let _selPct     = null;
+let _selDName   = DISCOUNT_NAMES[0];
+let _selExpiry  = 7;
+let _couponCode = null;
+let _msgText    = '';
+let _printBusy  = false;
+let _printerSettingsOpen = false;
 let _balField    = 'custody';  /* معرّف الحقل النشط للوحة الأرقام */
 
 const _ikey = (catId, nameAr) => catId + '||' + nameAr;
@@ -162,6 +187,27 @@ const T = {
     balReportOk: 'متطابق', balReportMismatch: 'فرق إدخال',
     balExport: 'تصدير', balImport: 'استعادة',
     balExportOk: 'تم تصدير الموازنة ✓', balImportOk: 'تم استعادة الموازنة ✓', balImportErr: 'ملف غير صالح',
+    settingsUpdate: 'تحديث النظام',
+    updateAppLabel: 'تحديث المتصفح والأكواد', updateAppSub: 'يمسح الذاكرة المؤقتة ويحمّل آخر نسخة من أكواد الموقع',
+    updateAppBtn: 'تحديث الآن', updatingApp: 'جاري التحديث...',
+    updateAppDone: 'تم التحديث ✓', updateAppOk: 'تم مسح الذاكرة المؤقتة، جاري إعادة التحميل...',
+    updateAppNothing: 'لا توجد ذاكرة مؤقتة محفوظة — جاري إعادة التحميل فقط...',
+    updateAppErr: 'تعذّر التحديث، حاول مرة أخرى',
+    printing: 'الطباعة', printingSubtitle: 'طباعة كوبونات الخصم ورسائل العملاء على طابعة الفواتير',
+    printCouponTitle: 'كوبون خصم', printPctLabel: 'نسبة الخصم', printNameLabel: 'اسم الخصم',
+    printCouponBtn: 'طباعة الكوبون', printSelectPctFirst: 'اختر نسبة الخصم أولاً',
+    printCouponSub: (pct, name) => `${pct}% — ${name}`,
+    printMsgTitle: 'رسالة للعميل', printPresetLabel: 'رسائل جاهزة', printCustomLabel: 'أو اكتب رسالة مخصصة',
+    printCustomPlaceholder: 'اكتب رسالتك هنا...', printMsgBtn: 'طباعة الرسالة',
+    printConnecting: 'جاري الاتصال بالطابعة...', printSending: 'جاري الطباعة...',
+    printDone: 'تمت الطباعة ✓', printFailed: 'فشلت الطباعة',
+    printerLibMissing: 'مكتبة الطابعة غير محمَّلة',
+    printerSettingsTitle: 'إعدادات الطابعة', printerIpLabel: 'عنوان IP الخاص بالطابعة',
+    printerModelLabel: 'موديل الطابعة', printerSaveBtn: 'حفظ الإعدادات',
+    printerSavedOk: 'تم حفظ إعدادات الطابعة ✓', printerIpInvalid: 'عنوان IP غير صحيح',
+    printExpiryLabel: 'مدة صلاحية الكوبون', printExpiryDays: n => `${n} ${n === 1 ? 'يوم' : 'أيام'}`,
+    printPreviewLabel: 'معاينة شكل الكوبون', printCouponCode: 'كود الكوبون',
+    printIssueDate: 'تاريخ الإصدار', printValidUntil: 'صالح حتى',
   },
   en: {
     products: 'Products', slides: 'Slides', actions: 'Actions', settings: 'Settings',
@@ -256,6 +302,27 @@ const T = {
     balReportOk: 'Matched', balReportMismatch: 'Entry Mismatch',
     balExport: 'Export', balImport: 'Restore',
     balExportOk: 'Balance exported ✓', balImportOk: 'Balance restored ✓', balImportErr: 'Invalid file',
+    settingsUpdate: 'System Update',
+    updateAppLabel: 'Update Browser & Code', updateAppSub: 'Clears the cache and downloads the latest version of the site code',
+    updateAppBtn: 'Update Now', updatingApp: 'Updating...',
+    updateAppDone: 'Updated ✓', updateAppOk: 'Cache cleared, reloading...',
+    updateAppNothing: 'No cache stored — just reloading...',
+    updateAppErr: 'Update failed, try again',
+    printing: 'Printing', printingSubtitle: 'Print discount coupons and customer messages on the receipt printer',
+    printCouponTitle: 'Discount Coupon', printPctLabel: 'Discount Percentage', printNameLabel: 'Discount Name',
+    printCouponBtn: 'Print Coupon', printSelectPctFirst: 'Select a discount percentage first',
+    printCouponSub: (pct, name) => `${pct}% — ${name}`,
+    printMsgTitle: 'Customer Message', printPresetLabel: 'Quick Messages', printCustomLabel: 'Or write a custom message',
+    printCustomPlaceholder: 'Type your message here...', printMsgBtn: 'Print Message',
+    printConnecting: 'Connecting to printer...', printSending: 'Printing...',
+    printDone: 'Printed ✓', printFailed: 'Print failed',
+    printerLibMissing: 'Printer library not loaded',
+    printerSettingsTitle: 'Printer Settings', printerIpLabel: 'Printer IP Address',
+    printerModelLabel: 'Printer Model', printerSaveBtn: 'Save Settings',
+    printerSavedOk: 'Printer settings saved ✓', printerIpInvalid: 'Invalid IP address',
+    printExpiryLabel: 'Coupon Validity', printExpiryDays: n => `${n} day${n === 1 ? '' : 's'}`,
+    printPreviewLabel: 'Coupon Preview', printCouponCode: 'Coupon Code',
+    printIssueDate: 'Issue Date', printValidUntil: 'Valid Until',
   }
 };
 const t  = k  => (T[_lang]?.[k]  ?? T.ar[k]  ?? k);
@@ -348,6 +415,7 @@ function _updateStaticLabels() {
   _setText('t-actions',   t('actions'));
   _setText('t-split',     t('split'));
   _setText('t-balance',   t('balance'));
+  _setText('t-printing',  t('printing'));
   _setText('t-devices',   t('devices'));
   _setText('t-settings',  t('settings'));
   _setText('h-role-label', t('cashierRole'));
@@ -379,6 +447,7 @@ function _rerenderTab() {
     case 'actions':  _renderActions();  break;
     case 'split':    _renderSplit();    break;
     case 'balance':  _renderBalance();  break;
+    case 'printing': _renderPrinting(); break;
     case 'devices':  _renderDevices();  break;
     case 'settings': _renderSettings(); break;
   }
@@ -1149,109 +1218,312 @@ function cBalImportFile(input) {
 }
 window.cBalImportFile = cBalImportFile;
 
-/* ══════════ الشريط الجانبي — بطاقات الأجهزة ══════════ */
-function _renderSidebarDevices() {
-  const list  = document.getElementById('sb-devs-list');
-  const badge = document.getElementById('sb-dev-count');
-  if (!list) return;
+/* ══════════ TAB — الطباعة ══════════ */
+function _genCouponCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; /* بلا أحرف/أرقام متشابهة (I, O, 0, 1) */
+  let code = '';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return 'DUO-' + code;
+}
 
-  const now = Date.now();
+function _fmtDate(d) { return d.toLocaleDateString(_lang === 'ar' ? 'ar-SA' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
+function _fmtDateTime(d) { return d.toLocaleString(_lang === 'ar' ? 'ar-SA' : 'en-GB'); }
 
-  function _ago(ts) {
-    if (!ts) return '—';
-    const s = Math.round((now - ts) / 1000);
-    if (s < 60) return _lang === 'ar' ? `${s} ث` : `${s}s`;
-    const m = Math.round(s / 60);
-    if (m < 60) return _lang === 'ar' ? `${m} د` : `${m}m`;
-    return _lang === 'ar' ? `${Math.round(m/60)} س` : `${Math.round(m/60)}h`;
-  }
+function _couponDates() {
+  const issue  = new Date();
+  const expiry = new Date(issue.getTime() + _selExpiry * 86400000);
+  return { issue, expiry };
+}
 
-  function _battClass(pct) {
-    if (pct === null || pct === undefined) return '';
-    if (pct <= 15) return 'lvl-low';
-    if (pct <= 35) return 'lvl-mid';
-    if (pct <= 60) return 'lvl-ok';
-    return 'lvl-good';
-  }
+function _renderPrinting() {
+  const el = document.getElementById('printing-content');
+  if (!el) return;
 
-  const online  = _devices.filter(d => d.online);
-  const offline = _devices.filter(d => !d.online);
+  if (!_couponCode) _couponCode = _genCouponCode();
 
-  if (badge) badge.textContent = _devices.length;
+  const pctChips = DISCOUNT_PERCENTS.map(p =>
+    `<button class="pct-chip ${_selPct === p ? 'pct-chip--active' : ''}" onclick="cSelectDiscountPct(${p})">${p}%</button>`
+  ).join('');
 
-  if (!_devices.length) {
-    list.innerHTML = `<div class="sdev-empty">
-      <i class="fa-solid fa-tv"></i>
-      <span>${t('noDevices')}</span>
-    </div>`;
-    return;
-  }
+  const nameOptions = DISCOUNT_NAMES.map(n =>
+    `<option value="${_esc(n)}" ${n === _selDName ? 'selected' : ''}>${_esc(n)}</option>`
+  ).join('');
 
-  const platformIcon = p => {
-    if (!p) return 'fa-display';
-    p = p.toLowerCase();
-    if (p.includes('ipad'))    return 'fa-tablet-screen-button';
-    if (p.includes('iphone'))  return 'fa-mobile-screen-button';
-    if (p.includes('android')) return 'fa-mobile-screen-button';
-    return 'fa-display';
+  const expiryChips = COUPON_EXPIRY_DAYS.map(n =>
+    `<button class="pct-chip ${_selExpiry === n ? 'pct-chip--active' : ''}" onclick="cSelectExpiry(${n})">${tf('printExpiryDays', n)}</button>`
+  ).join('');
+
+  const presetChips = MESSAGE_PRESETS.map((m, idx) =>
+    `<button class="msg-preset ${m === _msgText ? 'msg-preset--active' : ''}" onclick="cFillMsgPreset(${idx})">${_esc(m)}</button>`
+  ).join('');
+
+  const pCfg = DuoPrinter.getConfig();
+  const modelOptions = DuoPrinter.getSupportedModels().map(m =>
+    `<option value="${_esc(m)}" ${m === pCfg.model ? 'selected' : ''}>${_esc(m)}</option>`
+  ).join('');
+
+  const settingsPopover = _printerSettingsOpen ? `
+  <div class="printer-settings-popover">
+    <div class="set-card-title"><i class="fa-solid fa-gear"></i> ${t('printerSettingsTitle')}</div>
+    <div class="print-body">
+      <div class="print-field-label">${t('printerIpLabel')}</div>
+      <input class="set-input" id="printer-ip-input" type="text" inputmode="decimal"
+        placeholder="192.168.0.147" value="${_esc(pCfg.ip)}">
+
+      <div class="print-field-label">${t('printerModelLabel')}</div>
+      <select class="set-input" id="printer-model-input">${modelOptions}</select>
+
+      <button class="print-action-btn" id="printer-settings-save-btn" onclick="cSavePrinterSettings()">
+        <i class="fa-solid fa-check"></i>
+        <span><div>${t('printerSaveBtn')}</div></span>
+      </button>
+    </div>
+  </div>` : '';
+
+  const { issue, expiry } = _couponDates();
+
+  el.innerHTML = `
+  ${_printerSettingsOpen ? `<div class="popover-backdrop" onclick="cTogglePrinterSettings()"></div>` : ''}
+
+  <div class="section-head">
+    <div class="section-head-icon"><i class="fa-solid fa-print"></i></div>
+    <div class="section-head-text">
+      <div class="section-head-title">${t('printing')}</div>
+      <div class="section-head-sub">${t('printingSubtitle')}</div>
+    </div>
+    <div class="printer-settings-wrap">
+      <button class="section-head-btn ${_printerSettingsOpen ? 'is-active' : ''}" onclick="cTogglePrinterSettings()" title="${t('printerSettingsTitle')}">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+      ${settingsPopover}
+    </div>
+  </div>
+
+  <!-- كوبون خصم -->
+  <div class="set-card">
+    <div class="set-card-title"><i class="fa-solid fa-percent"></i> ${t('printCouponTitle')}</div>
+    <div class="coupon-layout">
+      <div class="print-body">
+        <div class="print-field-label">${t('printPctLabel')}</div>
+        <div class="pct-chip-row">${pctChips}</div>
+
+        <div class="print-field-label">${t('printNameLabel')}</div>
+        <select class="set-input" onchange="cSelectDiscountName(this.value)">${nameOptions}</select>
+
+        <div class="print-field-label">${t('printExpiryLabel')}</div>
+        <div class="pct-chip-row">${expiryChips}</div>
+
+        <button class="print-action-btn" id="print-coupon-btn" onclick="cPrintCoupon()" ${_selPct ? '' : 'disabled'}>
+          <i class="fa-solid fa-print"></i>
+          <span>
+            <div>${t('printCouponBtn')}</div>
+            <small>${_selPct ? tf('printCouponSub', _selPct, _selDName) : t('printSelectPctFirst')}</small>
+          </span>
+        </button>
+      </div>
+
+      <div class="coupon-preview">
+        <div class="print-field-label"><i class="fa-solid fa-eye"></i> ${t('printPreviewLabel')}</div>
+        <div class="coupon-receipt-mock">
+          <div class="crm-name">${_esc(restaurantInfo.nameAr)}</div>
+          <div class="crm-addr">${_esc(restaurantInfo.address)}</div>
+          <div class="crm-sep"></div>
+          <div class="crm-title">${t('printCouponTitle')}</div>
+          <div class="crm-pct">${_selPct ? _selPct + '%' : '--%'}</div>
+          <div class="crm-dname">${_esc(_selDName)}</div>
+          <div class="crm-sep"></div>
+          <div class="crm-code-label">${t('printCouponCode')}</div>
+          <div class="crm-code">${_couponCode}</div>
+          <div class="crm-sep"></div>
+          <div class="crm-row"><span>${t('printIssueDate')}</span><span>${_fmtDate(issue)}</span></div>
+          <div class="crm-row"><span>${t('printValidUntil')}</span><span>${_fmtDate(expiry)}</span></div>
+          <div class="crm-cut"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- رسالة للعميل -->
+  <div class="set-card">
+    <div class="set-card-title"><i class="fa-solid fa-comment-dots"></i> ${t('printMsgTitle')}</div>
+    <div class="print-body">
+      <div class="print-field-label">${t('printPresetLabel')}</div>
+      <div class="msg-preset-list">${presetChips}</div>
+
+      <div class="print-field-label">${t('printCustomLabel')}</div>
+      <textarea class="set-input print-textarea" id="print-msg-input"
+        placeholder="${t('printCustomPlaceholder')}"
+        oninput="cSetMsgText(this.value)">${_esc(_msgText)}</textarea>
+
+      <button class="print-action-btn" id="print-message-btn" onclick="cPrintMessage()" ${_msgText.trim() ? '' : 'disabled'}>
+        <i class="fa-solid fa-print"></i>
+        <span><div>${t('printMsgBtn')}</div></span>
+      </button>
+    </div>
+  </div>`;
+}
+
+function cTogglePrinterSettings() { _printerSettingsOpen = !_printerSettingsOpen; _renderPrinting(); }
+window.cTogglePrinterSettings = cTogglePrinterSettings;
+
+function cSavePrinterSettings() {
+  const ipInput    = document.getElementById('printer-ip-input');
+  const modelInput = document.getElementById('printer-model-input');
+  const ip = (ipInput?.value || '').trim();
+
+  const ipPattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+  const m = ip.match(ipPattern);
+  const valid = m && m.slice(1).every(n => Number(n) >= 0 && Number(n) <= 255);
+  if (!valid) { cToast(t('printerIpInvalid'), 'err'); return; }
+
+  DuoPrinter.setConfig({ ip, model: modelInput?.value });
+  cToast(t('printerSavedOk'), 'ok');
+  _printerSettingsOpen = false;
+  _renderPrinting();
+}
+window.cSavePrinterSettings = cSavePrinterSettings;
+
+function cSelectDiscountPct(pct) { _selPct = pct; _couponCode = _genCouponCode(); _renderPrinting(); }
+window.cSelectDiscountPct = cSelectDiscountPct;
+
+function cSelectDiscountName(name) { _selDName = name; _couponCode = _genCouponCode(); _renderPrinting(); }
+window.cSelectDiscountName = cSelectDiscountName;
+
+function cSelectExpiry(days) { _selExpiry = days; _couponCode = _genCouponCode(); _renderPrinting(); }
+window.cSelectExpiry = cSelectExpiry;
+
+function cFillMsgPreset(idx) { _msgText = MESSAGE_PRESETS[idx] || ''; _renderPrinting(); }
+window.cFillMsgPreset = cFillMsgPreset;
+
+function cSetMsgText(v) {
+  _msgText = v;
+  const btn = document.getElementById('print-message-btn');
+  if (btn) btn.disabled = !v.trim();
+}
+window.cSetMsgText = cSetMsgText;
+
+/* بناء فاتورة كوبون الخصم — رأس المطعم + النسبة + اسم الخصم + كود فريد + تاريخ الإصدار والانتهاء */
+function _buildCouponBuilder(pct, name, expiryDays, code) {
+  const { issue, expiry } = (() => {
+    const i = new Date();
+    return { issue: i, expiry: new Date(i.getTime() + expiryDays * 86400000) };
+  })();
+
+  const b = new epson.ePOSBuilder();
+  b.addTextLang('ar');
+  b.addTextAlign(b.ALIGN_CENTER);
+
+  b.addTextSize(2, 2);
+  b.addText(restaurantInfo.nameAr + '\n');
+  b.addTextSize(1, 1);
+  b.addText(restaurantInfo.address + '\n');
+  b.addText('--------------------------------\n');
+
+  b.addText('كوبون خصم\n');
+  b.addTextSize(4, 4);
+  b.addText(pct + '%\n');
+  b.addTextSize(1, 1);
+  b.addText(name + '\n');
+  b.addText('--------------------------------\n');
+
+  b.addText('كود الكوبون\n');
+  b.addTextSize(2, 1);
+  b.addText(code + '\n');
+  b.addTextSize(1, 1);
+  b.addText('--------------------------------\n');
+
+  b.addText('تاريخ الإصدار: ' + _fmtDateTime(issue) + '\n');
+  b.addText('صالح حتى: ' + _fmtDate(expiry) + '\n');
+
+  b.addFeed();
+  b.addCut(b.CUT_FEED);
+  return b;
+}
+
+/* بناء فاتورة رسالة نصية بسيطة للعميل */
+function _buildMessageBuilder(msg) {
+  const b = new epson.ePOSBuilder();
+  b.addTextLang('ar');
+  b.addTextAlign(b.ALIGN_CENTER);
+
+  b.addTextSize(2, 2);
+  b.addText(restaurantInfo.nameAr + '\n');
+  b.addTextSize(1, 1);
+  b.addText('--------------------------------\n');
+  b.addText(msg + '\n');
+  b.addText('--------------------------------\n');
+  b.addText(new Date().toLocaleString('ar-SA') + '\n');
+
+  b.addFeed();
+  b.addCut(b.CUT_FEED);
+  return b;
+}
+
+/* تسلسل موحّد: اتصال → تجهيز الطابعة → إرسال، مع تغذية راجعة على الزر */
+function _printViaPrinter(builder, btnId, afterSuccess) {
+  if (_printBusy) return;
+  if (typeof DuoPrinter === 'undefined') { cToast(t('printerLibMissing'), 'err'); return; }
+
+  const btn = document.getElementById(btnId);
+  const setBtn = (iconCls, label) => {
+    if (!btn) return;
+    const i = btn.querySelector('i');
+    const d = btn.querySelector('div');
+    if (i) i.className = `fa-solid ${iconCls}`;
+    if (d) d.textContent = label;
   };
 
-  const sorted = [...online, ...offline];
-  let html = '';
+  _printBusy = true;
+  if (btn) { btn.disabled = true; btn.classList.remove('is-error'); btn.classList.add('is-loading'); }
+  setBtn('fa-spinner fa-spin', t('printConnecting'));
 
-  sorted.forEach((d, idx) => {
-    const isOnline  = d.online;
-    const pct       = (d.battery !== null && d.battery !== undefined) ? d.battery : null;
-    const charging  = d.batteryCharging;
-    const net       = d.netType || '—';
-    const platform  = d.platform || '—';
-    const shortId   = (d.devId || '').replace('dev_', '').toUpperCase().slice(0, 5);
-    const name      = _esc(d.name || platform || (idx + 1));
-    const bc        = _battClass(pct);
+  const fail = (msg) => {
+    _printBusy = false;
+    if (btn) { btn.disabled = false; btn.classList.remove('is-loading'); btn.classList.add('is-error'); }
+    setBtn('fa-triangle-exclamation', t('printFailed'));
+    cToast(msg || t('printFailed'), 'err');
+  };
 
-    const battRow = pct !== null ? `
-      <div class="sdev-batt-row">
-        <div class="sdev-batt-bar">
-          <div class="sdev-batt-fill ${charging ? 'charging' : bc}" style="width:${pct}%"></div>
-        </div>
-        <span class="sdev-batt-pct ${bc}">${pct}%</span>
-        ${charging ? `<i class="fa-solid fa-bolt sdev-bolt"></i>` : ''}
-      </div>` : '';
+  DuoPrinter.connectPrinter(eposDevice => {
+    DuoPrinter.createPrinterDevice(eposDevice, printer => {
+      setBtn('fa-spinner fa-spin', t('printSending'));
+      DuoPrinter.sendPrint(printer, builder, () => {
+        _printBusy = false;
+        btn?.classList.remove('is-loading');
+        btn?.classList.add('is-success');
+        setBtn('fa-check', t('printDone'));
+        cToast(t('printDone'), 'ok');
+        afterSuccess && afterSuccess();
+        setTimeout(() => _renderPrinting(), 1400);
+      }, fail);
+    }, fail);
+  }, fail);
+}
 
-    const onlinePill = isOnline
-      ? `<span class="sdev-pill good"><i class="fa-solid fa-circle" style="font-size:6px"></i> ${t('devOnline')}</span>`
-      : `<span class="sdev-pill warn"><i class="fa-solid fa-circle" style="font-size:6px"></i> ${t('devOffline')}</span>`;
+function cPrintCoupon() {
+  if (!_selPct) return;
+  _printViaPrinter(
+    _buildCouponBuilder(_selPct, _selDName, _selExpiry, _couponCode),
+    'print-coupon-btn',
+    () => { _couponCode = _genCouponCode(); }
+  );
+}
+window.cPrintCoupon = cPrintCoupon;
 
-    const netPill = net !== '—'
-      ? `<span class="sdev-pill"><i class="fa-solid fa-wifi"></i> ${net}</span>` : '';
+function cPrintMessage() {
+  const msg = _msgText.trim();
+  if (!msg) return;
+  _printViaPrinter(_buildMessageBuilder(msg), 'print-message-btn');
+}
+window.cPrintMessage = cPrintMessage;
 
-    html += `<div class="sdev-card ${isOnline ? 'is-online' : 'is-offline'}">
-      <div class="sdev-top">
-        <div class="sdev-icon"><i class="fa-solid ${platformIcon(platform)}"></i></div>
-        <div class="sdev-info">
-          <div class="sdev-name" title="${name}">${name}</div>
-          <div class="sdev-id">${platform}${shortId ? ' · #' + shortId : ''}</div>
-        </div>
-        <button class="sdev-rename-btn" onclick="event.stopPropagation();cRenameDevice('${d.devId}')" title="${t('devRename')}">
-          <i class="fa-solid fa-pen"></i>
-        </button>
-        <div class="sdev-status-dot"></div>
-      </div>
-      ${battRow}
-      <div class="sdev-meta">${onlinePill}${netPill}</div>
-      <div class="sdev-np-row" onclick="event.stopPropagation()">
-        <span class="sdev-np-label"><i class="fa-solid fa-image"></i> ${t('devNewProducts')}</span>
-        <label class="set-toggle set-toggle--sm">
-          <input type="checkbox" ${d.newProductsVisible ? 'checked' : ''}
-            onchange="cToggleDeviceNewProducts('${d.devId}', this.checked)">
-          <span class="set-slider"></span>
-        </label>
-      </div>
-      <div class="sdev-last">${_ago(d.ts)}</div>
-    </div>`;
-  });
-
-  list.innerHTML = html;
+/* ══════════ شارة عدد الأجهزة في التنقّل ══════════ */
+function _updateDevBadge() {
+  const badge = document.getElementById('nav-dev-badge');
+  if (!badge) return;
+  const online = _devices.filter(d => d.online).length;
+  badge.textContent = _devices.length;
+  badge.classList.toggle('has-online', online > 0);
 }
 
 /* ══════════ TAB 4 — الأجهزة ══════════ */
@@ -1513,6 +1785,18 @@ function _renderSettings() {
     </div>
   </div>
 
+  <!-- تحديث النظام -->
+  <div class="set-card">
+    <div class="set-card-title"><i class="fa-solid fa-cloud-arrow-down"></i> ${t('settingsUpdate')}</div>
+    <button class="btn-update" id="update-app-btn" onclick="cForceUpdate()">
+      <i class="fa-solid fa-arrows-rotate"></i>
+      <span>
+        <div>${t('updateAppLabel')}</div>
+        <small>${t('updateAppSub')}</small>
+      </span>
+    </button>
+  </div>
+
   <!-- إعادة الضبط -->
   <div class="set-card set-card--danger">
     <button class="btn-reset" id="reset-btn" onclick="cFactoryReset()">
@@ -1561,6 +1845,52 @@ function cFactoryReset() {
   setTimeout(() => location.reload(), 800);
 }
 window.cFactoryReset = cFactoryReset;
+
+async function cForceUpdate() {
+  const btn = document.getElementById('update-app-btn');
+  const setBtn = (iconCls, label) => {
+    if (!btn) return;
+    const i = btn.querySelector('i');
+    const d = btn.querySelector('div');
+    if (i) i.className = `fa-solid ${iconCls}`;
+    if (d) d.textContent = label;
+  };
+
+  if (btn) { btn.disabled = true; btn.classList.remove('is-error'); btn.classList.add('is-loading'); }
+  setBtn('fa-spinner fa-spin', t('updatingApp'));
+
+  let clearedCaches = 0, clearedSW = 0, failed = false;
+  try {
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      clearedCaches = keys.length;
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      clearedSW = regs.length;
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+  } catch (e) {
+    console.warn('[Update] Cache clear error:', e);
+    failed = true;
+  }
+
+  if (failed) {
+    if (btn) { btn.disabled = false; btn.classList.remove('is-loading'); btn.classList.add('is-error'); }
+    setBtn('fa-triangle-exclamation', t('updateAppErr'));
+    cToast(t('updateAppErr'), 'err');
+    return;
+  }
+
+  btn?.classList.remove('is-loading');
+  btn?.classList.add('is-success');
+  setBtn('fa-check', t('updateAppDone'));
+  cToast(clearedCaches || clearedSW ? t('updateAppOk') : t('updateAppNothing'), 'ok');
+
+  setTimeout(() => window.location.reload(), 1400);
+}
+window.cForceUpdate = cForceUpdate;
 
 /* ══════════ حالة الاتصال ══════════ */
 const CONN_COLORS = {
@@ -1755,7 +2085,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.DuoSync.watchDevices(devs => {
         _devices = devs;
         _updateStats();
-        _renderSidebarDevices();
+        _updateDevBadge();
         if (_activeTab === 'devices') _renderDevices();
       });
     }
@@ -1784,6 +2114,6 @@ document.addEventListener('DOMContentLoaded', () => {
   /* تحديث stats كل دقيقة (لوقت المزامنة) */
   setInterval(_updateStats, 60000);
 
-  _renderSidebarDevices();
+  _updateDevBadge();
   _rerenderTab();
 });

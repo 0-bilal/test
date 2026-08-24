@@ -37,6 +37,30 @@ window.DuoPrinter = (function () {
   let _eposDevice    = null; // كائن الاتصال بالشبكة (epson.ePOSDevice)
   let _printerDevice = null; // كائن الطابعة بعد createDevice (epson.ePOSPrint)
 
+  /* ── ترجمة رموز أخطاء Epson ePOS SDK إلى رسائل مفهومة للكاشير ── */
+  const ERROR_MESSAGES = {
+    ERROR_TIMEOUT: 'انتهت مهلة الاتصال بالطابعة. تأكد أن الطابعة مُشغّلة ومتصلة بنفس شبكة الواي فاي، وأن عنوان IP في إعدادات الطباعة مطابق لعنوان الطابعة الحالي.',
+    ERROR_DEVICE_NOT_FOUND: 'تعذّر العثور على الطابعة على هذا العنوان. تحقّق من عنوان IP وموديل الطابعة في الإعدادات.',
+    ERROR_BADPORT: 'تعذّر فتح منفذ الاتصال بالطابعة (تأكد من تفعيل خدمة ePOS-Print على الطابعة).',
+    ERROR_PARAMETER: 'إعدادات الطابعة (العنوان أو الموديل) غير صحيحة.',
+    ERROR_DEVICE_BUSY: 'الطابعة مشغولة حالياً بعملية أخرى، أعد المحاولة بعد قليل.',
+    ERROR_DEVICE_IN_USE: 'الطابعة مستخدَمة من جهاز آخر حالياً.',
+    ERROR_NOT_OPENED: 'لم يتم فتح اتصال بالطابعة بعد.',
+    ERROR_ALREADY_OPENED: 'يوجد اتصال قائم بالفعل بالطابعة.',
+    ERROR_SYSTEM: 'خطأ نظام أثناء الاتصال بالطابعة.',
+    SchemaError: 'استجابة غير متوقعة من الطابعة. غالباً بسبب انقطاع الاتصال أثناء الطباعة أو عدم تطابق موديل الطابعة المُختار في الإعدادات مع الطابعة الفعلية. أعد المحاولة، وأعد تشغيل الطابعة إذا تكرر الخطأ.',
+    PrintSystemError: 'خطأ داخلي في نظام الطباعة بالطابعة. أعد تشغيل الطابعة وحاول مجدداً.',
+    EPTR_COVER_OPEN: 'غطاء الطابعة مفتوح.',
+    EPTR_REC_EMPTY: 'نفد ورق الطابعة.',
+    EPTR_MECHANICAL: 'خطأ ميكانيكي في الطابعة.',
+    EPTR_AUTOMATICAL: 'خطأ تلقائي في الطابعة (تحقق من الورق والغطاء).',
+    EPTR_UNRECOVERABLE: 'خطأ غير قابل للإصلاح في الطابعة، أعد تشغيلها.',
+  };
+
+  function friendlyError(code) {
+    return ERROR_MESSAGES[code] || ('رمز الخطأ: ' + code);
+  }
+
   /* ══════════ إعدادات الطابعة (IP + الموديل) ══════════ */
   function getConfig() {
     try {
@@ -75,7 +99,7 @@ window.DuoPrinter = (function () {
         onSuccess && onSuccess(_eposDevice);
       } else {
         _eposDevice = null;
-        onError && onError('فشل الاتصال بالطابعة (' + data + ')');
+        onError && onError('فشل الاتصال بالطابعة: ' + friendlyError(data));
       }
     });
   }
@@ -93,7 +117,7 @@ window.DuoPrinter = (function () {
           _printerDevice = deviceObj;
           onSuccess && onSuccess(_printerDevice);
         } else {
-          onError && onError('فشل تجهيز الطابعة (' + retcode + ')');
+          onError && onError('فشل تجهيز الطابعة: ' + friendlyError(retcode));
         }
       }
     );
@@ -124,7 +148,7 @@ window.DuoPrinter = (function () {
   function sendPrint(printerDevice, builder, onSuccess, onError) {
     printerDevice.onreceive = function (res) {
       if (res && res.success) onSuccess && onSuccess(res);
-      else onError && onError('فشلت عملية الطباعة (' + (res && res.code) + ')');
+      else onError && onError('فشلت عملية الطباعة: ' + friendlyError(res && res.code));
     };
     printerDevice.onerror = function () {
       onError && onError('خطأ في الاتصال بالطابعة أثناء الطباعة');

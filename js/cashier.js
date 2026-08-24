@@ -205,6 +205,10 @@ const T = {
     printerSettingsTitle: 'إعدادات الطابعة', printerIpLabel: 'عنوان IP الخاص بالطابعة',
     printerModelLabel: 'موديل الطابعة', printerSaveBtn: 'حفظ الإعدادات',
     printerSavedOk: 'تم حفظ إعدادات الطابعة ✓', printerIpInvalid: 'عنوان IP غير صحيح',
+    printerTestBtn: 'اختبار الاتصال بالطابعة', printerTesting: 'جارٍ اختبار الاتصال…',
+    printerTestOk: ms => `نجح الاتصال بالطابعة ✓ (${ms} مللي ثانية)`,
+    printerEnvApp: 'تطبيق مثبّت (PWA)', printerEnvBrowser: 'متصفح Safari (تبويب عادي)',
+    printerTestEnv: (env, proto) => `بيئة التشغيل: ${env} — البروتوكول: ${proto}`,
     printExpiryLabel: 'مدة صلاحية الكوبون', printExpiryDays: n => `${n} ${n === 1 ? 'يوم' : 'أيام'}`,
     printPreviewLabel: 'معاينة شكل الكوبون', printCouponCode: 'كود الكوبون',
     printIssueDate: 'تاريخ الإصدار', printValidUntil: 'صالح حتى',
@@ -320,6 +324,10 @@ const T = {
     printerSettingsTitle: 'Printer Settings', printerIpLabel: 'Printer IP Address',
     printerModelLabel: 'Printer Model', printerSaveBtn: 'Save Settings',
     printerSavedOk: 'Printer settings saved ✓', printerIpInvalid: 'Invalid IP address',
+    printerTestBtn: 'Test Printer Connection', printerTesting: 'Testing connection…',
+    printerTestOk: ms => `Connected to printer ✓ (${ms} ms)`,
+    printerEnvApp: 'Installed app (PWA)', printerEnvBrowser: 'Safari browser (regular tab)',
+    printerTestEnv: (env, proto) => `Runtime: ${env} — Protocol: ${proto}`,
     printExpiryLabel: 'Coupon Validity', printExpiryDays: n => `${n} day${n === 1 ? '' : 's'}`,
     printPreviewLabel: 'Coupon Preview', printCouponCode: 'Coupon Code',
     printIssueDate: 'Issue Date', printValidUntil: 'Valid Until',
@@ -1277,6 +1285,11 @@ function _renderPrinting() {
         <i class="fa-solid fa-check"></i>
         <span><div>${t('printerSaveBtn')}</div></span>
       </button>
+
+      <button class="print-action-btn" id="printer-test-btn" onclick="cTestPrinterConnection()">
+        <i class="fa-solid fa-satellite-dish"></i>
+        <span><div>${t('printerTestBtn')}</div></span>
+      </button>
     </div>
   </div>` : '';
 
@@ -1382,6 +1395,33 @@ function cSavePrinterSettings() {
   _renderPrinting();
 }
 window.cSavePrinterSettings = cSavePrinterSettings;
+
+function cTestPrinterConnection() {
+  const btn = document.getElementById('printer-test-btn');
+  if (typeof DuoPrinter === 'undefined') { cToast(t('printerLibMissing'), 'err'); return; }
+  if (btn) btn.disabled = true;
+
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const envInfo = tf('printerTestEnv', isStandalone ? t('printerEnvApp') : t('printerEnvBrowser'), location.protocol);
+
+  DuoPrinter.setConfig({}); // يبطل أي اتصال مخزَّن مسبقاً كي يكون الاختبار حياً وليس من الذاكرة المؤقتة
+  cToast(`${t('printerTesting')} — ${envInfo}`, 'ok');
+  const started = performance.now();
+
+  const fail = (msg) => {
+    if (btn) btn.disabled = false;
+    cToast(`${msg} — ${envInfo}`, 'err');
+  };
+
+  DuoPrinter.connectPrinter(eposDevice => {
+    DuoPrinter.createPrinterDevice(eposDevice, () => {
+      const ms = Math.round(performance.now() - started);
+      if (btn) btn.disabled = false;
+      cToast(`${tf('printerTestOk', ms)} — ${envInfo}`, 'ok');
+    }, fail);
+  }, fail);
+}
+window.cTestPrinterConnection = cTestPrinterConnection;
 
 function cSelectDiscountPct(pct) { _selPct = pct; _couponCode = _genCouponCode(); _renderPrinting(); }
 window.cSelectDiscountPct = cSelectDiscountPct;

@@ -209,6 +209,7 @@ const T = {
     printerTestOk: ms => `نجح الاتصال بالطابعة ✓ (${ms} مللي ثانية)`,
     printerEnvApp: 'تطبيق مثبّت (PWA)', printerEnvBrowser: 'متصفح Safari (تبويب عادي)',
     printerTestEnv: (env, proto) => `بيئة التشغيل: ${env} — البروتوكول: ${proto}`,
+    printerTestPrintBtn: 'طباعة صفحة اختبار (نص إنجليزي فقط)',
     printExpiryLabel: 'مدة صلاحية الكوبون', printExpiryDays: n => `${n} ${n === 1 ? 'يوم' : 'أيام'}`,
     printPreviewLabel: 'معاينة شكل الكوبون', printCouponCode: 'كود الكوبون',
     printIssueDate: 'تاريخ الإصدار', printValidUntil: 'صالح حتى',
@@ -328,6 +329,7 @@ const T = {
     printerTestOk: ms => `Connected to printer ✓ (${ms} ms)`,
     printerEnvApp: 'Installed app (PWA)', printerEnvBrowser: 'Safari browser (regular tab)',
     printerTestEnv: (env, proto) => `Runtime: ${env} — Protocol: ${proto}`,
+    printerTestPrintBtn: 'Print Test Page (English text only)',
     printExpiryLabel: 'Coupon Validity', printExpiryDays: n => `${n} day${n === 1 ? '' : 's'}`,
     printPreviewLabel: 'Coupon Preview', printCouponCode: 'Coupon Code',
     printIssueDate: 'Issue Date', printValidUntil: 'Valid Until',
@@ -1290,6 +1292,11 @@ function _renderPrinting() {
         <i class="fa-solid fa-satellite-dish"></i>
         <span><div>${t('printerTestBtn')}</div></span>
       </button>
+
+      <button class="print-action-btn" id="printer-test-print-btn" onclick="cTestPrinterPrint()">
+        <i class="fa-solid fa-file"></i>
+        <span><div>${t('printerTestPrintBtn')}</div></span>
+      </button>
     </div>
   </div>` : '';
 
@@ -1423,6 +1430,11 @@ function cTestPrinterConnection() {
 }
 window.cTestPrinterConnection = cTestPrinterConnection;
 
+function cTestPrinterPrint() {
+  _printViaPrinter(_buildTestPrintBuilder(), 'printer-test-print-btn');
+}
+window.cTestPrinterPrint = cTestPrinterPrint;
+
 function cSelectDiscountPct(pct) { _selPct = pct; _couponCode = _genCouponCode(); _renderPrinting(); }
 window.cSelectDiscountPct = cSelectDiscountPct;
 
@@ -1475,6 +1487,21 @@ function _buildCouponBuilder(pct, name, expiryDays, code) {
   b.addText('تاريخ الإصدار: ' + _fmtDateTime(issue) + '\n');
   b.addText('صالح حتى: ' + _fmtDate(expiry) + '\n');
 
+  b.addFeed();
+  b.addCut(b.CUT_FEED);
+  return b;
+}
+
+/* فاتورة اختبار بنص إنجليزي فقط (بلا addTextLang) — لعزل مشكلة دعم اللغة العربية في الطابعة */
+function _buildTestPrintBuilder() {
+  const b = new epson.ePOSBuilder();
+  b.addTextAlign(b.ALIGN_CENTER);
+  b.addTextSize(2, 2);
+  b.addText('TEST PRINT\n');
+  b.addTextSize(1, 1);
+  b.addText('--------------------------------\n');
+  b.addText(new Date().toISOString() + '\n');
+  b.addText('--------------------------------\n');
   b.addFeed();
   b.addCut(b.CUT_FEED);
   return b;

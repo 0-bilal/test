@@ -52,17 +52,23 @@ let _splitPayments = {};       /* { رقم الشخص: 'cash' | 'network' } */
 
 /* الموازنة */
 const BAL_DENOMS = [1, 5, 10, 20, 50, 100, 200, 500];
-function _balDefaultState() {
+const BAL_CASH_MODES = ['full', 'final', 'custody']; /* كاملة، نهائية (للإيداع)، عهدة */
+function _balEmptyDenoms() {
   const denoms = {};
   BAL_DENOMS.forEach(d => denoms[d] = '');
+  return denoms;
+}
+function _balDefaultState() {
+  const cash = {};
+  BAL_CASH_MODES.forEach(m => cash[m] = _balEmptyDenoms());
   return {
-    denoms,
-    custody: '500',
+    cash,
     devices: [{ visa: '', mc: '', mada: '' }, { visa: '', mc: '', mada: '' }],
     report: { sales: '', cash: '', network: '' },
   };
 }
 let _bal        = _balDefaultState();
+let _balCashTab = 'full'; /* أي من عمليات عدّ النقود الثلاث معروضة حالياً للتعبئة */
 
 /* الطباعة */
 const DISCOUNT_PERCENTS = [5, 10, 15, 20, 30];
@@ -88,7 +94,8 @@ let _couponCode = null;
 let _msgText    = '';
 let _printBusy  = false;
 let _printerSettingsOpen = false;
-let _balField    = 'custody';  /* معرّف الحقل النشط للوحة الأرقام */
+const BAL_FIELD_DEFAULT = 'cash:full:1';
+let _balField    = BAL_FIELD_DEFAULT;  /* معرّف الحقل النشط للوحة الأرقام */
 
 const _ikey = (catId, nameAr) => catId + '||' + nameAr;
 
@@ -165,8 +172,10 @@ const T = {
     },
     splitPayCash: 'كاش', splitPayNetwork: 'شبكة', splitPayPending: 'بانتظار الدفع',
     balance: 'الموازنة', balanceSubtitle: 'عدّ نقدية الدرج وأجهزة الشبكة وقارنها بتقرير الكاشير',
-    balCashGroup: 'عدّ نقدية الدرج', balCustodyGroup: 'عهدة الكاشير',
-    balCustodyLabel: 'مبلغ العهدة الافتتاحية',
+    balCashGroup: 'عدّ نقدية الدرج',
+    balCashGroupSub: 'كل عملية عدّ مستقلة تماماً عن الأخرى — عبّئ ما تحتاجه فقط',
+    balCashMode_full: 'نقود كاملة', balCashMode_final: 'نقود نهائية (للإيداع)', balCashMode_custody: 'نقود العهدة',
+    balNetCashSrc_full: 'من الكاملة − العهدة', balNetCashSrc_final: 'من النقود النهائية',
     balNetworkGroup: 'أجهزة نقاط البيع (الشبكة)',
     balDevice: n => `جهاز ${n}`, balAddDevice: 'إضافة جهاز', balRemoveDevice: 'حذف الجهاز',
     balVisa: 'فيزا', balMastercard: 'ماستركارد', balMada: 'مدى',
@@ -174,7 +183,6 @@ const T = {
     balReportSales: 'إجمالي المبيعات', balReportCash: 'إجمالي الكاش', balReportNetwork: 'إجمالي الشبكة',
     balNoteUnit: n => `${n} ريال`, balNoteCountUnit: 'ورقة',
     balSummaryTitle: 'ملخص الموازنة', balActiveField: 'الحقل النشط',
-    balCountedCash: 'إجمالي الكاش المعدود', balCustodyRow: 'عهدة الكاشير',
     balNetCash: 'صافي مبيعات الكاش', balCalcNetwork: 'إجمالي الشبكة المحسوب',
     balCashCompare: 'مقارنة الكاش', balNetworkCompare: 'مقارنة الشبكة', balSalesCompare: 'مقارنة الإجمالي',
     balTotalCompareNote: '(مقارنة الكاش + مقارنة الشبكة)',
@@ -185,7 +193,8 @@ const T = {
     balReportCheck: 'تحقق أرقام التقرير',
     balReportCheckSub: 'الفرق بين "إجمالي المبيعات" ومجموع "الكاش + الشبكة" في نفس تقرير الكاشير — أي فرق هنا غالبًا خطأ إدخال وليس عجزًا فعليًا',
     balReportOk: 'متطابق', balReportMismatch: 'فرق إدخال',
-    balExport: 'تصدير', balImport: 'استعادة',
+    balExport: 'تصدير', balImport: 'استعادة', balPrint: 'طباعة',
+    balPrintTitle: 'تقرير الموازنة',
     balExportOk: 'تم تصدير الموازنة ✓', balImportOk: 'تم استعادة الموازنة ✓', balImportErr: 'ملف غير صالح',
     settingsUpdate: 'تحديث النظام',
     updateAppLabel: 'تحديث المتصفح والأكواد', updateAppSub: 'يمسح الذاكرة المؤقتة ويحمّل آخر نسخة من أكواد الموقع',
@@ -286,8 +295,10 @@ const T = {
     },
     splitPayCash: 'Cash', splitPayNetwork: 'Network', splitPayPending: 'Pending',
     balance: 'Balance', balanceSubtitle: 'Count the drawer cash and network devices, compare against the register report',
-    balCashGroup: 'Drawer Cash Count', balCustodyGroup: 'Cashier Float',
-    balCustodyLabel: 'Opening Float Amount',
+    balCashGroup: 'Drawer Cash Count',
+    balCashGroupSub: 'Each count is fully independent — fill in only what you need',
+    balCashMode_full: 'Full Cash', balCashMode_final: 'Final Cash (for deposit)', balCashMode_custody: 'Float Cash',
+    balNetCashSrc_full: 'from Full − Float', balNetCashSrc_final: 'from Final Cash',
     balNetworkGroup: 'POS Devices (Network)',
     balDevice: n => `Device ${n}`, balAddDevice: 'Add Device', balRemoveDevice: 'Remove Device',
     balVisa: 'Visa', balMastercard: 'Mastercard', balMada: 'Mada',
@@ -295,7 +306,6 @@ const T = {
     balReportSales: 'Total Sales', balReportCash: 'Total Cash', balReportNetwork: 'Total Network',
     balNoteUnit: n => `${n} SAR`, balNoteCountUnit: 'notes',
     balSummaryTitle: 'Balance Summary', balActiveField: 'Active Field',
-    balCountedCash: 'Counted Cash Total', balCustodyRow: 'Cashier Float',
     balNetCash: 'Net Cash Sales', balCalcNetwork: 'Calculated Network Total',
     balCashCompare: 'Cash Comparison', balNetworkCompare: 'Network Comparison', balSalesCompare: 'Total Comparison',
     balTotalCompareNote: '(Cash comparison + Network comparison)',
@@ -306,7 +316,8 @@ const T = {
     balReportCheck: 'Report Figures Check',
     balReportCheckSub: 'Difference between "Total Sales" and "Cash + Network" on the same register report — any gap here is usually a data-entry mistake, not an actual shortage',
     balReportOk: 'Matched', balReportMismatch: 'Entry Mismatch',
-    balExport: 'Export', balImport: 'Restore',
+    balExport: 'Export', balImport: 'Restore', balPrint: 'Print',
+    balPrintTitle: 'Balance Report',
     balExportOk: 'Balance exported ✓', balImportOk: 'Balance restored ✓', balImportErr: 'Invalid file',
     settingsUpdate: 'System Update',
     updateAppLabel: 'Update Browser & Code', updateAppSub: 'Clears the cache and downloads the latest version of the site code',
@@ -890,8 +901,10 @@ window.cSplitReset = cSplitReset;
 
 /* ══════════ TAB — الموازنة ══════════ */
 function _balGet(id) {
-  if (id === 'custody') return _bal.custody;
-  if (id.startsWith('denom:')) return _bal.denoms[id.slice(6)] || '';
+  if (id.startsWith('cash:')) {
+    const [, mode, d] = id.split(':');
+    return _bal.cash[mode]?.[d] || '';
+  }
   if (id.startsWith('dev:')) {
     const [, idx, key] = id.split(':');
     return _bal.devices[+idx]?.[key] || '';
@@ -901,8 +914,11 @@ function _balGet(id) {
 }
 
 function _balSet(id, val) {
-  if (id === 'custody') { _bal.custody = val; return; }
-  if (id.startsWith('denom:')) { _bal.denoms[id.slice(6)] = val; return; }
+  if (id.startsWith('cash:')) {
+    const [, mode, d] = id.split(':');
+    if (_bal.cash[mode]) _bal.cash[mode][d] = val;
+    return;
+  }
   if (id.startsWith('dev:')) {
     const [, idx, key] = id.split(':');
     if (_bal.devices[+idx]) _bal.devices[+idx][key] = val;
@@ -911,10 +927,28 @@ function _balSet(id, val) {
   if (id.startsWith('rep:')) { _bal.report[id.slice(4)] = val; return; }
 }
 
+function _balCashModeTotal(mode) {
+  return BAL_DENOMS.reduce((s, d) => s + d * (parseInt(_bal.cash[mode][d], 10) || 0), 0);
+}
+function _balCashModeHasEntries(mode) {
+  return BAL_DENOMS.some(d => (parseInt(_bal.cash[mode][d], 10) || 0) > 0);
+}
+
 function _computeBalance() {
-  const totalCash    = BAL_DENOMS.reduce((s, d) => s + d * (parseInt(_bal.denoms[d], 10) || 0), 0);
-  const custody       = parseInt(_bal.custody, 10) || 0;
-  const netCash        = totalCash - custody;
+  const fullTotal    = _balCashModeTotal('full');
+  const finalTotal   = _balCashModeTotal('final');
+  const custodyTotal = _balCashModeTotal('custody');
+  const hasFull    = _balCashModeHasEntries('full');
+  const hasFinal   = _balCashModeHasEntries('final');
+  const hasCustody = _balCashModeHasEntries('custody');
+
+  /* كل عملية عدّ مستقلة عن الأخرى: "النقود النهائية" (المُعدّة للإيداع) هي
+     أدق تمثيل مباشر لصافي مبيعات الكاش إن عُدّت بمفردها؛ وإلا فتُحسب من
+     (الكاملة − العهدة) إن كانتا معاً متوفرتين. */
+  let netCash = 0, netCashSource = null;
+  if (hasFinal)      { netCash = finalTotal; netCashSource = 'final'; }
+  else if (hasFull)  { netCash = fullTotal - custodyTotal; netCashSource = 'full'; }
+
   const totalNetwork  = _bal.devices.reduce((s, dv) =>
     s + (parseInt(dv.visa, 10) || 0) + (parseInt(dv.mc, 10) || 0) + (parseInt(dv.mada, 10) || 0), 0);
   const reportSales   = parseInt(_bal.report.sales,   10) || 0;
@@ -923,7 +957,8 @@ function _computeBalance() {
   const cashDiff    = netCash - reportCash;
   const networkDiff = totalNetwork - reportNetwork;
   return {
-    totalCash, custody, netCash, totalNetwork,
+    fullTotal, finalTotal, custodyTotal, hasFull, hasFinal, hasCustody,
+    netCash, netCashSource, totalNetwork,
     reportSales, reportCash, reportNetwork,
     cashDiff, networkDiff,
     /* الفرق الإجمالي = فرق الكاش + فرق الشبكة فقط — وليس مقارنة مستقلة بحقل "إجمالي المبيعات" */
@@ -953,9 +988,9 @@ function _balFieldTile(id, label, unit) {
   </button>`;
 }
 
-function _balDenomTile(d) {
-  const id = `denom:${d}`;
-  const raw   = _bal.denoms[d];
+function _balDenomTile(mode, d) {
+  const id = `cash:${mode}:${d}`;
+  const raw   = _bal.cash[mode][d];
   const count = parseInt(raw, 10) || 0;
   const amount = count * d;
   const active = _balField === id ? 'bal-field--active' : '';
@@ -966,11 +1001,22 @@ function _balDenomTile(d) {
   </button>`;
 }
 
+function _balCashTabBtn(mode, icon) {
+  const total = _balCashModeTotal(mode);
+  const has = _balCashModeHasEntries(mode);
+  const active = _balCashTab === mode ? 'bal-cash-tab--active' : '';
+  return `<button class="bal-cash-tab ${active}" onclick="cBalSetCashTab('${mode}')">
+    <span class="bal-cash-tab-label"><i class="fa-solid ${icon}"></i> ${t('balCashMode_' + mode)} ${has ? '<i class="fa-solid fa-circle-check bal-cash-tab-check"></i>' : ''}</span>
+    <span class="bal-cash-tab-value">${tf('balDiffAmt', total)}</span>
+  </button>`;
+}
+
 function _renderBalance() {
   const el = document.getElementById('balance-content');
   if (!el) return;
 
-  const denomTiles = BAL_DENOMS.map(_balDenomTile).join('');
+  const denomTiles = BAL_DENOMS.map(d => _balDenomTile(_balCashTab, d)).join('');
+  const cashTabs = _balCashTabBtn('full', 'fa-layer-group') + _balCashTabBtn('final', 'fa-building-columns') + _balCashTabBtn('custody', 'fa-vault');
 
   const deviceCards = _bal.devices.map((dv, i) => `
     <div class="bal-device-card">
@@ -989,7 +1035,8 @@ function _renderBalance() {
 
   const r = _computeBalance();
   const activeLabel = _balFieldLabel(_balField);
-  const activeDenom = _balField.startsWith('denom:') ? parseInt(_balField.slice(6), 10) : null;
+  const activeDenomMatch = _balField.startsWith('cash:') ? _balField.split(':') : null;
+  const activeDenom = activeDenomMatch ? parseInt(activeDenomMatch[2], 10) : null;
   const activeDenomAmt = activeDenom !== null ? (parseInt(_balGet(_balField), 10) || 0) * activeDenom : null;
 
   const html = `
@@ -1000,6 +1047,9 @@ function _renderBalance() {
       <div class="section-head-sub">${t('balanceSubtitle')}</div>
     </div>
     <div class="bal-head-actions">
+      <button class="bal-head-btn" id="bal-print-btn" onclick="cBalPrint()">
+        <i class="fa-solid fa-print"></i> <span><div>${t('balPrint')}</div></span>
+      </button>
       <button class="bal-head-btn" onclick="cBalExport()">
         <i class="fa-solid fa-file-export"></i> ${t('balExport')}
       </button>
@@ -1015,6 +1065,8 @@ function _renderBalance() {
 
       <div class="bal-group">
         <div class="bal-group-title"><i class="fa-solid fa-sack-dollar"></i> ${t('balCashGroup')}</div>
+        <div class="bal-group-sub">${t('balCashGroupSub')}</div>
+        <div class="bal-cash-tabs">${cashTabs}</div>
         <div class="bal-denom-grid">${denomTiles}</div>
       </div>
 
@@ -1046,14 +1098,6 @@ function _renderBalance() {
     </div>
 
     <div class="bal-side-col">
-      <div class="bal-custody-bar">
-        <div class="bal-custody-bar-label"><i class="fa-solid fa-vault"></i> ${t('balCustodyGroup')}</div>
-        <button class="bal-custody-bar-field ${_balField === 'custody' ? 'bal-field--active' : ''}" onclick="cBalSetField('custody')">
-          <span class="bal-custody-bar-value">${_bal.custody || '0'}</span>
-          <span class="bal-custody-bar-unit">${t('sar')}</span>
-        </button>
-      </div>
-
       <div class="bal-numpad-panel">
         <div class="bal-active-field">
           <span class="bal-active-field-label">${t('balActiveField')}</span>
@@ -1071,9 +1115,13 @@ function _renderBalance() {
 
       <div class="bal-summary-panel">
         <div class="bal-summary-title">${t('balSummaryTitle')}</div>
-        <div class="bal-summary-row"><span>${t('balCountedCash')}</span><b>${tf('balDiffAmt', r.totalCash)}</b></div>
-        <div class="bal-summary-row"><span>${t('balCustodyRow')}</span><b>− ${tf('balDiffAmt', r.custody)}</b></div>
-        <div class="bal-summary-row bal-summary-row--total"><span>${t('balNetCash')}</span><b>${tf('balDiffAmt', r.netCash)}</b></div>
+        ${r.hasFull    ? `<div class="bal-summary-row"><span>${t('balCashMode_full')}</span><b>${tf('balDiffAmt', r.fullTotal)}</b></div>` : ''}
+        ${r.hasFinal   ? `<div class="bal-summary-row"><span>${t('balCashMode_final')}</span><b>${tf('balDiffAmt', r.finalTotal)}</b></div>` : ''}
+        ${r.hasCustody ? `<div class="bal-summary-row"><span>${t('balCashMode_custody')}</span><b>${tf('balDiffAmt', r.custodyTotal)}</b></div>` : ''}
+        <div class="bal-summary-row bal-summary-row--total">
+          <span>${t('balNetCash')}${r.netCashSource ? ` <small class="bal-compare-note">(${t('balNetCashSrc_' + r.netCashSource)})</small>` : ''}</span>
+          <b>${tf('balDiffAmt', r.netCash)}</b>
+        </div>
         <div class="bal-summary-row bal-summary-row--total"><span>${t('balCalcNetwork')}</span><b>${tf('balDiffAmt', r.totalNetwork)}</b></div>
 
         <div class="bal-compare-row">
@@ -1103,8 +1151,10 @@ function _renderBalance() {
 }
 
 function _balFieldLabel(id) {
-  if (id === 'custody') return t('balCustodyLabel');
-  if (id.startsWith('denom:')) return tf('balNoteUnit', id.slice(6));
+  if (id.startsWith('cash:')) {
+    const [, mode, d] = id.split(':');
+    return `${t('balCashMode_' + mode)} — ${tf('balNoteUnit', d)}`;
+  }
   if (id.startsWith('dev:')) {
     const [, idx, key] = id.split(':');
     const names = { visa: t('balVisa'), mc: t('balMastercard'), mada: t('balMada') };
@@ -1151,17 +1201,25 @@ window.cBalAddDevice = cBalAddDevice;
 function cBalRemoveDevice(idx) {
   if (_bal.devices.length <= 1) { cToast(t('balNoDeviceRemove'), 'warn'); return; }
   _bal.devices.splice(idx, 1);
-  if (_balField.startsWith('dev:')) _balField = 'custody';
+  if (_balField.startsWith('dev:')) _balField = BAL_FIELD_DEFAULT;
   _renderBalance();
 }
 window.cBalRemoveDevice = cBalRemoveDevice;
 
 function cBalReset() {
   _bal = _balDefaultState();
-  _balField = 'custody';
+  _balField = BAL_FIELD_DEFAULT;
+  _balCashTab = 'full';
   _renderBalance();
 }
 window.cBalReset = cBalReset;
+
+function cBalSetCashTab(mode) {
+  _balCashTab = mode;
+  if (_balField.startsWith('cash:')) _balField = `cash:${mode}:1`;
+  _renderBalance();
+}
+window.cBalSetCashTab = cBalSetCashTab;
 
 function _balDateStamp() {
   const d = new Date();
@@ -1198,19 +1256,25 @@ function cBalImportFile(input) {
     try {
       const parsed = JSON.parse(String(reader.result));
       const data = parsed && typeof parsed === 'object' && parsed.data ? parsed.data : parsed;
-      if (!data || typeof data !== 'object' || !data.denoms || !data.devices || !data.report) {
+      if (!data || typeof data !== 'object' || !data.devices || !data.report || (!data.cash && !data.denoms)) {
         throw new Error('invalid balance file');
       }
-      const denoms = {};
-      BAL_DENOMS.forEach(d => { denoms[d] = String(data.denoms[d] ?? ''); });
+      const cash = {};
+      BAL_CASH_MODES.forEach(mode => {
+        const src = data.cash?.[mode]
+          /* توافق مع ملفات موازنة قديمة (denoms بلا أوضاع متعددة) — تُستورد كـ "نقود كاملة" فقط */
+          ?? (mode === 'full' ? data.denoms : null);
+        const denoms = _balEmptyDenoms();
+        BAL_DENOMS.forEach(d => { denoms[d] = String(src?.[d] ?? ''); });
+        cash[mode] = denoms;
+      });
       const devices = Array.isArray(data.devices) && data.devices.length
         ? data.devices.map(dv => ({
             visa: String(dv?.visa ?? ''), mc: String(dv?.mc ?? ''), mada: String(dv?.mada ?? ''),
           }))
         : [{ visa: '', mc: '', mada: '' }, { visa: '', mc: '', mada: '' }];
       _bal = {
-        denoms,
-        custody: String(data.custody ?? '500'),
+        cash,
         devices,
         report: {
           sales:   String(data.report?.sales   ?? ''),
@@ -1218,7 +1282,8 @@ function cBalImportFile(input) {
           network: String(data.report?.network ?? ''),
         },
       };
-      _balField = 'custody';
+      _balField = BAL_FIELD_DEFAULT;
+      _balCashTab = 'full';
       _renderBalance();
       cToast(t('balImportOk'), 'ok');
     } catch (e) {
@@ -1551,6 +1616,47 @@ function _buildMessageBuilder(msg) {
   b.addCut(b.CUT_FEED);
   return b;
 }
+
+/* بناء تقرير الموازنة — تفاصيل الشبكة، إجمالي المبيعات، الكاش، والشبكة */
+function _buildBalanceReceiptBuilder() {
+  const r = _computeBalance();
+  const diffText = (diff) => diff === 0 ? t('balMatch') : `${diff > 0 ? t('balOver') : t('balShort')} ${tf('balDiffAmt', Math.abs(diff))}`;
+
+  const deviceLines = _bal.devices.map((dv, i) => ({
+    text: `${tf('balDevice', i + 1)}: ${t('balVisa')} ${dv.visa || 0} + ${t('balMastercard')} ${dv.mc || 0} + ${t('balMada')} ${dv.mada || 0}`,
+    size: 1,
+  }));
+
+  const b = new epson.ePOSBuilder();
+  DuoPrinter.addImageBlock(b, [
+    { text: restaurantInfo.nameAr, size: 2, bold: true },
+    { text: t('balPrintTitle'), size: 1, bold: true },
+    { text: _fmtDateTime(new Date()), size: 1 },
+    { rule: true },
+    { text: `${t('balReportSales')}: ${tf('balDiffAmt', r.reportSales)}`, size: 1 },
+    { text: `${t('balReportCash')}: ${tf('balDiffAmt', r.reportCash)}`, size: 1 },
+    { text: `${t('balReportNetwork')}: ${tf('balDiffAmt', r.reportNetwork)}`, size: 1 },
+    { rule: true },
+    { text: t('balNetworkGroup'), size: 1, bold: true },
+    ...deviceLines,
+    { text: `${t('balCalcNetwork')}: ${tf('balDiffAmt', r.totalNetwork)}`, size: 1, bold: true },
+    { rule: true },
+    { text: `${t('balNetCash')}${r.netCashSource ? ` (${t('balNetCashSrc_' + r.netCashSource)})` : ''}: ${tf('balDiffAmt', r.netCash)}`, size: 1, bold: true },
+    { rule: true },
+    { text: `${t('balCashCompare')}: ${diffText(r.cashDiff)}`, size: 1 },
+    { text: `${t('balNetworkCompare')}: ${diffText(r.networkDiff)}`, size: 1 },
+    { text: `${t('balSalesCompare')}: ${diffText(r.totalDiff)}`, size: 1, bold: true },
+  ]);
+
+  b.addFeed();
+  b.addCut(b.CUT_FEED);
+  return b;
+}
+
+function cBalPrint() {
+  _printViaPrinter(_buildBalanceReceiptBuilder(), 'bal-print-btn');
+}
+window.cBalPrint = cBalPrint;
 
 /* تسلسل موحّد: اتصال → تجهيز الطابعة → إرسال، مع تغذية راجعة على الزر */
 function _printViaPrinter(builder, btnId, afterSuccess) {

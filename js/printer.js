@@ -116,6 +116,16 @@ window.DuoPrinter = (function () {
   }
 
   function getSupportedModels() { return SUPPORTED_MODELS.slice(); }
+
+  /* رابط صفحة الطابعة نفسها بنفس بروتوكول/منفذ الاتصال الحالي — زيارته يدوياً
+     مرة في تبويب متصفح عادي (وليس تطبيق PWA مثبَّت) تُفعِّل ثقة شهادة SSL
+     الذاتية لبقية تبويبات نفس المتصفح في نفس الجلسة على iOS، حيث لا توجد
+     طريقة أخرى موثوقة لجعل التطبيق المثبَّت يشارك هذه الثقة. */
+  function getPrinterPageUrl() {
+    const { ip } = getConfig();
+    const proto = (typeof location !== 'undefined') ? location.protocol : 'http:';
+    return proto + '//' + ip + ':' + PORT_FIXED + '/';
+  }
   function getSupportedPaperWidths() { return SUPPORTED_PAPER_WIDTHS.slice(); }
 
   /* ══════════ رسم نص عربي/مختلط كصورة — يتجاوز محدودية خط الطابعة ══════════
@@ -273,5 +283,6 @@ window.DuoPrinter = (function () {
   return {
     connectPrinter, createPrinterDevice, buildReceipt, sendPrint,
     getConfig, setConfig, getSupportedModels, getSupportedPaperWidths, addImageBlock,
+    getPrinterPageUrl,
   };
 })();

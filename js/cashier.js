@@ -210,6 +210,7 @@ const T = {
     printerEnvApp: 'تطبيق مثبّت (PWA)', printerEnvBrowser: 'متصفح Safari (تبويب عادي)',
     printerTestEnv: (env, proto) => `بيئة التشغيل: ${env} — البروتوكول: ${proto}`,
     printerTestPrintBtn: 'طباعة صفحة اختبار (نص إنجليزي فقط)',
+    printerOpenPageBtn: 'افتح صفحة الطابعة', printerOpenPageSub: 'اضغط هذا أولاً في كل جلسة متصفح جديدة (وليس داخل التطبيق المثبَّت) على iOS',
     printExpiryLabel: 'مدة صلاحية الكوبون', printExpiryDays: n => `${n} ${n === 1 ? 'يوم' : 'أيام'}`,
     printPreviewLabel: 'معاينة شكل الكوبون', printCouponCode: 'كود الكوبون',
     printIssueDate: 'تاريخ الإصدار', printValidUntil: 'صالح حتى',
@@ -330,6 +331,7 @@ const T = {
     printerEnvApp: 'Installed app (PWA)', printerEnvBrowser: 'Safari browser (regular tab)',
     printerTestEnv: (env, proto) => `Runtime: ${env} — Protocol: ${proto}`,
     printerTestPrintBtn: 'Print Test Page (English text only)',
+    printerOpenPageBtn: 'Open Printer Page', printerOpenPageSub: 'Tap this first each new browser session (not inside the installed app) on iOS',
     printExpiryLabel: 'Coupon Validity', printExpiryDays: n => `${n} day${n === 1 ? '' : 's'}`,
     printPreviewLabel: 'Coupon Preview', printCouponCode: 'Coupon Code',
     printIssueDate: 'Issue Date', printValidUntil: 'Valid Until',
@@ -1299,6 +1301,14 @@ function _renderPrinting() {
         <span><div>${t('printerTestBtn')}</div></span>
       </button>
 
+      <button class="print-action-btn" onclick="cOpenPrinterPage()">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        <span>
+          <div>${t('printerOpenPageBtn')}</div>
+          <small>${t('printerOpenPageSub')}</small>
+        </span>
+      </button>
+
       <button class="print-action-btn" id="printer-test-print-btn" onclick="cTestPrinterPrint()">
         <i class="fa-solid fa-file"></i>
         <span><div>${t('printerTestPrintBtn')}</div></span>
@@ -1409,6 +1419,17 @@ function cSavePrinterSettings() {
   _renderPrinting();
 }
 window.cSavePrinterSettings = cSavePrinterSettings;
+
+/* يفتح صفحة الطابعة نفسها في تبويب متصفح عادي — على iOS، قبول شهادة SSL
+   الذاتية للطابعة يُخزَّن على مستوى المتصفح نفسه ويشمل كل تبويباته، لكن
+   تطبيق PWA المثبَّت على الشاشة الرئيسية يعمل في بيئة معزولة عن المتصفح لا
+   تشارك هذه الثقة إطلاقاً (قيد نظام iOS، لا حل له من الإعدادات). لذلك يلزم
+   من متصفح عادي (وليس PWA) زيارة هذه الصفحة مرة كل جلسة متصفح قبل الطباعة. */
+function cOpenPrinterPage() {
+  if (typeof DuoPrinter === 'undefined') { cToast(t('printerLibMissing'), 'err'); return; }
+  window.open(DuoPrinter.getPrinterPageUrl(), '_blank');
+}
+window.cOpenPrinterPage = cOpenPrinterPage;
 
 function cTestPrinterConnection() {
   const btn = document.getElementById('printer-test-btn');

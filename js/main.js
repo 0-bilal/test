@@ -252,6 +252,8 @@ function resumeAutoScroll() {
     return;
   }
 
+  if (!_isAutoScrollOn()) { isPaused = true; return; } // ابقَ متوقفاً إن كان السكرول التلقائي معطّلاً من لوحة التحكم
+
   isPaused = false;
   clearTimeout(pauseTimer);
 
@@ -444,6 +446,7 @@ function _findNearestVisibleItem() {
 function stepScroll() {
   clearTimeout(autoTimer);
   if (isPaused) return;
+  if (!_isAutoScrollOn()) return; // تم إيقاف السكرول التلقائي من لوحة التحكم
 
   // تخطّى المنتجات المخفية والمتخطَّاة في السكرول
   let nextIdx = (curIdx + 1) % allItemEls.length;
@@ -1287,7 +1290,28 @@ function applyRemoteSettings(v) {
     localStorage.setItem(LS_CAT_SKIP,   JSON.stringify([..._devCatSkip]));
 
     // إعدادات السكرول الديناميكية
-    if (v.autoScroll      !== undefined) localStorage.setItem(LS_AUTO_SCROLL,          String(!!v.autoScroll));
+    if (v.autoScroll !== undefined) {
+      const wasOn = _isAutoScrollOn();
+      const nowOn = !!v.autoScroll;
+      localStorage.setItem(LS_AUTO_SCROLL, String(nowOn));
+      // طبّق التغيير فوراً على المحرّك الجاري بدل انتظار إعادة تحميل الصفحة
+      if (nowOn !== wasOn) {
+        if (nowOn) {
+          if (allItemEls.length) {
+            clearTimeout(autoTimer);
+            clearTimeout(pauseTimer);
+            isPaused = false;
+            startAutoScroll();
+          } else if (typeof window._vxResume === 'function') {
+            window._vxResume();
+          }
+        } else {
+          clearTimeout(autoTimer);
+          clearTimeout(pauseTimer);
+          if (typeof window._vxPause === 'function') window._vxPause();
+        }
+      }
+    }
     if (v.itemDuration    !== undefined) localStorage.setItem(LS_ITEM_DURATION_KEY,    String(parseInt(v.itemDuration,    10) || ITEM_DURATION));
     if (v.pauseDuration   !== undefined) localStorage.setItem(LS_PAUSE_DURATION_KEY,   String(parseInt(v.pauseDuration,   10) || PAUSE_DURATION));
     if (v.overlayDuration !== undefined) localStorage.setItem(LS_OVERLAY_DURATION_KEY, String(parseInt(v.overlayDuration, 10) || 8000));

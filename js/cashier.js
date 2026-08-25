@@ -63,6 +63,7 @@ function _balDefaultState() {
   BAL_CASH_MODES.forEach(m => cash[m] = _balEmptyDenoms());
   return {
     cash,
+    custodyTarget: '500', /* المبلغ المتفق عليه/الثابت للعهدة — مرجع لمقارنة عهدة الدرج المعدودة فعلياً به */
     devices: [{ visa: '', mc: '', mada: '' }, { visa: '', mc: '', mada: '' }],
     report: { sales: '', cash: '', network: '' },
   };
@@ -176,6 +177,7 @@ const T = {
     balCashGroupSub: 'كل عملية عدّ مستقلة تماماً عن الأخرى — عبّئ ما تحتاجه فقط',
     balCashMode_full: 'نقود كاملة', balCashMode_final: 'نقود نهائية (للإيداع)', balCashMode_custody: 'نقود العهدة',
     balNetCashSrc_full: 'من الكاملة − العهدة', balNetCashSrc_final: 'من النقود النهائية',
+    balCustodyTarget: 'مبلغ العهدة المحدد', balCustodyTargetHint: 'عدّ نقود العهدة أعلاه لمقارنتها بهذا المبلغ',
     balNetworkGroup: 'أجهزة نقاط البيع (الشبكة)',
     balDevice: n => `جهاز ${n}`, balAddDevice: 'إضافة جهاز', balRemoveDevice: 'حذف الجهاز',
     balVisa: 'فيزا', balMastercard: 'ماستركارد', balMada: 'مدى',
@@ -299,6 +301,7 @@ const T = {
     balCashGroupSub: 'Each count is fully independent — fill in only what you need',
     balCashMode_full: 'Full Cash', balCashMode_final: 'Final Cash (for deposit)', balCashMode_custody: 'Float Cash',
     balNetCashSrc_full: 'from Full − Float', balNetCashSrc_final: 'from Final Cash',
+    balCustodyTarget: 'Fixed Float Amount', balCustodyTargetHint: 'Count the float cash above to compare it to this amount',
     balNetworkGroup: 'POS Devices (Network)',
     balDevice: n => `Device ${n}`, balAddDevice: 'Add Device', balRemoveDevice: 'Remove Device',
     balVisa: 'Visa', balMastercard: 'Mastercard', balMada: 'Mada',
@@ -901,6 +904,7 @@ window.cSplitReset = cSplitReset;
 
 /* ══════════ TAB — الموازنة ══════════ */
 function _balGet(id) {
+  if (id === 'custodyTarget') return _bal.custodyTarget;
   if (id.startsWith('cash:')) {
     const [, mode, d] = id.split(':');
     return _bal.cash[mode]?.[d] || '';
@@ -914,6 +918,7 @@ function _balGet(id) {
 }
 
 function _balSet(id, val) {
+  if (id === 'custodyTarget') { _bal.custodyTarget = val; return; }
   if (id.startsWith('cash:')) {
     const [, mode, d] = id.split(':');
     if (_bal.cash[mode]) _bal.cash[mode][d] = val;
@@ -949,6 +954,10 @@ function _computeBalance() {
   if (hasFinal)      { netCash = finalTotal; netCashSource = 'final'; }
   else if (hasFull)  { netCash = fullTotal - custodyTotal; netCashSource = 'full'; }
 
+  const custodyTarget = parseInt(_bal.custodyTarget, 10) || 0;
+  /* تحقق: هل عهدة الدرج المعدودة فعلياً تطابق المبلغ الثابت المتفق عليه؟ */
+  const custodyTargetDiff = hasCustody ? (custodyTotal - custodyTarget) : null;
+
   const totalNetwork  = _bal.devices.reduce((s, dv) =>
     s + (parseInt(dv.visa, 10) || 0) + (parseInt(dv.mc, 10) || 0) + (parseInt(dv.mada, 10) || 0), 0);
   const reportSales   = parseInt(_bal.report.sales,   10) || 0;
@@ -958,6 +967,7 @@ function _computeBalance() {
   const networkDiff = totalNetwork - reportNetwork;
   return {
     fullTotal, finalTotal, custodyTotal, hasFull, hasFinal, hasCustody,
+    custodyTarget, custodyTargetDiff,
     netCash, netCashSource, totalNetwork,
     reportSales, reportCash, reportNetwork,
     cashDiff, networkDiff,
@@ -1067,6 +1077,11 @@ function _renderBalance() {
         <div class="bal-group-title"><i class="fa-solid fa-sack-dollar"></i> ${t('balCashGroup')}</div>
         <div class="bal-group-sub">${t('balCashGroupSub')}</div>
         <div class="bal-cash-tabs">${cashTabs}</div>
+        ${_balCashTab === 'custody' ? `
+        <div class="bal-custody-target-row">
+          <div class="bal-custody-target-field">${_balFieldTile('custodyTarget', t('balCustodyTarget'), t('sar'))}</div>
+          ${r.hasCustody ? _balDiffBadge(r.custodyTargetDiff) : `<span class="bal-check-sub">${t('balCustodyTargetHint')}</span>`}
+        </div>` : ''}
         <div class="bal-denom-grid">${denomTiles}</div>
       </div>
 
@@ -1151,6 +1166,7 @@ function _renderBalance() {
 }
 
 function _balFieldLabel(id) {
+  if (id === 'custodyTarget') return t('balCustodyTarget');
   if (id.startsWith('cash:')) {
     const [, mode, d] = id.split(':');
     return `${t('balCashMode_' + mode)} — ${tf('balNoteUnit', d)}`;
@@ -1275,6 +1291,7 @@ function cBalImportFile(input) {
         : [{ visa: '', mc: '', mada: '' }, { visa: '', mc: '', mada: '' }];
       _bal = {
         cash,
+        custodyTarget: String(data.custodyTarget ?? data.custody ?? '500'),
         devices,
         report: {
           sales:   String(data.report?.sales   ?? ''),

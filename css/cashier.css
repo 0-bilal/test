@@ -996,6 +996,13 @@ input{font-family:inherit}
 
 .bal-single-field { max-width: 260px; }
 
+.bal-custody-target-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 12px; flex-wrap: wrap;
+}
+.bal-custody-target-field { max-width: 220px; }
+@media (max-width: 560px) { .bal-custody-target-row { flex-direction: column; align-items: stretch; } }
+
 .bal-devices-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
 .bal-device-card {
   background: var(--c-card2); border: 1px solid var(--c-edge); border-radius: var(--r-sm);

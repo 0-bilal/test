@@ -1074,13 +1074,15 @@ input{font-family:inherit}
 .bal-check-sub { font-size: 10.5px; color: var(--c-tx3); line-height: 1.5; }
 @media (max-width: 560px) { .bal-check-row { flex-direction: column; align-items: flex-start; } }
 
-/* ── العمود الجانبي: لوحة الأرقام + الملخص ── */
-.bal-side-col { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 0; }
-
+/* ── العمود الجانبي: لوحة الأرقام + الملخص ──
+   لوحة الأرقام وحدها ثابتة أثناء التمرير (sticky)؛ العمود نفسه والملخص
+   وتوزيع السحب أسفلها يمرّان بشكل طبيعي مع الصفحة. */
+.bal-side-col { display: flex; flex-direction: column; gap: 16px; }
 
 .bal-numpad-panel {
   background: var(--c-card); border: 1px solid var(--c-edge2); border-radius: var(--r);
   padding: 18px; box-shadow: 0 2px 16px rgba(0,0,0,.3);
+  position: sticky; top: 12px; z-index: 2;
 }
 .bal-active-field {
   display: flex; flex-direction: column; gap: 3px; margin-bottom: 14px;

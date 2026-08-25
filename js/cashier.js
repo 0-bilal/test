@@ -178,6 +178,7 @@ const T = {
     balCashMode_full: 'نقود كاملة', balCashMode_final: 'نقود نهائية (للإيداع)', balCashMode_custody: 'نقود العهدة',
     balNetCashSrc_full: 'من الكاملة − العهدة', balNetCashSrc_final: 'من النقود النهائية',
     balCustodyTarget: 'مبلغ العهدة المحدد', balCustodyTargetHint: 'عدّ نقود العهدة أعلاه لمقارنتها بهذا المبلغ',
+    balCashForBank: 'النقود الكاش المُسلَّمة للبنك', balCustodyInDrawer: 'مبلغ العهدة الموجود في الكاشير',
     balNetworkGroup: 'أجهزة نقاط البيع (الشبكة)',
     balDevice: n => `جهاز ${n}`, balAddDevice: 'إضافة جهاز', balRemoveDevice: 'حذف الجهاز',
     balVisa: 'فيزا', balMastercard: 'ماستركارد', balMada: 'مدى',
@@ -302,6 +303,7 @@ const T = {
     balCashMode_full: 'Full Cash', balCashMode_final: 'Final Cash (for deposit)', balCashMode_custody: 'Float Cash',
     balNetCashSrc_full: 'from Full − Float', balNetCashSrc_final: 'from Final Cash',
     balCustodyTarget: 'Fixed Float Amount', balCustodyTargetHint: 'Count the float cash above to compare it to this amount',
+    balCashForBank: 'Cash Delivered to Bank', balCustodyInDrawer: 'Float Amount in Drawer',
     balNetworkGroup: 'POS Devices (Network)',
     balDevice: n => `Device ${n}`, balAddDevice: 'Add Device', balRemoveDevice: 'Remove Device',
     balVisa: 'Visa', balMastercard: 'Mastercard', balMada: 'Mada',
@@ -1635,14 +1637,22 @@ function _buildMessageBuilder(msg) {
 }
 
 /* بناء تقرير الموازنة — تفاصيل الشبكة، إجمالي المبيعات، الكاش، والشبكة */
+/* صفوف تفاصيل الشبكة — سطر منفصل لكل نوع شبكة بكل جهاز، بقيمة قصيرة تناسب عمود الجدول */
+function _balDeviceNetworkRows() {
+  const rows = [];
+  _bal.devices.forEach((dv, i) => {
+    const prefix = _bal.devices.length > 1 ? `${tf('balDevice', i + 1)} — ` : '';
+    rows.push({ row: true, label: prefix + t('balVisa'),       value: tf('balDiffAmt', parseInt(dv.visa, 10) || 0), size: 1 });
+    rows.push({ row: true, label: prefix + t('balMastercard'), value: tf('balDiffAmt', parseInt(dv.mc,   10) || 0), size: 1 });
+    rows.push({ row: true, label: prefix + t('balMada'),       value: tf('balDiffAmt', parseInt(dv.mada, 10) || 0), size: 1 });
+  });
+  return rows;
+}
+
+/* تقرير الموازنة المطبوع — جدول تسمية/قيمة بلا أي مقارنات عجز أو فروقات،
+   يعرض فقط الأرقام النهائية المطلوبة للتسليم والأرشفة. */
 function _buildBalanceReceiptBuilder() {
   const r = _computeBalance();
-  const diffText = (diff) => diff === 0 ? t('balMatch') : `${diff > 0 ? t('balOver') : t('balShort')} ${tf('balDiffAmt', Math.abs(diff))}`;
-
-  const deviceLines = _bal.devices.map((dv, i) => ({
-    text: `${tf('balDevice', i + 1)}: ${t('balVisa')} ${dv.visa || 0} + ${t('balMastercard')} ${dv.mc || 0} + ${t('balMada')} ${dv.mada || 0}`,
-    size: 1,
-  }));
 
   const b = new epson.ePOSBuilder();
   DuoPrinter.addImageBlock(b, [
@@ -1650,19 +1660,16 @@ function _buildBalanceReceiptBuilder() {
     { text: t('balPrintTitle'), size: 1, bold: true },
     { text: _fmtDateTime(new Date()), size: 1 },
     { rule: true },
-    { text: `${t('balReportSales')}: ${tf('balDiffAmt', r.reportSales)}`, size: 1 },
-    { text: `${t('balReportCash')}: ${tf('balDiffAmt', r.reportCash)}`, size: 1 },
-    { text: `${t('balReportNetwork')}: ${tf('balDiffAmt', r.reportNetwork)}`, size: 1 },
+    { row: true, label: t('balReportSales'),  value: tf('balDiffAmt', r.reportSales),  bold: true, size: 1 },
+    { row: true, label: t('balReportCash'),    value: tf('balDiffAmt', r.reportCash),    size: 1 },
+    { row: true, label: t('balReportNetwork'), value: tf('balDiffAmt', r.reportNetwork), size: 1 },
     { rule: true },
     { text: t('balNetworkGroup'), size: 1, bold: true },
-    ...deviceLines,
-    { text: `${t('balCalcNetwork')}: ${tf('balDiffAmt', r.totalNetwork)}`, size: 1, bold: true },
+    ..._balDeviceNetworkRows(),
+    { row: true, label: t('balCalcNetwork'), value: tf('balDiffAmt', r.totalNetwork), bold: true, size: 1 },
     { rule: true },
-    { text: `${t('balNetCash')}${r.netCashSource ? ` (${t('balNetCashSrc_' + r.netCashSource)})` : ''}: ${tf('balDiffAmt', r.netCash)}`, size: 1, bold: true },
-    { rule: true },
-    { text: `${t('balCashCompare')}: ${diffText(r.cashDiff)}`, size: 1 },
-    { text: `${t('balNetworkCompare')}: ${diffText(r.networkDiff)}`, size: 1 },
-    { text: `${t('balSalesCompare')}: ${diffText(r.totalDiff)}`, size: 1, bold: true },
+    { row: true, label: t('balCashForBank'),   value: tf('balDiffAmt', r.netCash),      bold: true, size: 1 },
+    { row: true, label: t('balCustodyInDrawer'), value: tf('balDiffAmt', r.custodyTotal), bold: true, size: 1 },
   ]);
 
   b.addFeed();

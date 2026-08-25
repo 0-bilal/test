@@ -996,24 +996,25 @@ input{font-family:inherit}
 
 .bal-single-field { max-width: 260px; }
 
-/* أقسام عدّ النقود الثلاثة المستقلة (كاملة / نهائية / عهدة) — كل قسم بطاقة
-   قائمة بذاتها بشبكة عدّ فئاتها الخاصة، وليست تبويبات متبادلة */
-.bal-cash-section {
-  background: var(--c-card2); border: 1px solid var(--c-edge2); border-radius: var(--r-sm);
-  padding: 14px; margin-bottom: 14px;
+/* أزرار التبديل بين عمليات عدّ النقود الثلاث المستقلة — أعلى الصفحة، ثلاثة
+   جانب بعضها. الضغط على أحدها يفتح شبكة عدّ فئاته أسفل الأزرار مباشرة. */
+.bal-cash-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.bal-cash-tab {
+  flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 12px; border-radius: var(--r-sm); text-align: start; cursor: pointer;
+  background: var(--c-card2); border: 2px solid var(--c-edge2); transition: all .18s;
 }
-.bal-cash-section:last-child { margin-bottom: 0; }
-.bal-cash-section-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  margin-bottom: 12px;
+.bal-cash-tab:hover { border-color: var(--c-edge3); }
+.bal-cash-tab--active { border-color: var(--a-35); background: var(--a-10); box-shadow: 0 0 0 3px var(--a-10); }
+.bal-cash-tab-label {
+  font-size: 11.5px; font-weight: 800; color: var(--c-tx3);
+  display: flex; align-items: center; gap: 6px;
 }
-.bal-cash-section-title {
-  font-size: 13px; font-weight: 900; color: var(--c-tx);
-  display: flex; align-items: center; gap: 8px;
-}
-.bal-cash-section-title i { font-size: 12px; color: var(--amber2); }
-.bal-cash-section-check-icon { color: var(--emr) !important; font-size: 12px; }
-.bal-cash-section-total { font-size: 17px; font-weight: 900; color: var(--amber2); font-family: var(--font-en); }
+.bal-cash-tab--active .bal-cash-tab-label { color: var(--amber2); }
+.bal-cash-tab-check { color: var(--emr); font-size: 11px; }
+.bal-cash-tab-value { font-size: 16px; font-weight: 900; color: var(--c-tx); font-family: var(--font-en); }
+.bal-cash-tab--active .bal-cash-tab-value { color: var(--amber2); }
+
 .bal-cash-section-check {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--c-edge2);

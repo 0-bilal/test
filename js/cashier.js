@@ -70,6 +70,7 @@ function _balDefaultState() {
   };
 }
 let _bal        = _balDefaultState();
+let _balCashTab = 'full'; /* أي عملية عدّ نقود مفتوحة حالياً أسفل أزرار التبديل الثلاثة */
 
 /* الطباعة */
 const DISCOUNT_PERCENTS = [5, 10, 15, 20, 30];
@@ -1020,23 +1021,19 @@ function _balDenomTile(mode, d) {
   </button>`;
 }
 
-/* قسم مستقل لعملية عدّ نقود واحدة (كاملة / نهائية / عهدة) — رأس بعنوان
-   وإجمالي، محتوى تحقّق اختياري (checkHtml)، ثم شبكة عدّ فئاته الخاصة به. */
-function _balCashSection(mode, icon, checkHtml) {
+/* زر أعلى الصفحة لأحد عمليات عدّ النقود الثلاث — الضغط عليه يفتح شبكة
+   عدّ فئاته أسفله (زر واحد نشط في كل مرة). */
+function _balCashTabBtn(mode, icon) {
   const total = _balCashModeTotal(mode);
   const has = _balCashModeHasEntries(mode);
-  return `
-  <div class="bal-cash-section">
-    <div class="bal-cash-section-head">
-      <span class="bal-cash-section-title">
-        <i class="fa-solid ${icon}"></i> ${t('balCashMode_' + mode)}
-        ${has ? '<i class="fa-solid fa-circle-check bal-cash-section-check-icon"></i>' : ''}
-      </span>
-      <span class="bal-cash-section-total">${tf('balDiffAmt', total)}</span>
-    </div>
-    ${checkHtml || ''}
-    <div class="bal-denom-grid">${BAL_DENOMS.map(d => _balDenomTile(mode, d)).join('')}</div>
-  </div>`;
+  const active = _balCashTab === mode ? 'bal-cash-tab--active' : '';
+  return `<button class="bal-cash-tab ${active}" onclick="cBalSetCashTab('${mode}')">
+    <span class="bal-cash-tab-label">
+      <i class="fa-solid ${icon}"></i> ${t('balCashMode_' + mode)}
+      ${has ? '<i class="fa-solid fa-circle-check bal-cash-tab-check"></i>' : ''}
+    </span>
+    <span class="bal-cash-tab-value">${tf('balDiffAmt', total)}</span>
+  </button>`;
 }
 
 function _renderBalance() {
@@ -1045,16 +1042,10 @@ function _renderBalance() {
 
   const r = _computeBalance();
 
-  const finalCheckHtml = `<div class="bal-cash-section-check">
-    ${r.hasFinal ? _balDiffBadge(r.finalCheckDiff) : ''}
-    <span class="bal-check-sub">${t('balFinalCheckHint')}</span>
-  </div>`;
-  const custodyCheckHtml = `<div class="bal-cash-section-check">
-    ${r.hasCustody ? _balDiffBadge(r.custodyTargetDiff) : ''}
-    <span class="bal-check-sub">${t('balCustodyTargetHint')}</span>
-  </div>`;
+  const cashTabs = _balCashTabBtn('full', 'fa-layer-group')
+    + _balCashTabBtn('final', 'fa-building-columns')
+    + _balCashTabBtn('custody', 'fa-vault');
 
-  const fullSection    = _balCashSection('full',    'fa-layer-group');
   const deductionsHtml = `
   <div class="bal-cash-deductions">
     <div class="bal-cash-deductions-title"><i class="fa-solid fa-minus"></i> ${t('balDeductionsTitle')}</div>
@@ -1063,8 +1054,16 @@ function _renderBalance() {
       ${_balFieldTile('cancelled',     t('balCancelled'),     t('sar'))}
     </div>
   </div>`;
-  const finalSection   = _balCashSection('final',   'fa-building-columns', finalCheckHtml);
-  const custodySection = _balCashSection('custody', 'fa-vault',            custodyCheckHtml);
+
+  /* شريط تحقّق اختياري يظهر فقط أسفل تبويبي "نهائية"/"عهدة" — لا يظهر
+     تحت "كاملة" لأنها أساس الحساب نفسه وليست عملية تحقّق. */
+  const activeCheckHtml = _balCashTab === 'final'
+    ? `<div class="bal-cash-section-check">${r.hasFinal ? _balDiffBadge(r.finalCheckDiff) : ''}<span class="bal-check-sub">${t('balFinalCheckHint')}</span></div>`
+    : (_balCashTab === 'custody'
+      ? `<div class="bal-cash-section-check">${r.hasCustody ? _balDiffBadge(r.custodyTargetDiff) : ''}<span class="bal-check-sub">${t('balCustodyTargetHint')}</span></div>`
+      : '');
+
+  const activeDenomGrid = `<div class="bal-denom-grid">${BAL_DENOMS.map(d => _balDenomTile(_balCashTab, d)).join('')}</div>`;
 
   const deviceCards = _bal.devices.map((dv, i) => `
     <div class="bal-device-card">
@@ -1113,10 +1112,10 @@ function _renderBalance() {
       <div class="bal-group">
         <div class="bal-group-title"><i class="fa-solid fa-sack-dollar"></i> ${t('balCashGroup')}</div>
         <div class="bal-group-sub">${t('balCashGroupSub')}</div>
-        ${fullSection}
+        <div class="bal-cash-tabs">${cashTabs}</div>
         ${deductionsHtml}
-        ${finalSection}
-        ${custodySection}
+        ${activeCheckHtml}
+        ${activeDenomGrid}
       </div>
 
       <div class="bal-group">
@@ -1260,9 +1259,17 @@ window.cBalRemoveDevice = cBalRemoveDevice;
 function cBalReset() {
   _bal = _balDefaultState();
   _balField = BAL_FIELD_DEFAULT;
+  _balCashTab = 'full';
   _renderBalance();
 }
 window.cBalReset = cBalReset;
+
+function cBalSetCashTab(mode) {
+  _balCashTab = mode;
+  if (_balField.startsWith('cash:')) _balField = `cash:${mode}:1`;
+  _renderBalance();
+}
+window.cBalSetCashTab = cBalSetCashTab;
 
 function _balDateStamp() {
   const d = new Date();
@@ -1328,6 +1335,7 @@ function cBalImportFile(input) {
         },
       };
       _balField = BAL_FIELD_DEFAULT;
+      _balCashTab = 'full';
       _renderBalance();
       cToast(t('balImportOk'), 'ok');
     } catch (e) {

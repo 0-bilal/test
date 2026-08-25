@@ -175,11 +175,11 @@ const T = {
     splitPayCash: 'كاش', splitPayNetwork: 'شبكة', splitPayPending: 'بانتظار الدفع',
     balance: 'الموازنة', balanceSubtitle: 'عدّ نقدية الدرج وأجهزة الشبكة وقارنها بتقرير الكاشير',
     balCashGroup: 'عدّ نقدية الدرج',
-    balCashGroupSub: '"الكاملة" هي أساس الحساب المحاسبي (صافي الكاش = الكاملة − مبلغ العهدة − المبلغ الملغى). عدّ "النهائية" و"العهدة" اختياري للتحقق فقط ولا يؤثر على الحساب',
+    balCashGroupSub: '"الكاملة" هي أساس الحساب المحاسبي (صافي الكاش المعدود = الكاملة − مبلغ العهدة). عدّ "النهائية" و"العهدة" اختياري للتحقق فقط ولا يؤثر على الحساب',
     balCashMode_full: 'نقود كاملة', balCashMode_final: 'نقود نهائية (للإيداع)', balCashMode_custody: 'نقود العهدة',
     balCustodyTarget: 'مبلغ العهدة المحدد', balCustodyTargetHint: 'عدّ نقود العهدة أعلاه لمقارنتها بهذا المبلغ (تحقق فقط، لا يدخل في الحساب)',
     balFinalCheckHint: 'عدّ النقود النهائية أعلاه لمقارنتها بصافي الكاش المحسوب (تحقق فقط، لا يدخل في الحساب)',
-    balDeductionsTitle: 'خصومات من الكاش الكاملة', balCancelled: 'المبلغ الملغى (كنسل)',
+    balDeductionsTitle: 'خصم من الكاش الكاملة', balCancelled: 'المبلغ الملغى (كنسل)',
     balCashForBank: 'النقود الكاش المُسلَّمة للبنك', balCustodyInDrawer: 'مبلغ العهدة الموجود في الكاشير',
     balNetworkGroup: 'أجهزة نقاط البيع (الشبكة)',
     balDevice: n => `جهاز ${n}`, balAddDevice: 'إضافة جهاز', balRemoveDevice: 'حذف الجهاز',
@@ -197,6 +197,8 @@ const T = {
     balSelectField: 'اضغط على أي حقل بالأعلى ثم استخدم لوحة الأرقام لتعبئته',
     balReportCheck: 'تحقق أرقام التقرير',
     balReportCheckSub: 'الفرق بين "إجمالي المبيعات" ومجموع "الكاش + الشبكة" في نفس تقرير الكاشير — أي فرق هنا غالبًا خطأ إدخال وليس عجزًا فعليًا',
+    balReportCashAdjusted: 'كاش التقرير بعد خصم الملغى',
+    balReportCashAdjustedSub: (cash, cancelled) => `${cash} − ${cancelled} (المبلغ الملغى) — هذا هو الرقم المستخدم فعلياً في مقارنة الكاش`,
     balReportOk: 'متطابق', balReportMismatch: 'فرق إدخال',
     balExport: 'تصدير', balImport: 'استعادة', balPrint: 'طباعة',
     balPrintTitle: 'تقرير الموازنة',
@@ -301,11 +303,11 @@ const T = {
     splitPayCash: 'Cash', splitPayNetwork: 'Network', splitPayPending: 'Pending',
     balance: 'Balance', balanceSubtitle: 'Count the drawer cash and network devices, compare against the register report',
     balCashGroup: 'Drawer Cash Count',
-    balCashGroupSub: '"Full" is the basis of the accounting calculation (Net Cash = Full − Float Amount − Cancelled Amount). Counting "Final" and "Float" is optional, for verification only, and does not affect the calculation',
+    balCashGroupSub: '"Full" is the basis of the accounting calculation (Counted Net Cash = Full − Float Amount). Counting "Final" and "Float" is optional, for verification only, and does not affect the calculation',
     balCashMode_full: 'Full Cash', balCashMode_final: 'Final Cash (for deposit)', balCashMode_custody: 'Float Cash',
     balCustodyTarget: 'Fixed Float Amount', balCustodyTargetHint: 'Count the float cash above to compare it to this amount (verification only, not part of the calculation)',
     balFinalCheckHint: 'Count the final cash above to compare it to the calculated net cash (verification only, not part of the calculation)',
-    balDeductionsTitle: 'Deductions from Full Cash', balCancelled: 'Cancelled Amount',
+    balDeductionsTitle: 'Deduction from Full Cash', balCancelled: 'Cancelled Amount',
     balCashForBank: 'Cash Delivered to Bank', balCustodyInDrawer: 'Float Amount in Drawer',
     balNetworkGroup: 'POS Devices (Network)',
     balDevice: n => `Device ${n}`, balAddDevice: 'Add Device', balRemoveDevice: 'Remove Device',
@@ -323,6 +325,8 @@ const T = {
     balSelectField: 'Tap any field above, then use the keypad to fill it in',
     balReportCheck: 'Report Figures Check',
     balReportCheckSub: 'Difference between "Total Sales" and "Cash + Network" on the same register report — any gap here is usually a data-entry mistake, not an actual shortage',
+    balReportCashAdjusted: 'Report Cash After Cancelled Deduction',
+    balReportCashAdjustedSub: (cash, cancelled) => `${cash} − ${cancelled} (cancelled amount) — this is the figure actually used in the cash comparison`,
     balReportOk: 'Matched', balReportMismatch: 'Entry Mismatch',
     balExport: 'Export', balImport: 'Restore', balPrint: 'Print',
     balPrintTitle: 'Balance Report',
@@ -957,11 +961,10 @@ function _computeBalance() {
   const custodyTarget = parseInt(_bal.custodyTarget, 10) || 0;
   const cancelled     = parseInt(_bal.cancelled, 10) || 0;
 
-  /* الحساب المحاسبي الرسمي الوحيد: صافي مبيعات الكاش = النقود الكاملة −
-     مبلغ العهدة المحدد − المبلغ الملغى (كنسل، ليس مبيعات فعلية). عدّ
-     "النقود النهائية" و"نقود العهدة" أدوات تحقّق اختيارية للموظف فقط
-     (هل ما جهّزته يطابق المتوقع؟) ولا تُغيّران هذا الحساب مطلقاً. */
-  const netCash = fullTotal - custodyTarget - cancelled;
+  /* الحساب المحاسبي الرسمي: صافي مبيعات الكاش المعدود = النقود الكاملة −
+     مبلغ العهدة المحدد فقط. عدّ "النقود النهائية" و"نقود العهدة" أدوات
+     تحقّق اختيارية للموظف فقط ولا تُغيّران هذا الحساب مطلقاً. */
+  const netCash = fullTotal - custodyTarget;
 
   /* تحقق اختياري: هل عهدة الدرج المعدودة فعلياً تطابق المبلغ الثابت المحدد؟ */
   const custodyTargetDiff = hasCustody ? (custodyTotal - custodyTarget) : null;
@@ -973,13 +976,17 @@ function _computeBalance() {
   const reportSales   = parseInt(_bal.report.sales,   10) || 0;
   const reportCash    = parseInt(_bal.report.cash,    10) || 0;
   const reportNetwork = parseInt(_bal.report.network, 10) || 0;
-  const cashDiff    = netCash - reportCash;
+  /* المبلغ الملغى (كنسل) يُخصَم من كاش تقرير جهاز الكاشير — لأن التقرير
+     يحتسبه ضمن المبيعات رغم أنه ليس كاشاً فعلياً واجباً وجوده في الدرج —
+     وليس من النقود المعدودة فعلياً في الدرج. */
+  const reportCashAdjusted = reportCash - cancelled;
+  const cashDiff    = netCash - reportCashAdjusted;
   const networkDiff = totalNetwork - reportNetwork;
   return {
     fullTotal, finalTotal, custodyTotal, hasFull, hasFinal, hasCustody,
     custodyTarget, custodyTargetDiff, finalCheckDiff, cancelled,
     netCash, totalNetwork,
-    reportSales, reportCash, reportNetwork,
+    reportSales, reportCash, reportCashAdjusted, reportNetwork,
     cashDiff, networkDiff,
     /* الفرق الإجمالي = فرق الكاش + فرق الشبكة فقط — وليس مقارنة مستقلة بحقل "إجمالي المبيعات" */
     totalDiff: cashDiff + networkDiff,
@@ -1051,7 +1058,6 @@ function _renderBalance() {
     <div class="bal-cash-deductions-title"><i class="fa-solid fa-minus"></i> ${t('balDeductionsTitle')}</div>
     <div class="bal-cash-deductions-fields">
       ${_balFieldTile('custodyTarget', t('balCustodyTarget'), t('sar'))}
-      ${_balFieldTile('cancelled',     t('balCancelled'),     t('sar'))}
     </div>
   </div>`;
 
@@ -1133,7 +1139,16 @@ function _renderBalance() {
           ${_balFieldTile('rep:sales',   t('balReportSales'),   t('sar'))}
           ${_balFieldTile('rep:cash',    t('balReportCash'),    t('sar'))}
           ${_balFieldTile('rep:network', t('balReportNetwork'), t('sar'))}
+          ${_balFieldTile('cancelled',   t('balCancelled'),     t('sar'))}
         </div>
+        ${r.cancelled > 0 ? `
+        <div class="bal-check-row">
+          <div class="bal-check-text">
+            <span class="bal-check-title">${t('balReportCashAdjusted')}</span>
+            <span class="bal-check-sub">${tf('balReportCashAdjustedSub', r.reportCash, r.cancelled)}</span>
+          </div>
+          <span class="bal-badge bal-badge--match">${tf('balDiffAmt', r.reportCashAdjusted)}</span>
+        </div>` : ''}
         <div class="bal-check-row">
           <div class="bal-check-text">
             <span class="bal-check-title">${t('balReportCheck')}</span>
@@ -1165,7 +1180,6 @@ function _renderBalance() {
         <div class="bal-summary-title">${t('balSummaryTitle')}</div>
         <div class="bal-summary-row"><span>${t('balCashMode_full')}</span><b>${tf('balDiffAmt', r.fullTotal)}</b></div>
         <div class="bal-summary-row"><span>− ${t('balCustodyTarget')}</span><b>${tf('balDiffAmt', r.custodyTarget)}</b></div>
-        ${r.cancelled > 0 ? `<div class="bal-summary-row"><span>− ${t('balCancelled')}</span><b>${tf('balDiffAmt', r.cancelled)}</b></div>` : ''}
         <div class="bal-summary-row bal-summary-row--total">
           <span>${t('balNetCash')}</span>
           <b>${tf('balDiffAmt', r.netCash)}</b>

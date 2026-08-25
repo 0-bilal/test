@@ -1030,8 +1030,7 @@ input{font-family:inherit}
   display: flex; align-items: center; gap: 6px; margin-bottom: 10px;
 }
 .bal-cash-deductions-title i { font-size: 10px; color: var(--rose); }
-.bal-cash-deductions-fields { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-@media (max-width: 560px) { .bal-cash-deductions-fields { grid-template-columns: 1fr; } }
+.bal-cash-deductions-fields { max-width: 220px; }
 
 .bal-devices-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
 .bal-device-card {
@@ -1063,8 +1062,8 @@ input{font-family:inherit}
 }
 .bal-add-device-btn:hover { border-color: var(--a-35); color: var(--amber2); background: var(--a-10); }
 
-.bal-report-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-@media (max-width: 560px) { .bal-report-grid { grid-template-columns: 1fr; } }
+.bal-report-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+@media (max-width: 700px) { .bal-report-grid { grid-template-columns: repeat(2, 1fr); } }
 
 .bal-check-row {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;

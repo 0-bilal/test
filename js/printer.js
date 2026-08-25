@@ -156,6 +156,16 @@ window.DuoPrinter = (function () {
       const fontPx = fontPxFor(line.size);
       ctx.font = weightFor(line.bold) + ' ' + fontPx + 'px ' + fontStack;
       const lineHeight = Math.round(fontPx * 1.55);
+
+      /* صف جدول بعمودين: تسمية تبدأ من اليمين (بداية القراءة بالعربية)
+         وقيمة تنتهي عند اليسار، على نفس السطر — لتقارير كشوف/جداول واضحة. */
+      if (line.row) {
+        y += lineHeight;
+        rows.push({ tableRow: true, label: line.label, value: line.value, y: y - lineHeight * 0.3, fontPx, bold: line.bold });
+        y += (line.spacing || 6);
+        return;
+      }
+
       const words = String(line.text == null ? '' : line.text).split(' ');
       const wrapped = [];
       let cur = '';
@@ -181,6 +191,13 @@ window.DuoPrinter = (function () {
     rows.forEach(r => {
       if (r.rule) { ctx.fillRect(PAD, r.y, widthPx - PAD * 2, 3); return; }
       ctx.font = weightFor(r.bold) + ' ' + r.fontPx + 'px ' + fontStack;
+      if (r.tableRow) {
+        ctx.textAlign = 'right';
+        ctx.fillText(r.label, widthPx - PAD, r.y);
+        ctx.textAlign = 'left';
+        ctx.fillText(r.value, PAD, r.y);
+        return;
+      }
       ctx.textAlign = r.align;
       const x = r.align === 'center' ? widthPx / 2 : (r.align === 'right' ? widthPx - PAD : PAD);
       ctx.fillText(r.text, x, r.y);

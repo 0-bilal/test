@@ -174,10 +174,10 @@ const T = {
     splitPayCash: 'كاش', splitPayNetwork: 'شبكة', splitPayPending: 'بانتظار الدفع',
     balance: 'الموازنة', balanceSubtitle: 'عدّ نقدية الدرج وأجهزة الشبكة وقارنها بتقرير الكاشير',
     balCashGroup: 'عدّ نقدية الدرج',
-    balCashGroupSub: 'كل عملية عدّ مستقلة تماماً عن الأخرى — عبّئ ما تحتاجه فقط',
+    balCashGroupSub: '"الكاملة" هي أساس الحساب المحاسبي (صافي الكاش = الكاملة − مبلغ العهدة المحدد). عدّ "النهائية" و"العهدة" اختياري للتحقق فقط ولا يؤثر على الحساب',
     balCashMode_full: 'نقود كاملة', balCashMode_final: 'نقود نهائية (للإيداع)', balCashMode_custody: 'نقود العهدة',
-    balNetCashSrc_full: 'من الكاملة − العهدة', balNetCashSrc_final: 'من النقود النهائية',
-    balCustodyTarget: 'مبلغ العهدة المحدد', balCustodyTargetHint: 'عدّ نقود العهدة أعلاه لمقارنتها بهذا المبلغ',
+    balCustodyTarget: 'مبلغ العهدة المحدد', balCustodyTargetHint: 'عدّ نقود العهدة أعلاه لمقارنتها بهذا المبلغ (تحقق فقط، لا يدخل في الحساب)',
+    balFinalCheckHint: 'عدّ النقود النهائية أعلاه لمقارنتها بصافي الكاش المحسوب (تحقق فقط، لا يدخل في الحساب)',
     balCashForBank: 'النقود الكاش المُسلَّمة للبنك', balCustodyInDrawer: 'مبلغ العهدة الموجود في الكاشير',
     balNetworkGroup: 'أجهزة نقاط البيع (الشبكة)',
     balDevice: n => `جهاز ${n}`, balAddDevice: 'إضافة جهاز', balRemoveDevice: 'حذف الجهاز',
@@ -299,10 +299,10 @@ const T = {
     splitPayCash: 'Cash', splitPayNetwork: 'Network', splitPayPending: 'Pending',
     balance: 'Balance', balanceSubtitle: 'Count the drawer cash and network devices, compare against the register report',
     balCashGroup: 'Drawer Cash Count',
-    balCashGroupSub: 'Each count is fully independent — fill in only what you need',
+    balCashGroupSub: '"Full" is the basis of the accounting calculation (Net Cash = Full − Fixed Float Amount). Counting "Final" and "Float" is optional, for verification only, and does not affect the calculation',
     balCashMode_full: 'Full Cash', balCashMode_final: 'Final Cash (for deposit)', balCashMode_custody: 'Float Cash',
-    balNetCashSrc_full: 'from Full − Float', balNetCashSrc_final: 'from Final Cash',
-    balCustodyTarget: 'Fixed Float Amount', balCustodyTargetHint: 'Count the float cash above to compare it to this amount',
+    balCustodyTarget: 'Fixed Float Amount', balCustodyTargetHint: 'Count the float cash above to compare it to this amount (verification only, not part of the calculation)',
+    balFinalCheckHint: 'Count the final cash above to compare it to the calculated net cash (verification only, not part of the calculation)',
     balCashForBank: 'Cash Delivered to Bank', balCustodyInDrawer: 'Float Amount in Drawer',
     balNetworkGroup: 'POS Devices (Network)',
     balDevice: n => `Device ${n}`, balAddDevice: 'Add Device', balRemoveDevice: 'Remove Device',
@@ -949,16 +949,18 @@ function _computeBalance() {
   const hasFinal   = _balCashModeHasEntries('final');
   const hasCustody = _balCashModeHasEntries('custody');
 
-  /* كل عملية عدّ مستقلة عن الأخرى: "النقود النهائية" (المُعدّة للإيداع) هي
-     أدق تمثيل مباشر لصافي مبيعات الكاش إن عُدّت بمفردها؛ وإلا فتُحسب من
-     (الكاملة − العهدة) إن كانتا معاً متوفرتين. */
-  let netCash = 0, netCashSource = null;
-  if (hasFinal)      { netCash = finalTotal; netCashSource = 'final'; }
-  else if (hasFull)  { netCash = fullTotal - custodyTotal; netCashSource = 'full'; }
-
   const custodyTarget = parseInt(_bal.custodyTarget, 10) || 0;
-  /* تحقق: هل عهدة الدرج المعدودة فعلياً تطابق المبلغ الثابت المتفق عليه؟ */
+
+  /* الحساب المحاسبي الرسمي الوحيد: صافي مبيعات الكاش = النقود الكاملة −
+     مبلغ العهدة المحدد (الثابت المتفق عليه، وليس أي مبلغ معدود). عدّ
+     "النقود النهائية" و"نقود العهدة" أدوات تحقّق اختيارية للموظف فقط
+     (هل ما جهّزته يطابق المتوقع؟) ولا تُغيّران هذا الحساب مطلقاً. */
+  const netCash = fullTotal - custodyTarget;
+
+  /* تحقق اختياري: هل عهدة الدرج المعدودة فعلياً تطابق المبلغ الثابت المحدد؟ */
   const custodyTargetDiff = hasCustody ? (custodyTotal - custodyTarget) : null;
+  /* تحقق اختياري: هل النقود النهائية المعدودة (للإيداع) تطابق صافي الكاش المحسوب؟ */
+  const finalCheckDiff = hasFinal ? (finalTotal - netCash) : null;
 
   const totalNetwork  = _bal.devices.reduce((s, dv) =>
     s + (parseInt(dv.visa, 10) || 0) + (parseInt(dv.mc, 10) || 0) + (parseInt(dv.mada, 10) || 0), 0);
@@ -969,8 +971,8 @@ function _computeBalance() {
   const networkDiff = totalNetwork - reportNetwork;
   return {
     fullTotal, finalTotal, custodyTotal, hasFull, hasFinal, hasCustody,
-    custodyTarget, custodyTargetDiff,
-    netCash, netCashSource, totalNetwork,
+    custodyTarget, custodyTargetDiff, finalCheckDiff,
+    netCash, totalNetwork,
     reportSales, reportCash, reportNetwork,
     cashDiff, networkDiff,
     /* الفرق الإجمالي = فرق الكاش + فرق الشبكة فقط — وليس مقارنة مستقلة بحقل "إجمالي المبيعات" */
@@ -1079,11 +1081,14 @@ function _renderBalance() {
         <div class="bal-group-title"><i class="fa-solid fa-sack-dollar"></i> ${t('balCashGroup')}</div>
         <div class="bal-group-sub">${t('balCashGroupSub')}</div>
         <div class="bal-cash-tabs">${cashTabs}</div>
-        ${_balCashTab === 'custody' ? `
         <div class="bal-custody-target-row">
           <div class="bal-custody-target-field">${_balFieldTile('custodyTarget', t('balCustodyTarget'), t('sar'))}</div>
-          ${r.hasCustody ? _balDiffBadge(r.custodyTargetDiff) : `<span class="bal-check-sub">${t('balCustodyTargetHint')}</span>`}
-        </div>` : ''}
+          ${_balCashTab === 'custody'
+            ? (r.hasCustody ? _balDiffBadge(r.custodyTargetDiff) : `<span class="bal-check-sub">${t('balCustodyTargetHint')}</span>`)
+            : (_balCashTab === 'final'
+              ? (r.hasFinal ? _balDiffBadge(r.finalCheckDiff) : `<span class="bal-check-sub">${t('balFinalCheckHint')}</span>`)
+              : '')}
+        </div>
         <div class="bal-denom-grid">${denomTiles}</div>
       </div>
 
@@ -1132,11 +1137,10 @@ function _renderBalance() {
 
       <div class="bal-summary-panel">
         <div class="bal-summary-title">${t('balSummaryTitle')}</div>
-        ${r.hasFull    ? `<div class="bal-summary-row"><span>${t('balCashMode_full')}</span><b>${tf('balDiffAmt', r.fullTotal)}</b></div>` : ''}
-        ${r.hasFinal   ? `<div class="bal-summary-row"><span>${t('balCashMode_final')}</span><b>${tf('balDiffAmt', r.finalTotal)}</b></div>` : ''}
-        ${r.hasCustody ? `<div class="bal-summary-row"><span>${t('balCashMode_custody')}</span><b>${tf('balDiffAmt', r.custodyTotal)}</b></div>` : ''}
+        <div class="bal-summary-row"><span>${t('balCashMode_full')}</span><b>${tf('balDiffAmt', r.fullTotal)}</b></div>
+        <div class="bal-summary-row"><span>− ${t('balCustodyTarget')}</span><b>${tf('balDiffAmt', r.custodyTarget)}</b></div>
         <div class="bal-summary-row bal-summary-row--total">
-          <span>${t('balNetCash')}${r.netCashSource ? ` <small class="bal-compare-note">(${t('balNetCashSrc_' + r.netCashSource)})</small>` : ''}</span>
+          <span>${t('balNetCash')}</span>
           <b>${tf('balDiffAmt', r.netCash)}</b>
         </div>
         <div class="bal-summary-row bal-summary-row--total"><span>${t('balCalcNetwork')}</span><b>${tf('balDiffAmt', r.totalNetwork)}</b></div>

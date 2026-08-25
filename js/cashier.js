@@ -1238,8 +1238,16 @@ function _genCouponCode() {
   return 'DUO-' + code;
 }
 
-function _fmtDate(d) { return d.toLocaleDateString(_lang === 'ar' ? 'ar-SA' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
-function _fmtDateTime(d) { return d.toLocaleString(_lang === 'ar' ? 'ar-SA' : 'en-GB'); }
+/* calendar:'gregory' إلزامي — لغة ar-SA تتحول تلقائياً للتقويم الهجري (أم القرى)
+   في أغلب المتصفحات إن لم يُفرض التقويم الميلادي صراحة. */
+function _fmtDate(d) {
+  return d.toLocaleDateString(_lang === 'ar' ? 'ar-SA' : 'en-GB',
+    { day: '2-digit', month: '2-digit', year: 'numeric', calendar: 'gregory' });
+}
+function _fmtDateTime(d) {
+  return d.toLocaleString(_lang === 'ar' ? 'ar-SA' : 'en-GB',
+    { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', calendar: 'gregory' });
+}
 
 function _couponDates() {
   const issue  = new Date();
@@ -1536,7 +1544,7 @@ function _buildMessageBuilder(msg) {
     { rule: true },
     { text: msg, size: 1 },
     { rule: true },
-    { text: new Date().toLocaleString('ar-SA'), size: 1 },
+    { text: _fmtDateTime(new Date()), size: 1 },
   ]);
 
   b.addFeed();

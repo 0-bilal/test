@@ -181,6 +181,11 @@ const T = {
     balFinalCheckHint: 'عدّ النقود النهائية أعلاه لمقارنتها بصافي الكاش المحسوب (تحقق فقط، لا يدخل في الحساب)',
     balDeductionsTitle: 'خصم من الكاش الكاملة', balCancelled: 'المبلغ الملغى (كنسل)',
     balCashForBank: 'النقود الكاش المُسلَّمة للبنك', balCustodyInDrawer: 'مبلغ العهدة الموجود في الكاشير',
+    balWithdrawTitle: 'توزيع سحب الإيداع المقترح',
+    balWithdrawSub: amt => `أقرب طريقة لتكوين ${amt} بالفئات الكبيرة أولاً، مع ترك أكبر قدر من الفئات الصغيرة في الدرج كعهدة وصرف للغد`,
+    balWithdrawShortfall: amt => `تعذّر تكوين المبلغ بالضبط بالفئات المعدودة — ناقص ${amt}`,
+    balWithdrawTake: 'اسحب هذه الأوراق للإيداع', balWithdrawLeave: 'اترك هذه الأوراق في الدرج (عهدة وصرف)',
+    balWithdrawNone: '—',
     balNetworkGroup: 'أجهزة نقاط البيع (الشبكة)',
     balDevice: n => `جهاز ${n}`, balAddDevice: 'إضافة جهاز', balRemoveDevice: 'حذف الجهاز',
     balVisa: 'فيزا', balMastercard: 'ماستركارد', balMada: 'مدى',
@@ -309,6 +314,11 @@ const T = {
     balFinalCheckHint: 'Count the final cash above to compare it to the calculated net cash (verification only, not part of the calculation)',
     balDeductionsTitle: 'Deduction from Full Cash', balCancelled: 'Cancelled Amount',
     balCashForBank: 'Cash Delivered to Bank', balCustodyInDrawer: 'Float Amount in Drawer',
+    balWithdrawTitle: 'Suggested Deposit Withdrawal',
+    balWithdrawSub: amt => `The best way to make up ${amt} using large notes first, leaving as many small notes as possible in the drawer as float for tomorrow`,
+    balWithdrawShortfall: amt => `Could not make the exact amount with the counted notes — short by ${amt}`,
+    balWithdrawTake: 'Withdraw these notes for deposit', balWithdrawLeave: 'Leave these notes in the drawer (float)',
+    balWithdrawNone: '—',
     balNetworkGroup: 'POS Devices (Network)',
     balDevice: n => `Device ${n}`, balAddDevice: 'Add Device', balRemoveDevice: 'Remove Device',
     balVisa: 'Visa', balMastercard: 'Mastercard', balMada: 'Mada',
@@ -950,6 +960,25 @@ function _balCashModeHasEntries(mode) {
   return BAL_DENOMS.some(d => (parseInt(_bal.cash[mode][d], 10) || 0) > 0);
 }
 
+/* خوارزمية اقتراح سحب المبلغ من الفئات المعدودة فعلياً في "النقود الكاملة" —
+   جشعة من الفئة الأكبر للأصغر (500 ثم 200 ثم 100...): تأخذ من كل فئة أكبر
+   قدر ممكن قبل الانتقال لما هو أصغر، فتُفضّل تلقائياً الأوراق الكبيرة
+   للسحب وتترك الفئات الصغيرة (1، 5، 10...) في الدرج كصرف/عهدة للغد، طالما
+   كانت الفئات الكبيرة كافية. إن تعذّر تكوين المبلغ بالضبط بالفئات
+   المتوفرة (نقص في فئة معينة)، يُعاد remainder > 0 يوضّح الفارق المتبقي. */
+function _balWithdrawalPlan(amount) {
+  let remaining = Math.max(0, amount || 0);
+  const take = {};
+  const leftover = {};
+  [...BAL_DENOMS].sort((a, b) => b - a).forEach(d => {
+    const available = parseInt(_bal.cash.full[d], 10) || 0;
+    const maxTake = Math.min(available, Math.floor(remaining / d));
+    if (maxTake > 0) { take[d] = maxTake; remaining -= maxTake * d; }
+    leftover[d] = available - (take[d] || 0);
+  });
+  return { take, leftover, remainder: remaining };
+}
+
 function _computeBalance() {
   const fullTotal    = _balCashModeTotal('full');
   const finalTotal   = _balCashModeTotal('final');
@@ -1004,6 +1033,32 @@ function _balDiffBadge(diff) {
 function _balCheckBadge(diff) {
   if (diff === 0) return `<span class="bal-badge bal-badge--match">${t('balReportOk')}</span>`;
   return `<span class="bal-badge bal-badge--short">${t('balReportMismatch')} · ${tf('balDiffAmt', Math.abs(diff))}</span>`;
+}
+
+/* بطاقة توزيع السحب المقترحة: أي الأوراق تُسحب لتكوين صافي مبيعات الكاش
+   (فئات كبيرة أولاً)، وأي الأوراق تبقى في الدرج كعهدة/صرف للغد. */
+function _balWithdrawalHtml(plan, amount) {
+  const takeRows = BAL_DENOMS.slice().reverse()
+    .filter(d => plan.take[d] > 0)
+    .map(d => `<div class="bal-withdraw-row"><span>${tf('balNoteUnit', d)} × ${plan.take[d]}</span><b>${tf('balDiffAmt', d * plan.take[d])}</b></div>`)
+    .join('');
+  const leftoverRows = BAL_DENOMS.slice().reverse()
+    .filter(d => plan.leftover[d] > 0)
+    .map(d => `<div class="bal-withdraw-row"><span>${tf('balNoteUnit', d)} × ${plan.leftover[d]}</span><b>${tf('balDiffAmt', d * plan.leftover[d])}</b></div>`)
+    .join('');
+
+  return `
+  <div class="bal-withdraw-panel">
+    <div class="bal-summary-title">${t('balWithdrawTitle')}</div>
+    <div class="bal-check-sub">${tf('balWithdrawSub', tf('balDiffAmt', amount))}</div>
+    ${plan.remainder > 0 ? `
+    <div class="bal-badge bal-badge--short" style="margin-top:8px;">${tf('balWithdrawShortfall', tf('balDiffAmt', plan.remainder))}</div>
+    ` : ''}
+    <div class="bal-withdraw-group-title">${t('balWithdrawTake')}</div>
+    ${takeRows || `<div class="bal-check-sub">${t('balWithdrawNone')}</div>`}
+    <div class="bal-withdraw-group-title">${t('balWithdrawLeave')}</div>
+    ${leftoverRows || `<div class="bal-check-sub">${t('balWithdrawNone')}</div>`}
+  </div>`;
 }
 
 function _balFieldTile(id, label, unit) {
@@ -1202,6 +1257,8 @@ function _renderBalance() {
           ${_balDiffBadge(r.totalDiff)}
         </div>
       </div>
+
+      ${r.hasFull && r.netCash > 0 ? _balWithdrawalHtml(_balWithdrawalPlan(r.netCash), r.netCash) : ''}
 
       <button class="split-reset-btn" onclick="cBalReset()">
         <i class="fa-solid fa-rotate-right"></i> ${t('balReset')}

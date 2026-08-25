@@ -1123,6 +1123,20 @@ input{font-family:inherit}
 }
 .bal-summary-row--total b { color: var(--amber2); font-size: 15px; }
 
+.bal-withdraw-panel {
+  background: var(--c-card); border: 1px solid var(--c-edge2); border-radius: var(--r);
+  padding: 18px; box-shadow: 0 2px 16px rgba(0,0,0,.3);
+}
+.bal-withdraw-group-title {
+  font-size: 11px; font-weight: 800; color: var(--c-tx3);
+  margin: 12px 0 6px; padding-top: 10px; border-top: 1px dashed var(--c-edge2);
+}
+.bal-withdraw-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-size: 12.5px; color: var(--c-tx2); font-weight: 700; padding: 5px 0;
+}
+.bal-withdraw-row b { font-family: var(--font-en); color: var(--c-tx); font-size: 13px; }
+
 .bal-compare-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   font-size: 12.5px; color: var(--c-tx2); font-weight: 800; padding: 10px 0;

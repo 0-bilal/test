@@ -63,13 +63,13 @@ function _balDefaultState() {
   BAL_CASH_MODES.forEach(m => cash[m] = _balEmptyDenoms());
   return {
     cash,
-    custodyTarget: '500', /* المبلغ المتفق عليه/الثابت للعهدة — مرجع لمقارنة عهدة الدرج المعدودة فعلياً به */
+    custodyTarget: '500', /* المبلغ المتفق عليه/الثابت للعهدة — يُخصَم من الكاملة في الحساب */
+    cancelled: '', /* مبلغ العمليات الملغاة (كنسل) — يُخصَم من الكاملة أيضاً لأنه ليس مبيعات فعلية */
     devices: [{ visa: '', mc: '', mada: '' }, { visa: '', mc: '', mada: '' }],
     report: { sales: '', cash: '', network: '' },
   };
 }
 let _bal        = _balDefaultState();
-let _balCashTab = 'full'; /* أي من عمليات عدّ النقود الثلاث معروضة حالياً للتعبئة */
 
 /* الطباعة */
 const DISCOUNT_PERCENTS = [5, 10, 15, 20, 30];
@@ -174,10 +174,11 @@ const T = {
     splitPayCash: 'كاش', splitPayNetwork: 'شبكة', splitPayPending: 'بانتظار الدفع',
     balance: 'الموازنة', balanceSubtitle: 'عدّ نقدية الدرج وأجهزة الشبكة وقارنها بتقرير الكاشير',
     balCashGroup: 'عدّ نقدية الدرج',
-    balCashGroupSub: '"الكاملة" هي أساس الحساب المحاسبي (صافي الكاش = الكاملة − مبلغ العهدة المحدد). عدّ "النهائية" و"العهدة" اختياري للتحقق فقط ولا يؤثر على الحساب',
+    balCashGroupSub: '"الكاملة" هي أساس الحساب المحاسبي (صافي الكاش = الكاملة − مبلغ العهدة − المبلغ الملغى). عدّ "النهائية" و"العهدة" اختياري للتحقق فقط ولا يؤثر على الحساب',
     balCashMode_full: 'نقود كاملة', balCashMode_final: 'نقود نهائية (للإيداع)', balCashMode_custody: 'نقود العهدة',
     balCustodyTarget: 'مبلغ العهدة المحدد', balCustodyTargetHint: 'عدّ نقود العهدة أعلاه لمقارنتها بهذا المبلغ (تحقق فقط، لا يدخل في الحساب)',
     balFinalCheckHint: 'عدّ النقود النهائية أعلاه لمقارنتها بصافي الكاش المحسوب (تحقق فقط، لا يدخل في الحساب)',
+    balDeductionsTitle: 'خصومات من الكاش الكاملة', balCancelled: 'المبلغ الملغى (كنسل)',
     balCashForBank: 'النقود الكاش المُسلَّمة للبنك', balCustodyInDrawer: 'مبلغ العهدة الموجود في الكاشير',
     balNetworkGroup: 'أجهزة نقاط البيع (الشبكة)',
     balDevice: n => `جهاز ${n}`, balAddDevice: 'إضافة جهاز', balRemoveDevice: 'حذف الجهاز',
@@ -299,10 +300,11 @@ const T = {
     splitPayCash: 'Cash', splitPayNetwork: 'Network', splitPayPending: 'Pending',
     balance: 'Balance', balanceSubtitle: 'Count the drawer cash and network devices, compare against the register report',
     balCashGroup: 'Drawer Cash Count',
-    balCashGroupSub: '"Full" is the basis of the accounting calculation (Net Cash = Full − Fixed Float Amount). Counting "Final" and "Float" is optional, for verification only, and does not affect the calculation',
+    balCashGroupSub: '"Full" is the basis of the accounting calculation (Net Cash = Full − Float Amount − Cancelled Amount). Counting "Final" and "Float" is optional, for verification only, and does not affect the calculation',
     balCashMode_full: 'Full Cash', balCashMode_final: 'Final Cash (for deposit)', balCashMode_custody: 'Float Cash',
     balCustodyTarget: 'Fixed Float Amount', balCustodyTargetHint: 'Count the float cash above to compare it to this amount (verification only, not part of the calculation)',
     balFinalCheckHint: 'Count the final cash above to compare it to the calculated net cash (verification only, not part of the calculation)',
+    balDeductionsTitle: 'Deductions from Full Cash', balCancelled: 'Cancelled Amount',
     balCashForBank: 'Cash Delivered to Bank', balCustodyInDrawer: 'Float Amount in Drawer',
     balNetworkGroup: 'POS Devices (Network)',
     balDevice: n => `Device ${n}`, balAddDevice: 'Add Device', balRemoveDevice: 'Remove Device',
@@ -907,6 +909,7 @@ window.cSplitReset = cSplitReset;
 /* ══════════ TAB — الموازنة ══════════ */
 function _balGet(id) {
   if (id === 'custodyTarget') return _bal.custodyTarget;
+  if (id === 'cancelled') return _bal.cancelled;
   if (id.startsWith('cash:')) {
     const [, mode, d] = id.split(':');
     return _bal.cash[mode]?.[d] || '';
@@ -921,6 +924,7 @@ function _balGet(id) {
 
 function _balSet(id, val) {
   if (id === 'custodyTarget') { _bal.custodyTarget = val; return; }
+  if (id === 'cancelled') { _bal.cancelled = val; return; }
   if (id.startsWith('cash:')) {
     const [, mode, d] = id.split(':');
     if (_bal.cash[mode]) _bal.cash[mode][d] = val;
@@ -950,12 +954,13 @@ function _computeBalance() {
   const hasCustody = _balCashModeHasEntries('custody');
 
   const custodyTarget = parseInt(_bal.custodyTarget, 10) || 0;
+  const cancelled     = parseInt(_bal.cancelled, 10) || 0;
 
   /* الحساب المحاسبي الرسمي الوحيد: صافي مبيعات الكاش = النقود الكاملة −
-     مبلغ العهدة المحدد (الثابت المتفق عليه، وليس أي مبلغ معدود). عدّ
+     مبلغ العهدة المحدد − المبلغ الملغى (كنسل، ليس مبيعات فعلية). عدّ
      "النقود النهائية" و"نقود العهدة" أدوات تحقّق اختيارية للموظف فقط
      (هل ما جهّزته يطابق المتوقع؟) ولا تُغيّران هذا الحساب مطلقاً. */
-  const netCash = fullTotal - custodyTarget;
+  const netCash = fullTotal - custodyTarget - cancelled;
 
   /* تحقق اختياري: هل عهدة الدرج المعدودة فعلياً تطابق المبلغ الثابت المحدد؟ */
   const custodyTargetDiff = hasCustody ? (custodyTotal - custodyTarget) : null;
@@ -971,7 +976,7 @@ function _computeBalance() {
   const networkDiff = totalNetwork - reportNetwork;
   return {
     fullTotal, finalTotal, custodyTotal, hasFull, hasFinal, hasCustody,
-    custodyTarget, custodyTargetDiff, finalCheckDiff,
+    custodyTarget, custodyTargetDiff, finalCheckDiff, cancelled,
     netCash, totalNetwork,
     reportSales, reportCash, reportNetwork,
     cashDiff, networkDiff,
@@ -1015,22 +1020,51 @@ function _balDenomTile(mode, d) {
   </button>`;
 }
 
-function _balCashTabBtn(mode, icon) {
+/* قسم مستقل لعملية عدّ نقود واحدة (كاملة / نهائية / عهدة) — رأس بعنوان
+   وإجمالي، محتوى تحقّق اختياري (checkHtml)، ثم شبكة عدّ فئاته الخاصة به. */
+function _balCashSection(mode, icon, checkHtml) {
   const total = _balCashModeTotal(mode);
   const has = _balCashModeHasEntries(mode);
-  const active = _balCashTab === mode ? 'bal-cash-tab--active' : '';
-  return `<button class="bal-cash-tab ${active}" onclick="cBalSetCashTab('${mode}')">
-    <span class="bal-cash-tab-label"><i class="fa-solid ${icon}"></i> ${t('balCashMode_' + mode)} ${has ? '<i class="fa-solid fa-circle-check bal-cash-tab-check"></i>' : ''}</span>
-    <span class="bal-cash-tab-value">${tf('balDiffAmt', total)}</span>
-  </button>`;
+  return `
+  <div class="bal-cash-section">
+    <div class="bal-cash-section-head">
+      <span class="bal-cash-section-title">
+        <i class="fa-solid ${icon}"></i> ${t('balCashMode_' + mode)}
+        ${has ? '<i class="fa-solid fa-circle-check bal-cash-section-check-icon"></i>' : ''}
+      </span>
+      <span class="bal-cash-section-total">${tf('balDiffAmt', total)}</span>
+    </div>
+    ${checkHtml || ''}
+    <div class="bal-denom-grid">${BAL_DENOMS.map(d => _balDenomTile(mode, d)).join('')}</div>
+  </div>`;
 }
 
 function _renderBalance() {
   const el = document.getElementById('balance-content');
   if (!el) return;
 
-  const denomTiles = BAL_DENOMS.map(d => _balDenomTile(_balCashTab, d)).join('');
-  const cashTabs = _balCashTabBtn('full', 'fa-layer-group') + _balCashTabBtn('final', 'fa-building-columns') + _balCashTabBtn('custody', 'fa-vault');
+  const r = _computeBalance();
+
+  const finalCheckHtml = `<div class="bal-cash-section-check">
+    ${r.hasFinal ? _balDiffBadge(r.finalCheckDiff) : ''}
+    <span class="bal-check-sub">${t('balFinalCheckHint')}</span>
+  </div>`;
+  const custodyCheckHtml = `<div class="bal-cash-section-check">
+    ${r.hasCustody ? _balDiffBadge(r.custodyTargetDiff) : ''}
+    <span class="bal-check-sub">${t('balCustodyTargetHint')}</span>
+  </div>`;
+
+  const fullSection    = _balCashSection('full',    'fa-layer-group');
+  const deductionsHtml = `
+  <div class="bal-cash-deductions">
+    <div class="bal-cash-deductions-title"><i class="fa-solid fa-minus"></i> ${t('balDeductionsTitle')}</div>
+    <div class="bal-cash-deductions-fields">
+      ${_balFieldTile('custodyTarget', t('balCustodyTarget'), t('sar'))}
+      ${_balFieldTile('cancelled',     t('balCancelled'),     t('sar'))}
+    </div>
+  </div>`;
+  const finalSection   = _balCashSection('final',   'fa-building-columns', finalCheckHtml);
+  const custodySection = _balCashSection('custody', 'fa-vault',            custodyCheckHtml);
 
   const deviceCards = _bal.devices.map((dv, i) => `
     <div class="bal-device-card">
@@ -1047,7 +1081,6 @@ function _renderBalance() {
       </div>
     </div>`).join('');
 
-  const r = _computeBalance();
   const activeLabel = _balFieldLabel(_balField);
   const activeDenomMatch = _balField.startsWith('cash:') ? _balField.split(':') : null;
   const activeDenom = activeDenomMatch ? parseInt(activeDenomMatch[2], 10) : null;
@@ -1080,16 +1113,10 @@ function _renderBalance() {
       <div class="bal-group">
         <div class="bal-group-title"><i class="fa-solid fa-sack-dollar"></i> ${t('balCashGroup')}</div>
         <div class="bal-group-sub">${t('balCashGroupSub')}</div>
-        <div class="bal-cash-tabs">${cashTabs}</div>
-        <div class="bal-custody-target-row">
-          <div class="bal-custody-target-field">${_balFieldTile('custodyTarget', t('balCustodyTarget'), t('sar'))}</div>
-          ${_balCashTab === 'custody'
-            ? (r.hasCustody ? _balDiffBadge(r.custodyTargetDiff) : `<span class="bal-check-sub">${t('balCustodyTargetHint')}</span>`)
-            : (_balCashTab === 'final'
-              ? (r.hasFinal ? _balDiffBadge(r.finalCheckDiff) : `<span class="bal-check-sub">${t('balFinalCheckHint')}</span>`)
-              : '')}
-        </div>
-        <div class="bal-denom-grid">${denomTiles}</div>
+        ${fullSection}
+        ${deductionsHtml}
+        ${finalSection}
+        ${custodySection}
       </div>
 
       <div class="bal-group">
@@ -1139,6 +1166,7 @@ function _renderBalance() {
         <div class="bal-summary-title">${t('balSummaryTitle')}</div>
         <div class="bal-summary-row"><span>${t('balCashMode_full')}</span><b>${tf('balDiffAmt', r.fullTotal)}</b></div>
         <div class="bal-summary-row"><span>− ${t('balCustodyTarget')}</span><b>${tf('balDiffAmt', r.custodyTarget)}</b></div>
+        ${r.cancelled > 0 ? `<div class="bal-summary-row"><span>− ${t('balCancelled')}</span><b>${tf('balDiffAmt', r.cancelled)}</b></div>` : ''}
         <div class="bal-summary-row bal-summary-row--total">
           <span>${t('balNetCash')}</span>
           <b>${tf('balDiffAmt', r.netCash)}</b>
@@ -1173,6 +1201,7 @@ function _renderBalance() {
 
 function _balFieldLabel(id) {
   if (id === 'custodyTarget') return t('balCustodyTarget');
+  if (id === 'cancelled') return t('balCancelled');
   if (id.startsWith('cash:')) {
     const [, mode, d] = id.split(':');
     return `${t('balCashMode_' + mode)} — ${tf('balNoteUnit', d)}`;
@@ -1231,17 +1260,9 @@ window.cBalRemoveDevice = cBalRemoveDevice;
 function cBalReset() {
   _bal = _balDefaultState();
   _balField = BAL_FIELD_DEFAULT;
-  _balCashTab = 'full';
   _renderBalance();
 }
 window.cBalReset = cBalReset;
-
-function cBalSetCashTab(mode) {
-  _balCashTab = mode;
-  if (_balField.startsWith('cash:')) _balField = `cash:${mode}:1`;
-  _renderBalance();
-}
-window.cBalSetCashTab = cBalSetCashTab;
 
 function _balDateStamp() {
   const d = new Date();
@@ -1298,6 +1319,7 @@ function cBalImportFile(input) {
       _bal = {
         cash,
         custodyTarget: String(data.custodyTarget ?? data.custody ?? '500'),
+        cancelled: String(data.cancelled ?? ''),
         devices,
         report: {
           sales:   String(data.report?.sales   ?? ''),
@@ -1306,7 +1328,6 @@ function cBalImportFile(input) {
         },
       };
       _balField = BAL_FIELD_DEFAULT;
-      _balCashTab = 'full';
       _renderBalance();
       cToast(t('balImportOk'), 'ok');
     } catch (e) {

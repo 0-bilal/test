@@ -120,6 +120,7 @@ const T = {
     showDiscount: 'عرض الخصم', showDiscountSub: 'يفتح نافذة الخصم / التقييم',
     showQR: 'منيو الجوال', showQRSub: 'يعرض QR code لفتح المنيو على الجوال',
     openGames: 'شاشة الألعاب', openGamesSub: 'يفتح شاشة اختيار اللعبة',
+    toggleLang: 'ترجمة المنيو', toggleLangSub: 'يبدّل لغة المنيو فوراً بين العربي والإنجليزي',
     launchReaction: 'لعبة رد الفعل', launchReactionSub: 'لعبة مَن يدفع الحساب',
     launchXO: 'لعبة إكس-أو', launchXOSub: 'يبدأ لعبة إكس-أو السريعة',
     closePanel: 'إغلاق النافذة', closePanelSub: 'يغلق أي نافذة مفتوحة',
@@ -254,6 +255,7 @@ const T = {
     showDiscount: 'Show Discount', showDiscountSub: 'Opens discount / review overlay',
     showQR: 'Mobile Menu', showQRSub: 'Shows QR code for mobile menu',
     openGames: 'Games Hub', openGamesSub: 'Opens game selection screen',
+    toggleLang: 'Translate Menu', toggleLangSub: 'Instantly switches the menu language between Arabic and English',
     launchReaction: 'Reaction Game', launchReactionSub: 'Starts the who-pays reaction game',
     launchXO: 'Speed X-O', launchXOSub: 'Starts the speed X-O game',
     closePanel: 'Close Panel', closePanelSub: 'Closes any open panel',
@@ -692,6 +694,7 @@ function _renderActions() {
       { icon:'fa-percent', color:'green',  key:'showDiscount', subKey:'showDiscountSub', fn:`cAction('showDiscount')` },
       { icon:'fa-qrcode',  color:'purple', key:'showQR',       subKey:'showQRSub',       fn:`cAction('showQRMenu')` },
       { icon:'fa-gamepad', color:'teal',   key:'openGames',    subKey:'openGamesSub',    fn:`cAction('showGames')` },
+      { icon:'fa-language',color:'gold',   key:'toggleLang',   subKey:'toggleLangSub',   fn:`cAction('toggleLang')` },
     ]},
     { labelKey: 'actionsGroupGames', items: [
       { icon:'fa-bolt',    color:'gold', key:'launchReaction', subKey:'launchReactionSub', fn:`cAction('launchGame','reaction')` },

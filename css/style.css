@@ -844,6 +844,21 @@ body.lang-en .product-overlay-desc {
   direction:ltr; text-align:right;
 }
 
+/* ── وضع الإنجليزي — الاسم الإنجليزي يصبح الاسم الأساسي ── */
+body.lang-en .item-name-ar,
+body.lang-en .product-overlay-name-ar {
+  display:none;
+}
+body.lang-en .item-name-en {
+  font-size:24px; font-weight:800; color:var(--white);
+  text-transform:none; letter-spacing:normal; margin-top:0;
+}
+body.lang-en .product-overlay-name-en {
+  font-size:56px; font-weight:900; color:var(--white);
+  text-transform:none; letter-spacing:normal; margin-top:0;
+  text-shadow:0 4px 22px rgba(0,0,0,.95);
+}
+
 /* ════════════════════════════════════════════════════════
    QR MENU OVERLAY — يغطي لوحة الشرائح
 ════════════════════════════════════════════════════════ */

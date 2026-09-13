@@ -59,12 +59,106 @@ const $ = id => document.getElementById(id);
 const setText = (id, v) => { const e=$(id); if(e) e.textContent=v; };
 
 /* ════════════════════════════════════════════════════════
+   لغة المنيو — ترجمة فورية من العربية إلى الإنجليزية
+════════════════════════════════════════════════════════ */
+const LS_MENU_LANG = 'duo_menu_lang';
+let menuLang = (localStorage.getItem(LS_MENU_LANG) === 'en') ? 'en' : 'ar';
+
+const _UI_STRINGS = {
+  calUnit:     { ar: 'سعرة',        en: 'kcal' },
+  calUnitFull: { ar: 'سعرة حرارية', en: 'kcal' },
+  currency:    { ar: 'ريال',        en: 'SAR' },
+  contains:    { ar: 'يحتوي على',   en: 'Contains' },
+  removable:   { ar: 'يمكن إزالته', en: 'removable' },
+  chooseColon: { ar: 'اختر: ',      en: 'Choose: ' },
+  or:          { ar: 'أو',          en: 'or' },
+  chooseSauce: { ar: 'اختر الصوص',  en: 'Choose Sauce' },
+};
+function _t(key) {
+  const row = _UI_STRINGS[key];
+  return row ? (row[menuLang] || row.ar) : '';
+}
+const _tCat     = cat  => menuLang === 'en' ? (cat.nameEn || cat.nameAr) : cat.nameAr;
+const _tDesc    = item => menuLang === 'en' ? (item.descriptionEn || item.descriptionAr || '') : (item.descriptionAr || '');
+const _tIngName = ing  => menuLang === 'en' ? (ing.nameEn || ing.nameAr) : ing.nameAr;
+const _tSauceAt = (item, i) => menuLang === 'en' ? (item.sauceOptionsEn?.[i] || item.sauceOptions[i]) : item.sauceOptions[i];
+const _tVariantAt = (item, i) => menuLang === 'en' ? (item.variantsEn?.[i] || item.variants[i]) : item.variants[i];
+
+let _currentOverlayItem = null;
+
+function toggleMenuLanguage() {
+  menuLang = (menuLang === 'ar') ? 'en' : 'ar';
+  localStorage.setItem(LS_MENU_LANG, menuLang);
+  applyMenuLanguage();
+}
+
+function applyMenuLanguage() {
+  document.body.classList.toggle('lang-en', menuLang === 'en');
+  const btn = $('header-lang-btn');
+  if (btn) btn.classList.toggle('lang-active', menuLang === 'en');
+
+  setText('rest-tagline', menuLang === 'en' ? (restaurantInfo.taglineEn || restaurantInfo.taglineAr) : restaurantInfo.taglineAr);
+  setText('tax-note-text', menuLang === 'en' ? (restaurantInfo.taxNoteEn || restaurantInfo.taxNote) : restaurantInfo.taxNote);
+
+  const wasIdx = curIdx;
+  renderCategoryTabs();
+  renderAllCategories();
+  fixScrollablePadding();
+  if (allItemEls.length) highlightItem(wasIdx);
+
+  if (_currentOverlayItem) _refreshOverlayLanguage();
+}
+
+/* ── تحديث نصوص الـ overlay الحالي دون إعادة تحميل الصورة ── */
+function _refreshOverlayLanguage() {
+  const item = _currentOverlayItem;
+  if (!item) return;
+
+  const descEl = $('product-overlay-desc');
+  if (descEl) {
+    descEl.textContent   = _tDesc(item);
+    descEl.style.display = _tDesc(item) ? 'block' : 'none';
+  }
+
+  const ingredientsEl = $('product-overlay-ingredients');
+  if (ingredientsEl && item.ingredients?.length) {
+    ingredientsEl.innerHTML = item.ingredients.map(ing => ing.removable
+      ? `<span class="ingredient-tag ingredient-tag--removable">
+           <i class="fa-solid fa-circle-minus"></i> ${_tIngName(ing)}
+           <span class="ingredient-tag-hint">${_t('removable')}</span>
+         </span>`
+      : `<span class="ingredient-tag">${_tIngName(ing)}</span>`
+    ).join('');
+  }
+
+  const variantsEl = $('product-overlay-variants');
+  if (variantsEl && item.variants?.length) {
+    variantsEl.querySelectorAll('.overlay-variant-tag').forEach((el, i) => {
+      el.textContent = _tVariantAt(item, i);
+    });
+  }
+
+  const sauceBtns = $('product-overlay-sauce-btns');
+  if (sauceBtns && item.sauceOptions?.length) {
+    sauceBtns.querySelectorAll('.sauce-btn').forEach((btn, i) => {
+      btn.textContent = _tSauceAt(item, i);
+    });
+  }
+
+  setText('product-overlay-cal-unit', _t('calUnitFull'));
+  setText('product-overlay-price-cur', _t('currency'));
+
+  const sauceLabel = $('product-overlay-sauce-label');
+  if (sauceLabel) sauceLabel.innerHTML = `<i class="fa-solid fa-bottle-droplet"></i> ${_t('chooseSauce')}`;
+}
+
+/* ════════════════════════════════════════════════════════
    RESTAURANT INFO
 ════════════════════════════════════════════════════════ */
 function renderRestaurantInfo() {
   setText('rest-name-ar',    restaurantInfo.nameAr);
   setText('rest-name-en',    restaurantInfo.nameEn);
-  setText('rest-tagline',    restaurantInfo.taglineAr);
+  setText('rest-tagline',    menuLang === 'en' ? (restaurantInfo.taglineEn || restaurantInfo.taglineAr) : restaurantInfo.taglineAr);
   setText('review-rest-name', restaurantInfo.nameAr);
 
   // Logo
@@ -77,7 +171,7 @@ function renderRestaurantInfo() {
   }
 
   // Footer
-  setText('tax-note-text', restaurantInfo.taxNote);
+  setText('tax-note-text', menuLang === 'en' ? (restaurantInfo.taxNoteEn || restaurantInfo.taxNote) : restaurantInfo.taxNote);
   const wifiSec = $('wifi-section');
   if (wifiSec) {
     if (restaurantInfo.wifi) { setText('wifi-name', restaurantInfo.wifi); wifiSec.style.display='flex'; }
@@ -112,7 +206,7 @@ function renderCategoryTabs() {
     btn.dataset.id = cat.id;
     btn.innerHTML  =
       `<i class="fa-solid ${cat.icon}"></i>
-       <span class="cat-tab-label">${cat.nameAr}</span>`;
+       <span class="cat-tab-label">${_tCat(cat)}</span>`;
     btn.addEventListener('click', () => scrollToSection(cat.id));
     wrap.appendChild(btn);
   });
@@ -152,7 +246,7 @@ function renderAllCategories() {
     heading.dataset.cat = cat.id;
     heading.innerHTML =
       `<i class="fa-solid ${cat.icon}"></i>
-       <span class="section-heading-text">${cat.nameAr}</span>
+       <span class="section-heading-text">${_tCat(cat)}</span>
        <div class="section-heading-line"></div>`;
     area.appendChild(heading);
 
@@ -178,33 +272,33 @@ function renderAllCategories() {
           ${badge ? _badgeHTML(badge) : ''}
           <div class="item-name-ar">${item.nameAr}</div>
           <div class="item-name-en">${item.nameEn}</div>
-          ${item.descriptionAr
-            ? `<div class="item-desc">${item.descriptionAr}</div>` : ''}
+          ${_tDesc(item)
+            ? `<div class="item-desc">${_tDesc(item)}</div>` : ''}
           ${item.variants?.length
             ? `<div class="item-variants">
-                 ${item.variants.map(v => `<span class="item-variant-tag" data-vkey="${_devItemKey(cat.id, item.nameAr)}||${v}">${v}</span>`).join('')}
+                 ${item.variants.map((v, vi) => `<span class="item-variant-tag" data-vkey="${_devItemKey(cat.id, item.nameAr)}||${v}">${_tVariantAt(item, vi)}</span>`).join('')}
                </div>` : ''}
           ${item.ingredients?.some(i => i.removable)
             ? `<div class="item-removable-note">
                  <i class="fa-solid fa-circle-info"></i>
-                 يحتوي على ${item.ingredients.filter(i => i.removable).map(i => i.nameAr).join('، ')} — يمكن إزالته
+                 ${_t('contains')} ${item.ingredients.filter(i => i.removable).map(i => _tIngName(i)).join(menuLang === 'en' ? ', ' : '، ')} — ${_t('removable')}
                </div>` : ''}
           ${item.sauceOptions?.length
             ? `<div class="item-sauce-note">
                  <i class="fa-solid fa-bottle-droplet"></i>
-                 اختر: ${item.sauceOptions.join(' أو ')}
+                 ${_t('chooseColon')}${item.sauceOptions.map((s, si) => _tSauceAt(item, si)).join(` ${_t('or')} `)}
                </div>` : ''}
           <div class="item-meta">
             ${item.calories
               ? `<span class="cal-badge">
-                   <i class="fa-solid fa-fire-flame-curved"></i>&thinsp;${item.calories} سعرة
+                   <i class="fa-solid fa-fire-flame-curved"></i>&thinsp;${item.calories} ${_t('calUnit')}
                  </span>` : ''}
           </div>
         </div>
         <div class="item-price-wrap">
           <div class="item-price-badge">
             <span class="item-price-num">${item.price}</span>
-            <span class="item-price-cur">ريال</span>
+            <span class="item-price-cur">${_t('currency')}</span>
           </div>
         </div>`;
 
@@ -292,7 +386,7 @@ function highlightItem(idx) {
   const catId = el.dataset.cat;
   const cat   = menuCategories.find(c => c.id === catId);
   if (cat) {
-    setText('scroll-cat-label', cat.nameAr);
+    setText('scroll-cat-label', _tCat(cat));
     highlightActiveTab(catId);
   }
 
@@ -553,15 +647,16 @@ function _crossfadeOverlayImage(newSrc) {
 /* ── تعبئة بيانات المنتج (نصوص + صورة) ── */
 function _fillOverlayContent(item, idx) {
   productOverlayItemIdx = idx;
+  _currentOverlayItem   = item;
 
   const priceWrap = $('product-overlay-price-wrap');
   const calEl     = $('product-overlay-cal');
 
   // النصوص
-  $('product-overlay-name-ar').textContent = item.nameAr        || '';
-  $('product-overlay-name-en').textContent = item.nameEn        || '';
-  $('product-overlay-desc').textContent    = item.descriptionAr || '';
-  $('product-overlay-desc').style.display  = item.descriptionAr ? 'block' : 'none';
+  $('product-overlay-name-ar').textContent = item.nameAr    || '';
+  $('product-overlay-name-en').textContent = item.nameEn    || '';
+  $('product-overlay-desc').textContent    = _tDesc(item);
+  $('product-overlay-desc').style.display  = _tDesc(item) ? 'block' : 'none';
 
   // تتبع المشاهدة + الشارة في الـ overlay
   const _ovCat = menuCategories.find(c => c.items.includes(item));
@@ -587,8 +682,9 @@ function _fillOverlayContent(item, idx) {
     if (item.variants?.length) {
       const catId = _ovCat?.id || '';
       variantsEl.innerHTML = item.variants
-        .filter(v => !_devHiddenVariants.has(_devItemKey(catId, item.nameAr) + '||' + v))
-        .map(v => `<span class="overlay-variant-tag" data-vkey="${_devItemKey(catId, item.nameAr)}||${v}">${v}</span>`)
+        .map((v, vi) => ({ v, vi }))
+        .filter(({ v }) => !_devHiddenVariants.has(_devItemKey(catId, item.nameAr) + '||' + v))
+        .map(({ v, vi }) => `<span class="overlay-variant-tag" data-vkey="${_devItemKey(catId, item.nameAr)}||${v}">${_tVariantAt(item, vi)}</span>`)
         .join('');
       variantsEl.style.display = variantsEl.innerHTML ? 'flex' : 'none';
     } else {
@@ -604,11 +700,11 @@ function _fillOverlayContent(item, idx) {
       const tags = item.ingredients.map(ing => {
         if (ing.removable) {
           return `<span class="ingredient-tag ingredient-tag--removable">
-                    <i class="fa-solid fa-circle-minus"></i> ${ing.nameAr}
-                    <span class="ingredient-tag-hint">يمكن إزالته</span>
+                    <i class="fa-solid fa-circle-minus"></i> ${_tIngName(ing)}
+                    <span class="ingredient-tag-hint">${_t('removable')}</span>
                   </span>`;
         }
-        return `<span class="ingredient-tag">${ing.nameAr}</span>`;
+        return `<span class="ingredient-tag">${_tIngName(ing)}</span>`;
       }).join('');
       ingredientsEl.innerHTML = tags;
       ingredientsEl.style.display = 'flex';
@@ -626,7 +722,7 @@ function _fillOverlayContent(item, idx) {
       sauceBtns.innerHTML = item.sauceOptions.map((s, i) =>
         `<button class="sauce-btn${i === 0 ? ' sauce-btn--active' : ''}"
                  onclick="this.parentElement.querySelectorAll('.sauce-btn').forEach(b=>b.classList.remove('sauce-btn--active'));this.classList.add('sauce-btn--active')">
-           ${s}
+           ${_tSauceAt(item, i)}
          </button>`
       ).join('');
       sauceSection.style.display = 'flex';
@@ -637,6 +733,7 @@ function _fillOverlayContent(item, idx) {
   }
 
   // السعرات
+  setText('product-overlay-cal-unit', _t('calUnitFull'));
   if (item.calories) {
     $('product-overlay-cal-num').textContent = item.calories;
     calEl.style.display = 'inline-flex';
@@ -648,12 +745,17 @@ function _fillOverlayContent(item, idx) {
   _crossfadeOverlayImage(item.image || '');
 
   // السعر
+  setText('product-overlay-price-cur', _t('currency'));
   if (item.price != null) {
     $('product-overlay-price-num').textContent = item.price;
     priceWrap.style.display = 'inline-flex';
   } else {
     priceWrap.style.display = 'none';
   }
+
+  // تسمية اختيار الصوص
+  const _sauceLabel = $('product-overlay-sauce-label');
+  if (_sauceLabel) _sauceLabel.innerHTML = `<i class="fa-solid fa-bottle-droplet"></i> ${_t('chooseSauce')}`;
 
   highlightItem(idx);
 }
@@ -1640,6 +1742,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (_layout !== 'vertical') {
     // ── الوضع الأفقي (كما هو) ──
+    document.body.classList.toggle('lang-en', menuLang === 'en');
+    const _langBtn = $('header-lang-btn');
+    if (_langBtn) _langBtn.classList.toggle('lang-active', menuLang === 'en');
+
     renderRestaurantInfo();
     renderCategoryTabs();
     _loadBadges();

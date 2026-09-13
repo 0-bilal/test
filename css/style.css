@@ -818,6 +818,32 @@ html,body {
 .header-qrmenu-btn i    { font-size:22px; }
 .header-qrmenu-btn:active { transform:scale(.93); background:rgba(20,184,166,.22); }
 
+/* ── زر ترجمة المنيو (عربي ⇄ إنجليزي) ── */
+.header-lang-btn {
+  display:flex; align-items:center; justify-content:center;
+  width:62px; height:62px; border-radius:var(--rp);
+  background:rgba(124,58,237,.16);
+  border:1.5px solid rgba(167,139,250,.38);
+  color:rgba(196,181,253,.92);
+  flex-shrink:0; cursor:pointer;
+  transition:background .22s, border-color .22s, color .22s, transform .15s;
+}
+.header-lang-btn i { font-size:24px; }
+.header-lang-btn:active { transform:scale(.93); }
+.header-lang-btn.lang-active {
+  background:rgba(124,58,237,.32);
+  border-color:rgba(167,139,250,.65);
+  color:#fff;
+}
+
+/* ── وضع الإنجليزي — محاذاة النصوص المترجمة الطويلة ── */
+body.lang-en .item-desc,
+body.lang-en .item-removable-note,
+body.lang-en .item-sauce-note,
+body.lang-en .product-overlay-desc {
+  direction:ltr; text-align:right;
+}
+
 /* ════════════════════════════════════════════════════════
    QR MENU OVERLAY — يغطي لوحة الشرائح
 ════════════════════════════════════════════════════════ */

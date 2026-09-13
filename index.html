@@ -60,7 +60,10 @@
           </button>
           <button class="header-qrmenu-btn" id="header-qrmenu-btn" onclick="showQRMenuOverlay()">
             <i class="fa-solid fa-qrcode"></i>
-            
+
+          </button>
+          <button class="header-lang-btn" id="header-lang-btn" onclick="toggleMenuLanguage()" aria-label="Translate menu / ترجمة المنيو">
+            <i class="fa-solid fa-language"></i>
           </button>
           <button class="header-discount-btn" id="store-notif-btn" onclick="showReviewOverlay()">
             <i class="fa-solid fa-tags"></i>
@@ -153,7 +156,7 @@
         <div id="product-overlay-cal" class="product-overlay-cal-badge" style="display:none">
           <i class="fa-solid fa-fire-flame-curved"></i>
           <span id="product-overlay-cal-num"></span>
-          <span>سعرة حرارية</span>
+          <span id="product-overlay-cal-unit">سعرة حرارية</span>
         </div>
 
         <div id="product-overlay-name-ar" class="product-overlay-name-ar"></div>
@@ -167,14 +170,14 @@
 
         <!-- اختيار الصوص -->
         <div id="product-overlay-sauce" class="product-overlay-sauce-picker" style="display:none">
-          <span class="sauce-picker-label"><i class="fa-solid fa-bottle-droplet"></i> اختر الصوص</span>
+          <span class="sauce-picker-label" id="product-overlay-sauce-label"><i class="fa-solid fa-bottle-droplet"></i> اختر الصوص</span>
           <div id="product-overlay-sauce-btns" class="sauce-picker-btns"></div>
         </div>
 
         <!-- السعر -->
         <div id="product-overlay-price-wrap" class="product-overlay-price-wrap" style="display:none">
           <span id="product-overlay-price-num" class="product-overlay-price-num"></span>
-          <span class="product-overlay-price-cur">ريال</span>
+          <span class="product-overlay-price-cur" id="product-overlay-price-cur">ريال</span>
         </div>
 
       </div>

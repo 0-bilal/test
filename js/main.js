@@ -1512,6 +1512,11 @@ function _executeCashierAction(v) {
         if (typeof window.showGamesHub === 'function') window.showGamesHub();
         break;
 
+      case 'toggleLang':
+        // تبديل لغة المنيو بين العربي والإنجليزي
+        if (typeof toggleMenuLanguage === 'function') toggleMenuLanguage();
+        break;
+
       case 'launchGame': {
         // الألعاب تتزامن بين شاشتين عبر DuoConnect بدورين (يسار/يمين):
         // شاشة واحدة فقط تصبح "المضيف" وترسل طلب الفتح لشريكتها. أمر

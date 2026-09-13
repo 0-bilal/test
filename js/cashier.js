@@ -30,6 +30,7 @@ let _discountHidden = false;
 let _phoneHidden    = false;
 let _gamesHidden    = false;
 let _qrmenuHidden   = false;
+let _langBtnHidden  = false;
 let _autoScroll     = true;
 let _maintenanceOn  = false;
 let _maintenanceMsg = '';
@@ -127,6 +128,7 @@ const T = {
     maintMsgPlaceholder: 'نعود قريباً — We\'ll be back soon',
     discountBtn: 'زر الخصم', phoneBtn: 'زر الهاتف',
     gamesBtn: 'زر الألعاب', qrBtn: 'زر منيو الجوال',
+    langBtn: 'زر ترجمة المنيو',
     autoScrollLabel: 'تفعيل التمرير التلقائي',
     maintLabel: 'تفعيل وضع الصيانة',
     resetAll: 'إعادة الضبط الكامل',
@@ -260,6 +262,7 @@ const T = {
     maintMsgPlaceholder: 'We\'ll be back soon — نعود قريباً',
     discountBtn: 'Discount Button', phoneBtn: 'Phone Button',
     gamesBtn: 'Games Button', qrBtn: 'Mobile Menu Button',
+    langBtn: 'Menu Translate Button',
     autoScrollLabel: 'Enable Auto Scroll',
     maintLabel: 'Enable Maintenance Mode',
     resetAll: 'Factory Reset',
@@ -395,6 +398,7 @@ function _pushSettings() {
     phoneHidden:     _phoneHidden,
     gamesHidden:     _gamesHidden,
     qrmenuHidden:    _qrmenuHidden,
+    langBtnHidden:   _langBtnHidden,
     badges:          _badges,
     tempHide:        _tempHide,
     scrollSkip:      [], catSkip:   [],
@@ -423,6 +427,7 @@ function _applyState(v) {
   _phoneHidden    = !!v.phoneHidden;
   _gamesHidden    = !!v.gamesHidden;
   _qrmenuHidden   = !!v.qrmenuHidden;
+  _langBtnHidden  = !!v.langBtnHidden;
   _badges         = v.badges   || {};
   _tempHide       = v.tempHide || {};
   if (v.autoScroll      !== undefined) _autoScroll     = !!v.autoScroll;
@@ -2091,6 +2096,7 @@ function _renderSettings() {
     ${row('fa-phone',   t('phoneBtn'),   '', !_phoneHidden,    'cTogglePhone()')}
     ${row('fa-gamepad', t('gamesBtn'),   '', !_gamesHidden,    'cToggleGames()')}
     ${row('fa-qrcode',  t('qrBtn'),      '', !_qrmenuHidden,   'cToggleQR()')}
+    ${row('fa-language', t('langBtn'),   '', !_langBtnHidden,  'cToggleLangBtn()')}
   </div>
 
   <!-- التمرير -->
@@ -2138,6 +2144,7 @@ function cToggleDiscount()    { _discountHidden = !_discountHidden; _pushSetting
 function cTogglePhone()       { _phoneHidden    = !_phoneHidden;    _pushSettings(); _renderSettings(); }
 function cToggleGames()       { _gamesHidden    = !_gamesHidden;    _pushSettings(); _renderSettings(); }
 function cToggleQR()          { _qrmenuHidden   = !_qrmenuHidden;   _pushSettings(); _renderSettings(); }
+function cToggleLangBtn()     { _langBtnHidden  = !_langBtnHidden;  _pushSettings(); _renderSettings(); }
 function cToggleAutoScroll()  { _autoScroll     = !_autoScroll;     _pushSettings(); _renderSettings(); }
 function cToggleMaintenance() { _maintenanceOn  = !_maintenanceOn;  _pushSettings(); _renderSettings(); }
 function cUpdateMaintMsg(v)   { _maintenanceMsg = v; _pushSettings(); }
@@ -2146,6 +2153,7 @@ window.cToggleDiscount   = cToggleDiscount;
 window.cTogglePhone      = cTogglePhone;
 window.cToggleGames      = cToggleGames;
 window.cToggleQR         = cToggleQR;
+window.cToggleLangBtn    = cToggleLangBtn;
 window.cToggleAutoScroll = cToggleAutoScroll;
 window.cToggleMaintenance= cToggleMaintenance;
 window.cUpdateMaintMsg   = cUpdateMaintMsg;

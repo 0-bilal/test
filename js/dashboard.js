@@ -13,6 +13,7 @@ const SS_DISCOUNT = 'duo_discount_hidden';
 const SS_PHONE    = 'duo_phone_hidden';
 const SS_GAMES    = 'duo_games_hidden';
 const SS_QRMENU   = 'duo_qrmenu_hidden';
+const SS_LANGBTN  = 'duo_langbtn_hidden';
 const SS_VARIANTS = 'duo_hidden_variants';
 const LS_BADGES      = 'duo_badges';
 const LS_STATS_PFX   = 'duo_stats_';
@@ -54,6 +55,7 @@ let _discountHidden = false;
 let _phoneHidden    = false;
 let _gamesHidden    = false;
 let _qrmenuHidden   = false;
+let _langBtnHidden  = false;
 let _badges         = {};
 let _tempHide       = {};   // { "key": expiryMs }
 let _scrollSkip     = new Set();
@@ -93,6 +95,7 @@ function loadSettings() {
     _phoneHidden    = sessionStorage.getItem(SS_PHONE)    === 'true';
     _gamesHidden    = sessionStorage.getItem(SS_GAMES)   === 'true';
     _qrmenuHidden   = sessionStorage.getItem(SS_QRMENU) === 'true';
+    _langBtnHidden  = sessionStorage.getItem(SS_LANGBTN) === 'true';
     _badges         = JSON.parse(localStorage.getItem(LS_BADGES) || '{}');
     try { _tempHide = JSON.parse(localStorage.getItem(LS_TEMP_HIDE) || '{}'); } catch { _tempHide = {}; }
     _scrollSkip = new Set(JSON.parse(localStorage.getItem(LS_SCROLL_SKIP) || '[]'));
@@ -224,6 +227,17 @@ function renderHeaderTab(body) {
         </div>
         <span class="toggle">
           <input type="checkbox" ${!_qrmenuHidden ? 'checked' : ''} onchange="toggleQRMenu(this.checked)">
+          <span class="slider"></span>
+        </span>
+      </label>
+      <label class="row">
+        <div class="row-icon" style="background:rgba(124,58,237,.15);border-color:rgba(167,139,250,.35);color:rgba(196,181,253,.95)"><i class="fa-solid fa-language"></i></div>
+        <div class="row-label">
+         إظهار زر ترجمة المنيو
+          <small>الزر البنفسجي الذي يترجم المنيو للعميل من العربي للإنجليزي</small>
+        </div>
+        <span class="toggle">
+          <input type="checkbox" ${!_langBtnHidden ? 'checked' : ''} onchange="toggleLangBtn(this.checked)">
           <span class="slider"></span>
         </span>
       </label>
@@ -1028,7 +1042,7 @@ function exportSettings() {
     const k = localStorage.key(i);
     if (k?.startsWith('duo_')) data.ls[k] = localStorage.getItem(k);
   }
-  const ssKeys = [SS_ITEMS, SS_SLIDES, SS_DISCOUNT, SS_PHONE, SS_GAMES, SS_QRMENU, SS_VARIANTS];
+  const ssKeys = [SS_ITEMS, SS_SLIDES, SS_DISCOUNT, SS_PHONE, SS_GAMES, SS_QRMENU, SS_LANGBTN, SS_VARIANTS];
   ssKeys.forEach(k => { const v = sessionStorage.getItem(k); if (v !== null) data.ss[k] = v; });
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
@@ -1233,6 +1247,7 @@ function _syncPush() {
     phoneHidden:    _phoneHidden,
     gamesHidden:    _gamesHidden,
     qrmenuHidden:   _qrmenuHidden,
+    langBtnHidden:  _langBtnHidden,
     badges:         _badges,
     tempHide:       _tempHide,
     scrollSkip:     [..._scrollSkip],
@@ -1274,6 +1289,12 @@ function toggleQRMenu(checked) {
   sessionStorage.setItem(SS_QRMENU, String(_qrmenuHidden));
   _syncPush();
   toast(checked ? 'تم إظهار زر منيو الجوال' : 'تم إخفاء زر منيو الجوال');
+}
+function toggleLangBtn(checked) {
+  _langBtnHidden = !checked;
+  sessionStorage.setItem(SS_LANGBTN, String(_langBtnHidden));
+  _syncPush();
+  toast(checked ? 'تم إظهار زر ترجمة المنيو' : 'تم إخفاء زر ترجمة المنيو');
 }
 function toggleSlide(idx, checked) {
   if (checked) _hiddenSlides.delete(String(idx));
@@ -1367,6 +1388,7 @@ window.togglePhone    = togglePhone;
 window.toggleDiscount = toggleDiscount;
 window.toggleGames    = toggleGames;
 window.toggleQRMenu   = toggleQRMenu;
+window.toggleLangBtn  = toggleLangBtn;
 window.toggleSlide    = toggleSlide;
 window.toggleItem     = toggleItem;
 window.toggleVariant  = toggleVariant;
@@ -1924,6 +1946,7 @@ function _applyRemoteToDashboard(v) {
     _phoneHidden    = !!v.phoneHidden;
     _gamesHidden    = !!v.gamesHidden;
     _qrmenuHidden   = !!v.qrmenuHidden;
+    _langBtnHidden  = !!v.langBtnHidden;
     _badges         = v.badges || {};
     _tempHide       = v.tempHide   || {};
     _scrollSkip     = new Set(v.scrollSkip || []);
@@ -1939,6 +1962,7 @@ function _applyRemoteToDashboard(v) {
     sessionStorage.setItem(SS_PHONE,    String(_phoneHidden));
     sessionStorage.setItem(SS_GAMES,    String(_gamesHidden));
     sessionStorage.setItem(SS_QRMENU,  String(_qrmenuHidden));
+    sessionStorage.setItem(SS_LANGBTN, String(_langBtnHidden));
     localStorage.setItem(LS_BADGES,            JSON.stringify(_badges));
     localStorage.setItem(LS_TEMP_HIDE,         JSON.stringify(_tempHide));
     localStorage.setItem(LS_SCROLL_SKIP,       JSON.stringify([..._scrollSkip]));

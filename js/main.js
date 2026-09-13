@@ -120,6 +120,13 @@ function _refreshOverlayLanguage() {
     descEl.style.display = _tDesc(item) ? 'block' : 'none';
   }
 
+  const _ovCat = menuCategories.find(c => c.items.includes(item));
+  const obEl = $('product-overlay-badge');
+  if (_ovCat && obEl) {
+    const ob = _getBadge(_ovCat.id, item.nameAr);
+    obEl.innerHTML = ob ? _badgeHTML(ob) : '';
+  }
+
   const ingredientsEl = $('product-overlay-ingredients');
   if (ingredientsEl && item.ingredients?.length) {
     ingredientsEl.innerHTML = item.ingredients.map(ing => ing.removable
@@ -1188,6 +1195,7 @@ const SS_DISCOUNT  = 'duo_discount_hidden';
 const SS_PHONE     = 'duo_phone_hidden';
 const SS_GAMES     = 'duo_games_hidden';
 const SS_QRMENU    = 'duo_qrmenu_hidden';
+const SS_LANGBTN   = 'duo_langbtn_hidden';
 const SS_VARIANTS  = 'duo_hidden_variants';
 const LS_BADGES    = 'duo_badges';
 const LS_STATS_PFX = 'duo_stats_';
@@ -1203,6 +1211,7 @@ let _devPhoneHidden    = false;
 let _devPinnedSlide    = null; // null = لا تثبيت | رقم = الشريحة المثبتة
 let _devGamesHidden    = false;
 let _devQRMenuHidden   = false;
+let _devLangBtnHidden  = false;
 let _devBadges         = {};   // { "catId||nameAr": "popular"|"new"|"limited"|"" }
 let _devTempHide       = {};   // { "key": expiryMs }  — إخفاء مؤقت
 let _devScrollSkip     = new Set(); // مفاتيح المنتجات التي يتخطاها السكرول
@@ -1219,9 +1228,9 @@ function _trackView(catId, nameAr) {
 
 /* ── الشارات ── */
 const BADGE_META = {
-  popular: { label: 'الأكثر طلباً', icon: 'fa-fire',        cls: 'badge--popular' },
-  new:     { label: 'جديد',         icon: 'fa-star',         cls: 'badge--new'     },
-  limited: { label: 'محدود',        icon: 'fa-clock',        cls: 'badge--limited' },
+  popular: { labelAr: 'الأكثر طلباً', labelEn: 'Best Seller', icon: 'fa-fire',  cls: 'badge--popular' },
+  new:     { labelAr: 'جديد',         labelEn: 'New',         icon: 'fa-star',  cls: 'badge--new'     },
+  limited: { labelAr: 'محدود',        labelEn: 'Limited',     icon: 'fa-clock', cls: 'badge--limited' },
 };
 function _loadBadges()  { try { _devBadges = JSON.parse(localStorage.getItem(LS_BADGES) || '{}'); } catch { _devBadges = {}; } }
 function _saveBadges()  { localStorage.setItem(LS_BADGES, JSON.stringify(_devBadges)); }
@@ -1229,7 +1238,8 @@ function _getBadge(catId, nameAr) { return _devBadges[_devItemKey(catId, nameAr)
 function _badgeHTML(badge) {
   if (!badge || !BADGE_META[badge]) return '';
   const m = BADGE_META[badge];
-  return `<span class="item-badge ${m.cls}"><i class="fa-solid ${m.icon}"></i> ${m.label}</span>`;
+  const label = menuLang === 'en' ? m.labelEn : m.labelAr;
+  return `<span class="item-badge ${m.cls}"><i class="fa-solid ${m.icon}"></i> ${label}</span>`;
 }
 
 function _devItemKey(catId, nameAr) { return catId + '||' + nameAr; }
@@ -1247,6 +1257,7 @@ function _devLoadSettings() {
     _devPhoneHidden    = phoneRaw === 'true';
     _devGamesHidden    = sessionStorage.getItem(SS_GAMES)  === 'true';
     _devQRMenuHidden   = sessionStorage.getItem(SS_QRMENU) === 'true';
+    _devLangBtnHidden  = sessionStorage.getItem(SS_LANGBTN) === 'true';
     // ضمان: إذا لم تُحدَّد بعد، تأكّد من وضعها كـ "ظاهر"
     if (discRaw  === null) { sessionStorage.setItem(SS_DISCOUNT, 'false'); _devDiscountHidden = false; }
     if (phoneRaw === null) { sessionStorage.setItem(SS_PHONE,    'false'); _devPhoneHidden    = false; }
@@ -1354,6 +1365,10 @@ function applyDevSettings() {
   const qrMenuBtn = $('header-qrmenu-btn');
   if (qrMenuBtn) qrMenuBtn.style.display = _devQRMenuHidden ? 'none' : '';
 
+  // زر ترجمة المنيو
+  const langBtn = $('header-lang-btn');
+  if (langBtn) langBtn.style.display = _devLangBtnHidden ? 'none' : '';
+
   // عداد المنتجات
   const visCount = allItemEls.filter(el => el.style.display !== 'none').length;
   setText('scroll-total', String(visCount || allItemEls.length));
@@ -1373,6 +1388,7 @@ function applyRemoteSettings(v) {
     _devPhoneHidden    = !!v.phoneHidden;
     _devGamesHidden    = !!v.gamesHidden;
     _devQRMenuHidden   = !!v.qrmenuHidden;
+    _devLangBtnHidden  = !!v.langBtnHidden;
     _devBadges         = v.badges || {};
     _devTempHide       = v.tempHide   || {};
     _devScrollSkip     = new Set(v.scrollSkip || []);
@@ -1386,6 +1402,7 @@ function applyRemoteSettings(v) {
     sessionStorage.setItem(SS_PHONE,    String(_devPhoneHidden));
     sessionStorage.setItem(SS_GAMES,    String(_devGamesHidden));
     sessionStorage.setItem(SS_QRMENU,  String(_devQRMenuHidden));
+    sessionStorage.setItem(SS_LANGBTN, String(_devLangBtnHidden));
     localStorage.setItem(LS_BADGES,     JSON.stringify(_devBadges));
     localStorage.setItem(LS_TEMP_HIDE,  JSON.stringify(_devTempHide));
     localStorage.setItem(LS_SCROLL_SKIP,JSON.stringify([..._devScrollSkip]));

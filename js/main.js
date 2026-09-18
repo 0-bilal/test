@@ -73,6 +73,7 @@ const _UI_STRINGS = {
   chooseColon: { ar: 'اختر: ',      en: 'Choose: ' },
   or:          { ar: 'أو',          en: 'or' },
   chooseSauce: { ar: 'اختر الصوص',  en: 'Choose Sauce' },
+  meal:        { ar: 'وجبة',        en: 'Meal' },
 };
 function _t(key) {
   const row = _UI_STRINGS[key];
@@ -83,6 +84,32 @@ const _tDesc    = item => menuLang === 'en' ? (item.descriptionEn || item.descri
 const _tIngName = ing  => menuLang === 'en' ? (ing.nameEn || ing.nameAr) : ing.nameAr;
 const _tSauceAt = (item, i) => menuLang === 'en' ? (item.sauceOptionsEn?.[i] || item.sauceOptions[i]) : item.sauceOptions[i];
 const _tVariantAt = (item, i) => menuLang === 'en' ? (item.variantsEn?.[i] || item.variants[i]) : item.variants[i];
+
+/* ── أيقونتا الوجبة: بطاطس ومشروب (SVG داخلي) ── */
+const MEAL_FRIES_SVG = `
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="7.1" y="3.2" width="2.2" height="8" rx="1.1" fill="#F7C948" transform="rotate(-13 8.2 7.2)"/>
+    <rect x="10.9" y="1.9" width="2.2" height="9.3" rx="1.1" fill="#FFD966"/>
+    <rect x="14.7" y="3.2" width="2.2" height="8" rx="1.1" fill="#F7C948" transform="rotate(13 15.8 7.2)"/>
+    <path d="M4.6 10h14.8l-1.5 9.3a2.4 2.4 0 0 1-2.4 2h-7a2.4 2.4 0 0 1-2.4-2L4.6 10Z" fill="#fff"/>
+    <path d="M6.2 13.4h11.6" stroke="#be1e2d" stroke-width="1.7" stroke-linecap="round"/>
+  </svg>`;
+
+const MEAL_DRINK_SVG = `
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M13.6 2.8 11.6 8.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+    <rect x="4.7" y="6.6" width="14.6" height="3.1" rx="1.4" fill="#fff"/>
+    <path d="M6.1 10.6h11.8l-1.2 9a2.3 2.3 0 0 1-2.3 2h-4.8a2.3 2.3 0 0 1-2.3-2l-1.2-9Z" fill="#fff"/>
+    <path d="M7.4 14.2h9.2" stroke="#be1e2d" stroke-width="1.6" stroke-linecap="round"/>
+  </svg>`;
+
+/* يملأ أيقونتي الوجبة مرة واحدة */
+function _initMealIcons() {
+  const f = $('product-overlay-meal-fries');
+  const d = $('product-overlay-meal-drink');
+  if (f && !f.innerHTML.trim()) f.innerHTML = MEAL_FRIES_SVG;
+  if (d && !d.innerHTML.trim()) d.innerHTML = MEAL_DRINK_SVG;
+}
 
 let _currentOverlayItem = null;
 
@@ -154,6 +181,8 @@ function _refreshOverlayLanguage() {
 
   setText('product-overlay-cal-unit', _t('calUnitFull'));
   setText('product-overlay-price-cur', _t('currency'));
+  setText('product-overlay-meal-cur',  _t('currency'));
+  setText('product-overlay-meal-label', _t('meal'));
 
   const sauceLabel = $('product-overlay-sauce-label');
   if (sauceLabel) sauceLabel.innerHTML = `<i class="fa-solid fa-bottle-droplet"></i> ${_t('chooseSauce')}`;
@@ -758,6 +787,20 @@ function _fillOverlayContent(item, idx) {
     priceWrap.style.display = 'inline-flex';
   } else {
     priceWrap.style.display = 'none';
+  }
+
+  // سعر الوجبة — بطاقة بنفس تصميم السعر مع أيقونتي البطاطس والمشروب
+  const mealWrap = $('product-overlay-meal-wrap');
+  if (mealWrap) {
+    if (item.mealPrice != null) {
+      _initMealIcons();
+      setText('product-overlay-meal-label', _t('meal'));
+      setText('product-overlay-meal-cur',   _t('currency'));
+      $('product-overlay-meal-num').textContent = item.mealPrice;
+      mealWrap.style.display = 'inline-flex';
+    } else {
+      mealWrap.style.display = 'none';
+    }
   }
 
   // تسمية اختيار الصوص

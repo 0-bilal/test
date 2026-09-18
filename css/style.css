@@ -727,6 +727,33 @@ html,body {
 }
 .product-overlay-price-cur { font-size:21px; font-weight:400; color:rgba(255,255,255,.82); }
 
+/* ── سعر الوجبة — نفس تصميم بطاقة السعر + أيقونة بطاطس وأيقونة مشروب ── */
+.product-overlay-price-row {
+  display:flex; align-items:stretch; flex-wrap:wrap; gap:14px;
+}
+/* نفس البادينغ ونفس حجم رقم السعر ⇒ ارتفاع البطاقتين متطابق تماماً */
+.product-overlay-meal-wrap {
+  align-items:center; gap:14px; padding:15px 26px 15px 18px;
+}
+.overlay-meal-amount { display:inline-flex; align-items:baseline; gap:9px; }
+.overlay-meal-tag {
+  display:inline-flex; align-items:center; gap:7px;
+  font-family:var(--ar); font-size:20px; font-weight:700;
+  color:rgba(255,255,255,.95);
+  background:rgba(0,0,0,.22); border:1.5px solid rgba(255,255,255,.22);
+  border-radius:100px; padding:5px 16px; white-space:nowrap;
+}
+.overlay-meal-tag i { font-size:16px; }
+.overlay-meal-divider {
+  width:2px; height:46px; border-radius:2px; background:rgba(255,255,255,.28);
+}
+.overlay-meal-ico {
+  width:50px; height:50px; border-radius:50%; flex-shrink:0;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.22); border:1.5px solid rgba(255,255,255,.22);
+}
+.overlay-meal-ico svg { width:34px; height:34px; display:block; }
+
 /* ── مكونات المنتج في الـ overlay ── */
 .product-overlay-ingredients {
   display:flex; flex-wrap:wrap; gap:10px; margin-top:20px;

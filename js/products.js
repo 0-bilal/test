@@ -40,6 +40,7 @@ const menuCategories = [
         nameEn:        'Double DUO Burder',
         image:         'images/products/duo-burger.jpg',
         price:         23,
+        mealPrice:     33,
         calories:      630,
         descriptionAr: 'برجر اسماش دبل 140 غرام من اللحم المشوي، مع صوص، يعطي لذعة حموضة',
         descriptionEn: 'A double smash burger made with 140g of grilled beef, topped with our signature sauce for a tangy kick.',
@@ -56,6 +57,7 @@ const menuCategories = [
         nameEn:        'Double Origa Burger',
         image:         'images/products/origa-burger.jpg',
         price:         23,
+        mealPrice:     33,
         calories:      946,
         descriptionAr: 'برجر سماش دبل 140 غرام من اللحم المشوي، مع صوص فيه نسبه حلاوه بسيطة',
         descriptionEn: 'A double smash burger made with 140g of grilled beef, topped with a subtly sweet signature sauce.',
@@ -71,6 +73,7 @@ const menuCategories = [
         nameEn:        'Double Truffle Burger',
         image:         'images/products/truffle-burger.jpg',
         price:         26,
+        mealPrice:     36,
         descriptionAr: 'برجر اسماش دبل 140 غرام لعشاق النكهات العميقة والفريدة، ليقدم مزيجاً لا يُقاوم من المكونات الفاخرة التي تذوب في الفم وتأخذ حواسك إلى مستوى آخر',
         descriptionEn: 'A double smash burger made with 140g of grilled beef for lovers of deep, distinctive flavors — an irresistible blend of premium ingredients that melts in your mouth and takes your senses to another level.',
         ingredients: [

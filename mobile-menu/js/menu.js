@@ -14,6 +14,24 @@
     'fa-bottle-droplet': 'fa-bottle-droplet',
   };
 
+  /* أيقونات الوجبة — بطاطس ومشروب (SVG داخلي لضمان ظهورها دائماً) */
+  const MEAL_FRIES_SVG = `
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="7.1" y="3.2" width="2.2" height="8" rx="1.1" fill="#F7C948" transform="rotate(-13 8.2 7.2)"/>
+      <rect x="10.9" y="1.9" width="2.2" height="9.3" rx="1.1" fill="#FFD966"/>
+      <rect x="14.7" y="3.2" width="2.2" height="8" rx="1.1" fill="#F7C948" transform="rotate(13 15.8 7.2)"/>
+      <path d="M4.6 10h14.8l-1.5 9.3a2.4 2.4 0 0 1-2.4 2h-7a2.4 2.4 0 0 1-2.4-2L4.6 10Z" fill="#fff"/>
+      <path d="M6.2 13.4h11.6" stroke="#be1e2d" stroke-width="1.7" stroke-linecap="round"/>
+    </svg>`;
+
+  const MEAL_DRINK_SVG = `
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M13.6 2.8 11.6 8.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+      <rect x="4.7" y="6.6" width="14.6" height="3.1" rx="1.4" fill="#fff"/>
+      <path d="M6.1 10.6h11.8l-1.2 9a2.3 2.3 0 0 1-2.3 2h-4.8a2.3 2.3 0 0 1-2.3-2l-1.2-9Z" fill="#fff"/>
+      <path d="M7.4 14.2h9.2" stroke="#be1e2d" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>`;
+
   /* ══════════════════════════════════════════
      بناء الصفحة
   ══════════════════════════════════════════ */
@@ -197,6 +215,19 @@
     const mealEl = item.isMeal
       ? `<span class="m-modal-meal"><i class="fa-solid fa-utensils"></i>وجبة متكاملة</span>` : '';
 
+    /* سعر الوجبة — نفس تصميم سعر البرجر مع أيقونتي البطاطس والمشروب */
+    const mealPriceEl = item.mealPrice != null ? `
+      <div class="m-modal-price m-modal-meal-price" aria-label="سعر الوجبة ${item.mealPrice} ريال، تشمل بطاطس ومشروب">
+        <span class="m-meal-tag">وجبة</span>
+        <span class="m-meal-amount">
+          <span class="m-modal-price-num">${item.mealPrice}</span>
+          <span class="m-modal-price-cur">ر.س</span>
+        </span>
+        <span class="m-meal-divider" aria-hidden="true"></span>
+        <span class="m-meal-ico" title="مع بطاطس مبهّرة">${MEAL_FRIES_SVG}</span>
+        <span class="m-meal-ico" title="مع مشروب">${MEAL_DRINK_SVG}</span>
+      </div>` : '';
+
     /* المكونات */
     let ingredientsHtml = '';
     if (item.ingredients && item.ingredients.length) {
@@ -252,11 +283,14 @@
         ${item.nameEn ? `<div class="m-modal-name-en">${item.nameEn}</div>` : ''}
       </div>
       <div class="m-modal-price-row">
-        ${item.price != null ? `
-          <div class="m-modal-price">
-            <span class="m-modal-price-num">${item.price}</span>
-            <span class="m-modal-price-cur">ر.س</span>
-          </div>` : ''}
+        <div class="m-modal-prices">
+          ${item.price != null ? `
+            <div class="m-modal-price">
+              <span class="m-modal-price-num">${item.price}</span>
+              <span class="m-modal-price-cur">ر.س</span>
+            </div>` : ''}
+          ${mealPriceEl}
+        </div>
         ${calEl}${mealEl}
       </div>
       ${item.descriptionAr ? `<p class="m-modal-desc">${item.descriptionAr}</p>` : ''}

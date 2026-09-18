@@ -218,7 +218,7 @@
     /* سعر الوجبة — نفس تصميم سعر البرجر مع أيقونتي البطاطس والمشروب */
     const mealPriceEl = item.mealPrice != null ? `
       <div class="m-modal-price m-modal-meal-price" aria-label="سعر الوجبة ${item.mealPrice} ريال، تشمل بطاطس ومشروب">
-        <span class="m-meal-tag"><i class="fa-solid fa-utensils"></i>وجبة</span>
+        <span class="m-meal-tag">وجبة</span>
         <span class="m-meal-amount">
           <span class="m-modal-price-num">${item.mealPrice}</span>
           <span class="m-modal-price-cur">ر.س</span>
@@ -283,12 +283,14 @@
         ${item.nameEn ? `<div class="m-modal-name-en">${item.nameEn}</div>` : ''}
       </div>
       <div class="m-modal-price-row">
-        ${item.price != null ? `
-          <div class="m-modal-price">
-            <span class="m-modal-price-num">${item.price}</span>
-            <span class="m-modal-price-cur">ر.س</span>
-          </div>` : ''}
-        ${mealPriceEl}
+        <div class="m-modal-prices">
+          ${item.price != null ? `
+            <div class="m-modal-price">
+              <span class="m-modal-price-num">${item.price}</span>
+              <span class="m-modal-price-cur">ر.س</span>
+            </div>` : ''}
+          ${mealPriceEl}
+        </div>
         ${calEl}${mealEl}
       </div>
       ${item.descriptionAr ? `<p class="m-modal-desc">${item.descriptionAr}</p>` : ''}

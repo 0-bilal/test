@@ -174,10 +174,24 @@
           <div id="product-overlay-sauce-btns" class="sauce-picker-btns"></div>
         </div>
 
-        <!-- السعر -->
-        <div id="product-overlay-price-wrap" class="product-overlay-price-wrap" style="display:none">
-          <span id="product-overlay-price-num" class="product-overlay-price-num"></span>
-          <span class="product-overlay-price-cur" id="product-overlay-price-cur">ريال</span>
+        <!-- السعر + سعر الوجبة -->
+        <div class="product-overlay-price-row">
+          <div id="product-overlay-price-wrap" class="product-overlay-price-wrap" style="display:none">
+            <span id="product-overlay-price-num" class="product-overlay-price-num"></span>
+            <span class="product-overlay-price-cur" id="product-overlay-price-cur">ريال</span>
+          </div>
+
+          <!-- سعر الوجبة — نفس تصميم السعر + أيقونة بطاطس وأيقونة مشروب -->
+          <div id="product-overlay-meal-wrap" class="product-overlay-price-wrap product-overlay-meal-wrap" style="display:none">
+            <span class="overlay-meal-tag"><i class="fa-solid fa-utensils"></i><span id="product-overlay-meal-label">وجبة</span></span>
+            <span class="overlay-meal-amount">
+              <span id="product-overlay-meal-num" class="product-overlay-price-num"></span>
+              <span class="product-overlay-price-cur" id="product-overlay-meal-cur">ريال</span>
+            </span>
+            <span class="overlay-meal-divider" aria-hidden="true"></span>
+            <span class="overlay-meal-ico" id="product-overlay-meal-fries"></span>
+            <span class="overlay-meal-ico" id="product-overlay-meal-drink"></span>
+          </div>
         </div>
 
       </div>

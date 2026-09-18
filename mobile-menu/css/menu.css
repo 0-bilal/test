@@ -474,6 +474,30 @@ body {
 .m-modal-price-num { font-family: var(--en); font-size: 28px; font-weight: 800; color: #fff; }
 .m-modal-price-cur { font-size: 14px; color: rgba(255,255,255,.80); }
 
+/* سعر الوجبة — نفس تصميم سعر البرجر + أيقونة بطاطس وأيقونة مشروب */
+.m-modal-meal-price {
+  align-items: center; gap: 8px; padding: 6px 12px 6px 10px;
+}
+.m-meal-amount { display: inline-flex; align-items: baseline; gap: 5px; }
+.m-modal-meal-price .m-modal-price-num { font-size: 24px; line-height: 1; }
+.m-meal-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,.94);
+  background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.20);
+  border-radius: 999px; padding: 3px 9px; white-space: nowrap;
+}
+.m-meal-tag i { font-size: 9px; }
+.m-meal-divider {
+  width: 1px; height: 22px; border-radius: 1px;
+  background: rgba(255,255,255,.28);
+}
+.m-meal-ico {
+  width: 27px; height: 27px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.20);
+}
+.m-meal-ico svg { width: 17px; height: 17px; display: block; }
+
 .m-modal-cal {
   display: flex; align-items: center; gap: 6px; font-size: 13px;
   color: rgba(245,194,0,.90); background: rgba(245,194,0,.08);

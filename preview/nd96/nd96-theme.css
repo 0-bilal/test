@@ -1,0 +1,311 @@
+/* =========================================================
+   DUO Burger × اليوم الوطني السعودي الـ96 — «عزّنا بطبعنا»
+   طبقة موسمية فوق هوية ديو (أسود + أحمر #be1e2d) لا تلغيها.
+   تُفعَّل بإضافة class="nd96" على <body>
+   ========================================================= */
+body.nd96 {
+  --nd-green:      #006C35;
+  --nd-green-dk:   #004A24;
+  --nd-green-lt:   #12924E;
+  --nd-gold:       #C9A227;
+  --nd-gold-lt:    #F0D67A;
+  --nd-sand:       #E8DCC8;
+  --nd-green-soft: rgba(0,108,53,.14);
+  --nd-green-edge: rgba(0,108,53,.45);
+  --nd-gold-edge:  rgba(201,162,39,.45);
+}
+
+/* ── شريط السدو: مثلثات نجدية بالأخضر/الذهبي/الأحمر ── */
+body.nd96 .nd-sadu {
+  height: 10px;
+  flex-shrink: 0;
+  background:
+    repeating-linear-gradient(135deg,
+      var(--nd-green)    0 10px,
+      var(--nd-green-dk) 10px 20px,
+      var(--nd-gold)     20px 24px,
+      #0d0d0d            24px 34px,
+      var(--red)         34px 38px,
+      #0d0d0d            38px 48px);
+  box-shadow: 0 1px 10px rgba(0,108,53,.45);
+}
+body.nd96 .red-strip {
+  background: linear-gradient(90deg,
+    var(--red-dk) 0%, var(--red) 22%, var(--nd-green) 62%, var(--nd-gold) 84%, transparent 100%);
+  height: 3px;
+}
+
+/* ── الهيدر: الأحمر يمين (العلامة) والأخضر يسار (الوطن) ── */
+body.nd96 .menu-header {
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(0,108,53,.30) 0%, transparent 55%),
+    linear-gradient(155deg, #1c0005 0%, #0d0000 50%, #000 100%);
+  border-bottom: 2px solid transparent;
+  border-image: linear-gradient(90deg, var(--red) 0%, var(--red) 40%, var(--nd-green) 75%, var(--nd-gold) 100%) 1;
+}
+body.nd96 .menu-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none; opacity: .09;
+  background:
+    repeating-linear-gradient(60deg, transparent 0 22px, rgba(201,162,39,.55) 22px 23px),
+    repeating-linear-gradient(-60deg, transparent 0 22px, rgba(0,108,53,.55) 22px 23px);
+  -webkit-mask-image: linear-gradient(270deg, #000 0%, transparent 62%);
+          mask-image: linear-gradient(270deg, #000 0%, transparent 62%);
+}
+
+/* شعار المطعم: حلقة أحمر→أخضر→ذهبي */
+body.nd96 .logo-wrap {
+  border-color: transparent;
+  box-shadow: 0 0 0 3px var(--red), 0 0 0 6px rgba(0,108,53,.85), 0 0 26px rgba(0,108,53,.45);
+}
+
+/* وسم الشعار الوطني تحت اسم المطعم */
+body.nd96 .nd-slogan-pill {
+  display: inline-flex; align-items: center; gap: 9px;
+  margin-top: 8px; padding: 5px 16px 5px 12px;
+  border-radius: 100px;
+  background: linear-gradient(120deg, rgba(0,108,53,.30), rgba(201,162,39,.16));
+  border: 1px solid var(--nd-green-edge);
+}
+body.nd96 .nd-slogan-pill .nd-sl-txt {
+  font-size: 17px; font-weight: 800; color: #eaf6ee; letter-spacing: .3px;
+}
+body.nd96 .nd-slogan-pill .nd-sl-num {
+  font-size: 15px; font-weight: 900; color: var(--nd-gold-lt);
+}
+body.nd96 .nd-slogan-pill svg { width: 20px; height: 20px; }
+
+/* ── شريط اليوم الوطني (بين الهيدر والتصنيفات) ── */
+body.nd96 .nd-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 11px 24px;
+  background: linear-gradient(90deg, rgba(0,108,53,.22) 0%, rgba(0,0,0,.55) 55%, rgba(190,30,45,.18) 100%);
+  border-bottom: 1px solid var(--nd-green-edge);
+  flex-shrink: 0; position: relative; overflow: hidden;
+}
+body.nd96 .nd-bar::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .16;
+  background: repeating-linear-gradient(135deg, transparent 0 14px, rgba(201,162,39,.6) 14px 16px);
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, transparent 45%);
+          mask-image: linear-gradient(90deg, #000 0%, transparent 45%);
+}
+body.nd96 .nd-bar-date {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 16px; border-radius: 100px;
+  background: var(--nd-green); color: #fff;
+  font-size: 16px; font-weight: 800;
+  box-shadow: 0 3px 14px rgba(0,108,53,.55);
+}
+body.nd96 .nd-bar-title {
+  font-size: 21px; font-weight: 900; color: #fff; letter-spacing: .2px;
+}
+body.nd96 .nd-bar-title em {
+  font-style: normal; color: var(--nd-gold-lt);
+}
+body.nd96 .nd-bar-sep { width: 1px; height: 22px; background: rgba(255,255,255,.18); }
+body.nd96 .nd-bar-offer {
+  margin-right: auto;
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 7px 18px; border-radius: 100px;
+  background: linear-gradient(135deg, var(--red) 0%, #8f1521 100%);
+  border: 1px solid var(--nd-gold-edge);
+  font-size: 17px; font-weight: 800; color: #fff;
+}
+body.nd96 .nd-bar-offer b { font-size: 20px; color: var(--nd-gold-lt); }
+
+/* ── تبويبات التصنيفات ── */
+body.nd96 .category-tabs { border-bottom-color: rgba(0,108,53,.28); }
+body.nd96 .cat-tab:hover { border-color: var(--nd-green-edge); background: var(--nd-green-soft); }
+body.nd96 .cat-tab.active {
+  background: var(--red); border-color: var(--nd-gold);
+  box-shadow: 0 3px 14px var(--red-glow), 0 0 0 1px rgba(201,162,39,.35);
+}
+
+/* ── عناوين الأقسام ── */
+body.nd96 .section-heading-line {
+  background: linear-gradient(90deg, var(--nd-green-edge) 0%, var(--nd-gold-edge) 38%, transparent 100%);
+  height: 2px;
+}
+
+/* ── بطاقة عرض وطني ── */
+body.nd96 .menu-item.nd-pick {
+  border-color: var(--nd-green-edge);
+  background: linear-gradient(115deg, rgba(0,108,53,.16) 0%, var(--s1) 55%);
+}
+body.nd96 .menu-item.nd-pick::before {
+  content: ''; position: absolute; right: 0; top: 16%; bottom: 16%; width: 4px;
+  border-radius: 0 var(--rl) var(--rl) 0;
+  background: linear-gradient(180deg, var(--nd-green), var(--nd-gold));
+}
+body.nd96 .nd-ribbon {
+  position: absolute; top: -10px; left: 18px;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 4px 14px; border-radius: 100px;
+  background: linear-gradient(135deg, var(--nd-green) 0%, var(--nd-green-dk) 100%);
+  border: 1px solid var(--nd-gold-edge);
+  font-size: 13px; font-weight: 800; color: #fff;
+  box-shadow: 0 3px 12px rgba(0,108,53,.5);
+}
+body.nd96 .menu-item.nd-pick .item-price-badge {
+  background: linear-gradient(135deg, var(--nd-green) 0%, var(--nd-green-dk) 100%);
+  box-shadow: 0 3px 12px rgba(0,108,53,.55);
+}
+body.nd96 .nd-old-price {
+  display: block; margin-top: 3px;
+  font-family: var(--en); font-size: 13px; font-weight: 700;
+  color: rgba(255,255,255,.55); text-decoration: line-through;
+}
+
+/* ── الفوتر ── */
+body.nd96 .menu-footer {
+  border-top: 1px solid transparent;
+  border-image: linear-gradient(90deg, var(--nd-green), var(--nd-gold), var(--red)) 1;
+}
+body.nd96 .nd-foot-note {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 15px; font-weight: 700; color: var(--nd-gold-lt);
+}
+
+/* ── لوحة الشرائح: إطار وطني حول العرض ── */
+body.nd96 .nd-slide-frame {
+  position: absolute; inset: 0; pointer-events: none; z-index: 6;
+}
+body.nd96 .nd-slide-frame .nd-corner {
+  position: absolute; width: 96px; height: 96px;
+  border: 3px solid var(--nd-gold); opacity: .85;
+}
+body.nd96 .nd-corner-tl { top: 26px; left: 26px; border-right: 0; border-bottom: 0; }
+body.nd96 .nd-corner-tr { top: 26px; right: 26px; border-left: 0; border-bottom: 0; }
+body.nd96 .nd-corner-bl { bottom: 26px; left: 26px; border-right: 0; border-top: 0; }
+body.nd96 .nd-corner-br { bottom: 26px; right: 26px; border-left: 0; border-top: 0; }
+body.nd96 .nd-slide-frame::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(90% 60% at 50% 100%, rgba(0,108,53,.35) 0%, transparent 65%);
+}
+body.nd96 .nd-lockup {
+  position: absolute; right: 54px; bottom: 54px; text-align: right;
+}
+body.nd96 .nd-lockup .nd-lk-kicker {
+  font-size: 20px; font-weight: 700; color: var(--nd-gold-lt); letter-spacing: 2px;
+}
+body.nd96 .nd-lockup .nd-lk-main {
+  font-size: 74px; font-weight: 900; line-height: 1.05; color: #fff;
+  text-shadow: 0 6px 34px rgba(0,108,53,.65);
+}
+body.nd96 .nd-lockup .nd-lk-main em { font-style: normal; color: var(--nd-green-lt); }
+body.nd96 .nd-lockup .nd-lk-sub {
+  margin-top: 12px; display: inline-flex; align-items: center; gap: 12px;
+  padding: 9px 22px; border-radius: 100px;
+  background: rgba(0,0,0,.55); border: 1px solid var(--nd-gold-edge);
+  font-size: 20px; font-weight: 800; color: #fff;
+}
+body.nd96 .nd-flag-badge {
+  position: absolute; left: 54px; top: 54px;
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 22px; border-radius: 18px;
+  background: linear-gradient(135deg, rgba(0,108,53,.92), rgba(0,74,36,.92));
+  border: 1px solid var(--nd-gold-edge);
+  box-shadow: 0 10px 34px rgba(0,0,0,.55);
+}
+body.nd96 .nd-flag-badge .nd-96 {
+  font-family: var(--en); font-size: 40px; font-weight: 900; color: #fff; line-height: 1;
+}
+body.nd96 .nd-flag-badge .nd-96-lbl { font-size: 15px; color: var(--nd-gold-lt); font-weight: 700; }
+body.nd96 .nd-flag-badge svg { width: 42px; height: 42px; }
+
+/* ── تحسينات تنسيق ── */
+body.nd96 .nd-slogan-pill { white-space: nowrap; margin-top: 7px; padding: 4px 14px; }
+body.nd96 .nd-slogan-pill .nd-sl-txt { font-size: 16px; }
+body.nd96 .nd-slogan-pill .nd-sl-num { font-size: 13px; }
+body.nd96 .header-text { min-width: 0; }
+body.nd96 .restaurant-tagline { white-space: nowrap; }
+body.nd96 .nd-bar { white-space: nowrap; overflow: hidden; gap: 14px; padding: 10px 22px; }
+body.nd96 .nd-bar-traits { font-size: 17px; color: rgba(255,255,255,.62); font-weight: 700; }
+body.nd96 .menu-footer { justify-content: flex-start; gap: 22px; padding-left: 210px; }
+body.nd96 .nd-old-price { font-size: 12px; margin-top: 1px; }
+
+/* ── شريحة اليوم الوطني المخصّصة (بديلة للإطار فوق شريحة قائمة) ── */
+body.nd96 .nd-slide {
+  position: absolute; inset: 0; z-index: 5; overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% 120%, rgba(0,108,53,.55) 0%, transparent 60%),
+    radial-gradient(90% 70% at 15% 0%, rgba(190,30,45,.30) 0%, transparent 55%),
+    linear-gradient(180deg, #050505 0%, #06140c 55%, #000 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+body.nd96 .nd-slide .nd-band {
+  position: absolute; left: 0; right: 0; height: 26px;
+  background:
+    repeating-linear-gradient(135deg,
+      var(--nd-green) 0 14px, var(--nd-green-dk) 14px 28px,
+      var(--nd-gold) 28px 33px, #0a0a0a 33px 47px,
+      var(--red) 47px 52px, #0a0a0a 52px 66px);
+  opacity: .92;
+}
+body.nd96 .nd-slide .nd-band-top { top: 0; }
+body.nd96 .nd-slide .nd-band-bot { bottom: 0; }
+body.nd96 .nd-slide .nd-watermark {
+  position: absolute; inset: 26px 0; opacity: .07; pointer-events: none;
+  background:
+    repeating-linear-gradient(60deg, transparent 0 34px, rgba(201,162,39,.8) 34px 36px),
+    repeating-linear-gradient(-60deg, transparent 0 34px, rgba(0,108,53,.8) 34px 36px);
+}
+body.nd96 .nd-slide .nd-hero {
+  position: relative; z-index: 2; text-align: center; padding: 0 60px;
+}
+body.nd96 .nd-hero .nd-h-kicker {
+  display: inline-flex; align-items: center; gap: 12px;
+  padding: 9px 24px; border-radius: 100px;
+  background: rgba(0,108,53,.22); border: 1px solid var(--nd-gold-edge);
+  font-size: 22px; font-weight: 800; color: var(--nd-gold-lt); letter-spacing: 1px;
+}
+body.nd96 .nd-hero .nd-h-main {
+  margin-top: 26px; font-size: 128px; font-weight: 900; line-height: 1.02; color: #fff;
+  text-shadow: 0 10px 50px rgba(0,108,53,.6);
+}
+body.nd96 .nd-hero .nd-h-main em { font-style: normal; color: var(--nd-green-lt); }
+body.nd96 .nd-hero .nd-h-line {
+  margin: 22px auto 0; width: 360px; height: 3px;
+  background: linear-gradient(90deg, transparent, var(--nd-gold), transparent);
+}
+body.nd96 .nd-hero .nd-h-sub {
+  margin-top: 20px; font-size: 30px; font-weight: 700; color: rgba(255,255,255,.82);
+}
+body.nd96 .nd-hero .nd-h-duo {
+  margin-top: 34px; display: inline-flex; align-items: center; gap: 18px;
+  padding: 16px 30px; border-radius: 22px;
+  background: rgba(0,0,0,.55); border: 1px solid rgba(190,30,45,.55);
+}
+body.nd96 .nd-hero .nd-h-duo img { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; }
+body.nd96 .nd-hero .nd-h-duo .nd-h-offer-t { font-size: 24px; font-weight: 800; color: #fff; }
+body.nd96 .nd-hero .nd-h-duo .nd-h-offer-p { font-size: 20px; font-weight: 700; color: var(--nd-gold-lt); margin-top: 4px; }
+body.nd96 .nd-slide .nd-96-corner {
+  position: absolute; left: 46px; top: 60px; z-index: 3;
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 22px; border-radius: 18px;
+  background: linear-gradient(135deg, rgba(0,108,53,.92), rgba(0,74,36,.92));
+  border: 1px solid var(--nd-gold-edge);
+}
+body.nd96 .nd-slide .nd-96-corner .nd-96 { font-family: var(--en); font-size: 38px; font-weight: 900; color: #fff; line-height: 1; }
+body.nd96 .nd-slide .nd-96-corner .nd-96-lbl { font-size: 14px; color: var(--nd-gold-lt); font-weight: 700; }
+body.nd96 .nd-slide .nd-96-corner svg { width: 40px; height: 40px; }
+body.nd96 .nd-slide .nd-date-corner {
+  position: absolute; right: 46px; top: 60px; z-index: 3;
+  padding: 12px 22px; border-radius: 100px;
+  background: rgba(0,0,0,.6); border: 1px solid var(--nd-green-edge);
+  font-size: 20px; font-weight: 800; color: #fff;
+}
+
+/* ── إصلاحات نهائية للمعاينة ── */
+body.nd96 .restaurant-tagline { display: none; }
+body.nd96 .nd-slogan-pill { margin-top: 6px; }
+body.nd96 .nd-bar-traits { display: none; }
+body.nd96 .nd-bar-sep { display: none; }
+body.nd96 .nd-bar-offer { margin-right: auto; flex-shrink: 0; }
+body.nd96 .nd-bar-title { flex-shrink: 0; }
+body.nd96 .nd-hero .nd-h-kicker { white-space: nowrap; }
+body.nd96 .nd-hero .nd-h-kicker svg { width: 26px; height: 26px; flex-shrink: 0; }
+body.nd96 .nd-hero .nd-h-duo .nd-h-offer-t,
+body.nd96 .nd-hero .nd-h-duo .nd-h-offer-p { white-space: nowrap; }
+body.nd96 .menu-item.nd-pick .item-price-badge { padding: 9px 20px; }

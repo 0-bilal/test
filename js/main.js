@@ -332,6 +332,18 @@ function renderAllCategories() {
           </div>
         </div>
         <div class="item-price-wrap">
+          ${item.mealPrice != null ? `
+            <div class="item-price-badge item-meal-badge"${_devMealPriceHidden ? ' style="display:none"' : ''}>
+              <span class="item-meal-label">
+                <span class="item-meal-ico">${MEAL_FRIES_SVG}</span>
+                <span class="item-meal-ico">${MEAL_DRINK_SVG}</span>
+                ${_t('meal')}
+              </span>
+              <span class="item-meal-amount">
+                <span class="item-price-num">${item.mealPrice}</span>
+                <span class="item-price-cur">${_t('currency')}</span>
+              </span>
+            </div>` : ''}
           <div class="item-price-badge">
             <span class="item-price-num">${item.price}</span>
             <span class="item-price-cur">${_t('currency')}</span>
@@ -792,7 +804,7 @@ function _fillOverlayContent(item, idx) {
   // سعر الوجبة — بطاقة بنفس تصميم السعر مع أيقونتي البطاطس والمشروب
   const mealWrap = $('product-overlay-meal-wrap');
   if (mealWrap) {
-    if (item.mealPrice != null) {
+    if (item.mealPrice != null && !_devMealPriceHidden) {
       _initMealIcons();
       setText('product-overlay-meal-label', _t('meal'));
       setText('product-overlay-meal-cur',   _t('currency'));
@@ -1239,6 +1251,7 @@ const SS_PHONE     = 'duo_phone_hidden';
 const SS_GAMES     = 'duo_games_hidden';
 const SS_QRMENU    = 'duo_qrmenu_hidden';
 const SS_LANGBTN   = 'duo_langbtn_hidden';
+const SS_MEALPRICE = 'duo_mealprice_hidden';
 const SS_VARIANTS  = 'duo_hidden_variants';
 const LS_BADGES    = 'duo_badges';
 const LS_STATS_PFX = 'duo_stats_';
@@ -1255,6 +1268,7 @@ let _devPinnedSlide    = null; // null = لا تثبيت | رقم = الشريح
 let _devGamesHidden    = false;
 let _devQRMenuHidden   = false;
 let _devLangBtnHidden  = false;
+let _devMealPriceHidden = false;  // إخفاء/إظهار دائرة سعر الوجبة
 let _devBadges         = {};   // { "catId||nameAr": "popular"|"new"|"limited"|"" }
 let _devTempHide       = {};   // { "key": expiryMs }  — إخفاء مؤقت
 let _devScrollSkip     = new Set(); // مفاتيح المنتجات التي يتخطاها السكرول
@@ -1301,6 +1315,7 @@ function _devLoadSettings() {
     _devGamesHidden    = sessionStorage.getItem(SS_GAMES)  === 'true';
     _devQRMenuHidden   = sessionStorage.getItem(SS_QRMENU) === 'true';
     _devLangBtnHidden  = sessionStorage.getItem(SS_LANGBTN) === 'true';
+    _devMealPriceHidden = sessionStorage.getItem(SS_MEALPRICE) === 'true';
     // ضمان: إذا لم تُحدَّد بعد، تأكّد من وضعها كـ "ظاهر"
     if (discRaw  === null) { sessionStorage.setItem(SS_DISCOUNT, 'false'); _devDiscountHidden = false; }
     if (phoneRaw === null) { sessionStorage.setItem(SS_PHONE,    'false'); _devPhoneHidden    = false; }
@@ -1313,6 +1328,7 @@ function _devLoadSettings() {
   } catch(e) {
     _devHiddenItems = new Set(); _devHiddenSlides = new Set();
     _devHiddenVariants = new Set(); _devDiscountHidden = false; _devPhoneHidden = false;
+    _devMealPriceHidden = false;
     _devTempHide = {}; _devScrollSkip = new Set(); _devCatSkip = new Set();
     _devPinnedSlide = null;
   }
@@ -1412,6 +1428,16 @@ function applyDevSettings() {
   const langBtn = $('header-lang-btn');
   if (langBtn) langBtn.style.display = _devLangBtnHidden ? 'none' : '';
 
+  // دائرة سعر الوجبة — في قائمة المنتجات وفي تفاصيل المنتج
+  document.querySelectorAll('.item-meal-badge').forEach(el => {
+    el.style.display = _devMealPriceHidden ? 'none' : '';
+  });
+  const ovMeal = $('product-overlay-meal-wrap');
+  if (ovMeal) {
+    const ovHasMeal = _currentOverlayItem && _currentOverlayItem.mealPrice != null;
+    ovMeal.style.display = (ovHasMeal && !_devMealPriceHidden) ? 'inline-flex' : 'none';
+  }
+
   // عداد المنتجات
   const visCount = allItemEls.filter(el => el.style.display !== 'none').length;
   setText('scroll-total', String(visCount || allItemEls.length));
@@ -1432,6 +1458,7 @@ function applyRemoteSettings(v) {
     _devGamesHidden    = !!v.gamesHidden;
     _devQRMenuHidden   = !!v.qrmenuHidden;
     _devLangBtnHidden  = !!v.langBtnHidden;
+    _devMealPriceHidden = !!v.mealPriceHidden;
     _devBadges         = v.badges || {};
     _devTempHide       = v.tempHide   || {};
     _devScrollSkip     = new Set(v.scrollSkip || []);
@@ -1446,6 +1473,7 @@ function applyRemoteSettings(v) {
     sessionStorage.setItem(SS_GAMES,    String(_devGamesHidden));
     sessionStorage.setItem(SS_QRMENU,  String(_devQRMenuHidden));
     sessionStorage.setItem(SS_LANGBTN, String(_devLangBtnHidden));
+    sessionStorage.setItem(SS_MEALPRICE, String(_devMealPriceHidden));
     localStorage.setItem(LS_BADGES,     JSON.stringify(_devBadges));
     localStorage.setItem(LS_TEMP_HIDE,  JSON.stringify(_devTempHide));
     localStorage.setItem(LS_SCROLL_SKIP,JSON.stringify([..._devScrollSkip]));

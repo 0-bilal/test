@@ -185,6 +185,7 @@ const menuCategories = [
       {
         nameAr:        'صوص ترافل',
         nameEn:        'Truffle Sauce',
+        image:         'images/products/truffle-sauce.jpg',
         price:         4,
         descriptionAr: 'صوص ترافل لعشاق النكهات العميقة والفريدة',
       },

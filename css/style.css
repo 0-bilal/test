@@ -419,7 +419,7 @@ html,body {
 .cal-badge i { color:#f0a500; font-size:13px; }
 
 /* price */
-.item-price-wrap { flex-shrink:0; }
+.item-price-wrap { flex-shrink:0; display:flex; align-items:stretch; gap:10px; }
 .item-price-badge {
   background:var(--red); color:#fff;
   border-radius:var(--rp); padding:10px 24px; text-align:center;
@@ -431,6 +431,25 @@ html,body {
   line-height:1; display:block;
 }
 .item-price-cur { font-size:13px; opacity:.82; display:block; text-align:center; }
+
+/* ── دائرة سعر الوجبة — بجانب دائرة سعر البرجر وبنفس حجمها ── */
+.item-meal-badge {
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  padding:8px 18px;
+  background:linear-gradient(150deg,#d4283a,#8f1521);
+  border:1.5px solid rgba(255,255,255,.18);
+}
+.item-meal-label {
+  display:inline-flex; align-items:center; gap:5px;
+  font-family:var(--ar); font-size:14px; font-weight:700; line-height:1;
+  color:rgba(255,255,255,.96); white-space:nowrap;
+}
+.item-meal-ico { width:17px; height:17px; display:inline-flex; flex-shrink:0; }
+.item-meal-ico svg { width:17px; height:17px; display:block; }
+.item-meal-amount { display:inline-flex; align-items:baseline; gap:5px; }
+.item-meal-amount .item-price-num { font-size:26px; display:inline; }
+.item-meal-amount .item-price-cur { font-size:12px; display:inline; }
+.menu-item.highlighted .item-meal-badge { box-shadow:0 4px 16px rgba(190,30,45,.65); }
 
 /* item number */
 .item-num {

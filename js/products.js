@@ -10,8 +10,8 @@ const restaurantInfo = {
   taglineEn:    'An unforgettable flavor in every bite',
   logo:         'images/logo.ico',
   phone:        '059 301 1999',
-  workingHours: '12:00 م – 03:00 ص',
-  workingHoursEn: '12:00 PM – 3:00 AM',
+  workingHours: '02:00 م – 03:00 ص',
+  workingHoursEn: '02:00 PM – 3:00 AM',
   workingDays:  'طوال أيام الأسبوع',
   workingDaysEn: 'Every day of the week',
   instagram:    'duo_burger1@',
@@ -92,16 +92,6 @@ const menuCategories = [
         descriptionAr: 'كملها بإضافة شريحة لحم على البرجر ليصبح تريبل، أو. كواردير تصل شريحة اللحم الواحدة 70 غم',
         descriptionEn: 'Complete your burger by adding an extra patty to make it a triple or quadruple — each additional patty weighs about 70g.',
       },
-      {
-        nameAr:        'وجبة برجر',
-        nameEn:        'Burger Meal',
-        image:         'images/products/burger-meal.jpg',
-        price:         33,
-        isMeal:        true,
-        descriptionAr: 'وجبة من البرجر، ديو، أو أوريغا مع البطاطس المقلية المبهرة والمشروب',
-        descriptionEn: 'A meal with your choice of DUO or Origa burger, served with seasoned fries and a drink.',
-      },
-
     ],
   },
 

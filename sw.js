@@ -4,7 +4,7 @@
  * Bump CACHE_NAME to force an update on all clients.
  */
 
-const CACHE_NAME = 'duo-menu-v38';
+const CACHE_NAME = 'duo-menu-v39';
 
 /* Core assets cached on install — مسارات نسبية (بلا "/" بادئة) عمداً:
    تُحسَب داخل Service Worker بالنسبة لموقع sw.js نفسه، فتعمل صحيحة سواء
@@ -49,29 +49,30 @@ const PRECACHE = [
   './icons/icon-512.png',
   './images/logo.ico',
   './images/new-products/new.jpg',
-  /* صور الشرائح — 7 شرائح PNG فعلية */
-  './images/slides/slide1.png',
-  './images/slides/slide2.png',
-  './images/slides/slide3.png',
-  './images/slides/slide4.png',
-  './images/slides/slide5.png',
-  './images/slides/slide6.png',
-  './images/slides/slide7.png',
+  /* صور الشرائح — 7 شرائح JPG مضغوطة (كانت PNG بحجم ~5.7MB) */
+  './images/slides/slide1.jpg',
+  './images/slides/slide2.jpg',
+  './images/slides/slide3.jpg',
+  './images/slides/slide4.jpg',
+  './images/slides/slide5.jpg',
+  './images/slides/slide6.jpg',
+  './images/slides/slide7.jpg',
 ];
 
-/* ── Install: pre-cache core assets ── */
+/* ── Install: pre-cache core assets ──
+   - cache:'reload' يتجاوز كاش HTTP في المتصفح، فلا تُخزَّن نسخة قديمة من
+     ملف مع نسخة جديدة من آخر (خليط إصدارات يسبب أخطاء غريبة).
+   - كل ملف يُضاف على حدة: فشل ملف واحد لا يُلغي تخزين الباقي (addAll كان
+     يفشل بالكامل لو غاب ملف واحد). */
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(
-        PRECACHE.filter(url => {
-          // skip entries that might 404 (images added later by user)
-          return true;
+    caches.open(CACHE_NAME).then(cache =>
+      Promise.allSettled(PRECACHE.map(url =>
+        fetch(new Request(url, { cache: 'reload' })).then(res => {
+          if (res && res.ok) return cache.put(url, res);
         })
-      );
-    }).catch(err => {
-      console.warn('[SW] Pre-cache partial failure:', err);
-    })
+      ))
+    )
   );
   // Take control immediately without waiting for old SW to die
   self.skipWaiting();
@@ -89,65 +90,74 @@ self.addEventListener('activate', event => {
             return caches.delete(key);
           })
       )
-    )
+    ).then(() => self.clients.claim())
   );
-  // Claim all open clients immediately
-  self.clients.claim();
 });
 
-/* ── Fetch: Cache-first with network fallback ── */
+/* مكتبات ثابتة من CDN (الخطوط، Font Awesome، Firebase SDK) — عناوينها
+   مرقّمة بالإصدار ولا تتغيّر، فتُقدَّم من الكاش فوراً */
+const STATIC_CDN_HOSTS = [
+  'cdnjs.cloudflare.com',
+  'fonts.googleapis.com',
+  'fonts.gstatic.com',
+  'www.gstatic.com',
+];
+
+/* ── Fetch ── */
 self.addEventListener('fetch', event => {
   const { request } = event;
 
   // Only handle GET requests
   if (request.method !== 'GET') return;
 
-  // Skip cross-origin requests (CDN fonts, Font Awesome, etc.)
-  // We still let them go to the network, but cache successful responses
   const url = new URL(request.url);
   const isSameOrigin = url.origin === self.location.origin;
 
   if (isSameOrigin) {
-    /* Same-origin: Cache-first → Network fallback → Cache stale */
+    /* Same-origin: Cache-first (stale-while-revalidate) → Network fallback */
     event.respondWith(
-      caches.match(request).then(cached => {
+      caches.match(request, { ignoreSearch: request.mode === 'navigate' }).then(cached => {
+        const networkFetch = fetch(request).then(response => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          }
+          return response;
+        });
+
         if (cached) {
           // Serve from cache; refresh in background
-          const networkFetch = fetch(request).then(response => {
-            if (response && response.status === 200) {
-              const clone = response.clone();
-              caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
-            }
-            return response;
-          }).catch(() => {/* offline — cached already served */});
-
-          return cached; // return cached immediately
+          event.waitUntil(networkFetch.catch(() => {}));
+          return cached;
         }
+        return networkFetch.catch(() =>
+          request.mode === 'navigate' ? caches.match('./index.html') : Response.error()
+        );
+      })
+    );
+    return;
+  }
 
-        // Not in cache → fetch and cache
+  if (STATIC_CDN_HOSTS.includes(url.hostname)) {
+    /* CDN ثابت: Cache-first — كان Network-first فينتظر كل فتح الشبكة
+       (واي فاي المطعم البطيء) قبل الرسم، فيتأخر التحميل ويتقطّع */
+    event.respondWith(
+      caches.match(request).then(cached => {
+        if (cached) return cached;
         return fetch(request).then(response => {
-          if (!response || response.status !== 200) return response;
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          if (response && (response.status === 200 || response.type === 'opaque')) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          }
           return response;
         });
       })
     );
-  } else {
-    /* Cross-origin (CDN): Network-first → Cache fallback */
-    event.respondWith(
-      fetch(request)
-        .then(response => {
-          if (!response || response.status !== 200 || response.type === 'opaque') {
-            return response;
-          }
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
+    return;
   }
+
+  // أي طلب خارجي آخر (مثل Firebase Realtime Database) يذهب للشبكة مباشرة
+  // دون تدخّل — تخزين ردود قاعدة البيانات في الكاش كان يُرجع بيانات قديمة.
 });
 
 /* ── Message: force update from client ── */

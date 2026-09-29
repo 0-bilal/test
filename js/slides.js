@@ -16,7 +16,7 @@
 
 const slides = [
   {
-    image: 'images/slides/slide6.png',
+    image: 'images/slides/slide6.jpg',
     titleAr: '',
     titleEn: "",
     descriptionAr: '',
@@ -26,7 +26,7 @@ const slides = [
     duration: 10000,
   },
   {
-    image: 'images/slides/slide1.png',
+    image: 'images/slides/slide1.jpg',
     titleAr: 'طبق جديد',
     titleEn: "Today's Special",
     descriptionAr: 'البطاطس المقلية الذهبية مع اللحم، والصوص والجبنة والهلبين',
@@ -36,7 +36,7 @@ const slides = [
     duration: 7000,
   },
   {
-    image: 'images/slides/slide2.png',
+    image: 'images/slides/slide2.jpg',
     titleAr: 'لحومــــنا سعوديـــة',
     titleEn: 'Prescott Angus Fakher',
     descriptionAr: 'بريسكت انجوس فاخر',
@@ -46,7 +46,7 @@ const slides = [
     duration: 7000,
   },
  {
-    image: 'images/slides/slide3.png',
+    image: 'images/slides/slide3.jpg',
     titleAr: 'أضلاع الذرة',
     titleEn: 'CORN RIBS',
     descriptionAr: ' أضاع الدرة الذهبية المقلية مع الصوص والبهارات',
@@ -56,7 +56,7 @@ const slides = [
     duration: 5000,
   },
   {
-    image: 'images/slides/slide4.png',
+    image: 'images/slides/slide4.jpg',
     titleAr: 'من تختار ؟',
     titleEn: 'Who do you choose?',
     descriptionAr: 'المنافسة على اشدها جربهم وقرر بنفسك!',
@@ -66,7 +66,7 @@ const slides = [
     duration: 10000,
   },
   {
-    image: 'images/slides/slide5.png',
+    image: 'images/slides/slide5.jpg',
     titleAr: 'الخيار الذكي..',
     titleEn: 'The smart choice...',
     descriptionAr: '',
@@ -100,7 +100,7 @@ const slides = [
     duration: 9000,
   },
   {
-    image: 'images/slides/slide7.png',
+    image: 'images/slides/slide7.jpg',
     titleAr: 'دبل ترافل برجر',
     titleEn: "لعشاق الترافل",
     descriptionAr: '',

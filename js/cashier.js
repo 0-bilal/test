@@ -41,6 +41,7 @@ let _tempHide       = {};
 let _resetConfirmed = false;
 let _resetTimer     = null;
 let _lastSyncTs     = null;
+let _syncLoaded     = false;   /* وصلت الحالة الحالية من Firebase؟ */
 let _devices        = [];      /* أجهزة العملاء المتصلة */
 let _sidebarOpen    = true;    /* حالة الشريط الجانبي */
 
@@ -392,10 +393,15 @@ function sendAction(action) {
 
 function _pushSettings() {
   if (!window.DuoSync || typeof window.DuoSync.write !== 'function') return;
+  // لا تكتب قبل وصول الحالة الحالية من Firebase — وإلا تُرسَل قوائم فارغة
+  // فتظهر كل المنتجات المخفية على شاشات العملاء
+  if (!_syncLoaded) { cToast(t('noSync'), 'warn'); return; }
+  // نكتب فقط الحقول التي يديرها الكاشير (DuoSync.write يستخدم update)؛
+  // الحقول الأخرى (الخيارات، تخطّي السكرول، سعر الوجبة، المدد…) تديرها لوحة
+  // التحكم — كان الكاشير يُرسلها فارغة/افتراضية فيمسح إعدادات لوحة التحكم.
   window.DuoSync.write({
     hiddenItems:     [..._hiddenItems],
     hiddenSlides:    [..._hiddenSlides],
-    hiddenVariants:  [],
     discountHidden:  _discountHidden,
     phoneHidden:     _phoneHidden,
     gamesHidden:     _gamesHidden,
@@ -403,14 +409,7 @@ function _pushSettings() {
     langBtnHidden:   _langBtnHidden,
     badges:          _badges,
     tempHide:        _tempHide,
-    scrollSkip:      [], catSkip:   [],
     autoScroll:      _autoScroll,
-    itemDuration:    3500,
-    pauseDuration:   12000,
-    overlayDuration: 8000,
-    crossfadeDur:    520,
-    ovChangeDur:     260,
-    ovCloseDur:      430,
     maintenanceOn:   _maintenanceOn,
     maintenanceMsg:  _maintenanceMsg,
     slideDurations:  _slideDurations,
@@ -423,6 +422,7 @@ function _pushSettings() {
 
 function _applyState(v) {
   if (!v || typeof v !== 'object') return;
+  _syncLoaded = true;
   _hiddenItems    = new Set(v.hiddenItems    || []);
   _hiddenSlides   = new Set((v.hiddenSlides  || []).map(String));
   _discountHidden = !!v.discountHidden;
@@ -2413,6 +2413,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* تحميل الحالة من Firebase */
   if (window.DuoSync && typeof window.DuoSync.readOnce === 'function') {
     window.DuoSync.readOnce(v => {
+      _syncLoaded = true;   // null = لا توجد إعدادات بعد، فالكتابة آمنة
       if (v) _applyState(v);
       else   _rerenderTab();
     });

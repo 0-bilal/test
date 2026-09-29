@@ -23,6 +23,14 @@ window.DuoSync = (function () {
   function enabled() { return localStorage.getItem('duo_pair_enabled') === 'true'; }
 
   let db = null, ready = false;
+  let _serverOffset = 0;   // فرق ساعة هذا الجهاز عن ساعة خادم Firebase (ms)
+
+  /**
+   * الوقت الحالي بساعة خادم Firebase — موحّد بين كل الأجهزة.
+   * يُستخدم للإخفاء المؤقت وأوامر الكاشير بدل Date.now() التي تختلف
+   * من جهاز لآخر (فرق الساعة كان يُرجع المنتجات المخفية مبكراً أو متأخراً).
+   */
+  function serverNow() { return Date.now() + _serverOffset; }
 
   function _init() {
     if (ready && db) return true;
@@ -36,6 +44,9 @@ window.DuoSync = (function () {
                || firebase.initializeApp(fbConfig, 'duoSync');
       db = firebase.database(app);
       ready = true;
+      try {
+        db.ref('.info/serverTimeOffset').on('value', s => { _serverOffset = Number(s.val()) || 0; });
+      } catch (e) {}
     } catch (e) {
       console.warn('[DuoSync] init error:', e);
       return false;
@@ -45,9 +56,11 @@ window.DuoSync = (function () {
 
   function _ref() { return db.ref(`duo/${branch()}/settings`); }
 
+  /* update() بدل set(): يكتب الحقول المُرسلة فقط ويحافظ على باقي الحقول،
+     فلا يمسح جهاز (مثل الكاشير) إعدادات لا يديرها جهاز آخر (لوحة التحكم). */
   function write(settings) {
     if (!enabled() || !_init()) return;
-    try { _ref().set(Object.assign({ ts: Date.now() }, settings)); }
+    try { _ref().update(Object.assign({ ts: firebase.database.ServerValue.TIMESTAMP }, settings)); }
     catch (e) { console.warn('[DuoSync] write error:', e); }
   }
 
@@ -78,24 +91,37 @@ window.DuoSync = (function () {
     try {
       const ref = _actionRef();
       if (!ref) return false;
-      ref.set(Object.assign({ ts: Date.now() }, action));
+      // طابع زمني من الخادم + معرّف فريد — لا اعتماد على ساعة جهاز الكاشير
+      ref.set(Object.assign({
+        ts: firebase.database.ServerValue.TIMESTAMP,
+        id: Math.random().toString(36).slice(2, 10),
+      }, action));
       return true;
     } catch (e) { console.warn('[DuoSync] writeAction error:', e); return false; }
   }
 
   /**
    * يستمع لأوامر الكاشير الفورية على شاشة المنيو.
-   * sinceTs: يتجاهل الأوامر القديمة قبل وقت بدء الصفحة.
+   * - أول لقطة عند الاشتراك هي آخر أمر مخزَّن (قديم) → تُتجاهَل دائماً.
+   * - الأوامر الأقدم من 30 ثانية بساعة الخادم تُتجاهَل (مثلاً أمر وصل بعد
+   *   رجوع الاتصال) — بدل مقارنة ساعة الكاشير بساعة الآيباد كما كان.
+   * sinceTs: غير مستخدم الآن (بقي للتوافق).
    */
+  const ACTION_MAX_AGE = 30000;
   function onAction(cb, sinceTs) {
     if (!_init()) return;
-    const _since = sinceTs || Date.now();
     try {
       const ref = _actionRef();
       if (!ref) return;
+      let first = true, lastKey = null;
       ref.on('value', s => {
         const v = s.val();
-        if (v && v.ts && v.ts > _since) cb(v);
+        const key = v ? `${v.ts}|${v.id || ''}` : null;
+        if (first) { first = false; lastKey = key; return; }
+        if (!v || !v.ts || key === lastKey) return;
+        lastKey = key;
+        if (serverNow() - v.ts > ACTION_MAX_AGE) return;
+        cb(v);
       });
     } catch (e) { console.warn('[DuoSync] onAction error:', e); }
   }
@@ -236,7 +262,7 @@ window.DuoSync = (function () {
   }
 
   return {
-    write, listen, readOnce, writeAction, onAction, init: _init, enabled,
+    write, listen, readOnce, writeAction, onAction, init: _init, enabled, serverNow,
     presenceStart, presenceUpdate, watchDevices, renameDevice, removeDevice,
     setDeviceFlag, watchDevice,
   };

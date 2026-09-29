@@ -14,6 +14,7 @@
     const ov = $('games-hub'); if (!ov) return;
     ov.classList.add('active');
     _updateStatus();
+    clearInterval(_statusTimer);   // فتحها مرتين كان يترك مؤقتاً يعمل للأبد
     _statusTimer = setInterval(_updateStatus, 1500);
     if (typeof pauseAutoScroll === 'function') pauseAutoScroll();
   }

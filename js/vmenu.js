@@ -74,7 +74,7 @@
     const catSkip   = (typeof _devCatSkip      !== 'undefined') ? _devCatSkip      : new Set();
     const tempHide  = (typeof _devTempHide     !== 'undefined') ? _devTempHide     : {};
     const key       = (typeof _devItemKey === 'function') ? _devItemKey : (c, n) => c + '||' + n;
-    const now       = Date.now();
+    const now       = (typeof _syncNow === 'function') ? _syncNow() : Date.now();
 
     menuCategories.forEach(cat => {
       if (catSkip.has(cat.id)) return;   // تخطّى القسم كله

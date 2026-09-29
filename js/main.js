@@ -6,11 +6,10 @@
  * - FAB: social always visible; phone & hours toggle on tap
  */
 
-/* ══ منع الزوم بالأصبعين (Pinch-to-Zoom) ══ */
-document.addEventListener('touchmove', e => {
-  if (e.touches.length > 1) e.preventDefault();
-}, { passive: false });
-
+/* ══ منع الزوم بالأصبعين (Pinch-to-Zoom) ══
+   ملاحظة: لا نستخدم مستمع touchmove غير سلبي (passive:false) على الصفحة —
+   كان يجبر Safari على انتظار JavaScript قبل كل حركة سكرول فيتجمّد السكرول
+   على الآيباد عند انشغال المعالج. أحداث gesture* + touch-action في CSS تكفي. */
 document.addEventListener('gesturestart',  e => e.preventDefault(), { passive: false });
 document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
 document.addEventListener('gestureend',    e => e.preventDefault(), { passive: false });
@@ -130,6 +129,7 @@ function applyMenuLanguage() {
   const wasIdx = curIdx;
   renderCategoryTabs();
   renderAllCategories();
+  applyDevSettings();   // إعادة تطبيق الإخفاء/التخطّي — وإلا تظهر المنتجات المخفية بعد تبديل اللغة
   fixScrollablePadding();
   if (allItemEls.length) highlightItem(wasIdx);
 
@@ -297,7 +297,7 @@ function renderAllCategories() {
         <span class="item-num">0${i + 1}</span>
         <div class="item-img-wrap">
           ${item.image
-            ? `<img src="${item.image}" alt="${item.nameAr}"
+            ? `<img src="${item.image}" alt="${item.nameAr}" decoding="async"
                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
             : ''}
           <div class="item-img-placeholder"${item.image ? ' style="display:none"' : ''}>
@@ -383,9 +383,18 @@ function pauseAutoScroll() {
   clearTimeout(pauseTimer);
   pauseTimer = setTimeout(resumeAutoScroll, _getPauseDuration());
 
+  // ألغِ أي تمرير برمجي مجدول لم يبدأ بعد — حتى لا يتصارع مع إصبع العميل
+  clearTimeout(_centerTimer);
+
   if (isPaused) return; // already paused, just reset timer above
   isPaused = true;
   clearTimeout(autoTimer);
+}
+
+/* هل توجد نافذة/لعبة مفتوحة فوق الشاشة؟ لا نستأنف السكرول التلقائي خلفها */
+function _anyOverlayOpen() {
+  const ids = ['product-overlay', 'review-overlay', 'qrmenu-overlay', 'games-hub', 'game-overlay', 'xo-overlay'];
+  return ids.some(id => $(id)?.classList.contains('active'));
 }
 
 function resumeAutoScroll() {
@@ -395,6 +404,14 @@ function resumeAutoScroll() {
   }
 
   if (!_isAutoScrollOn()) { isPaused = true; return; } // ابقَ متوقفاً إن كان السكرول التلقائي معطّلاً من لوحة التحكم
+
+  // نافذة ما زالت مفتوحة، أو العميل يلمس القائمة الآن → أجّل الاستئناف
+  if (_anyOverlayOpen() || _userTouching) {
+    isPaused = true;
+    clearTimeout(pauseTimer);
+    pauseTimer = setTimeout(resumeAutoScroll, _getPauseDuration());
+    return;
+  }
 
   isPaused = false;
   clearTimeout(pauseTimer);
@@ -412,6 +429,9 @@ function resumeAutoScroll() {
 let curIdx        = 0;
 let autoTimer     = null;
 let progScroll    = false; // true while centerItem is scrolling programmatically
+let _centerTimer  = null;  // مؤقت التمرير المؤجَّل بعد التحديد — يُلغى عند لمس العميل
+let _progEndTimer = null;  // يُنهي progScroll عند توقّف أحداث scroll فعلياً
+let _userTouching = false; // إصبع العميل على القائمة الآن
 
 function highlightItem(idx) {
   // Clamp & store
@@ -427,7 +447,8 @@ function highlightItem(idx) {
 
   // ── Small delay so the browser registers the new class before we call
   //    getBoundingClientRect() inside centerItem (forces a layout reflow).
-  setTimeout(() => centerItem(el), HIGHLIGHT_DELAY);
+  clearTimeout(_centerTimer);
+  _centerTimer = setTimeout(() => centerItem(el), HIGHLIGHT_DELAY);
 
   // Status bar
   setText('scroll-cur', String(idx + 1));
@@ -501,6 +522,8 @@ function fixScrollablePadding() {
 function centerItem(el) {
   const area = $('menu-items-area');
   if (!area || !el) return;
+  // لا تحرّك القائمة برمجياً والعميل يلمسها — على iOS يُجمّد ذلك الزخم (momentum)
+  if (_userTouching) return;
 
   // ── تحويل إحداثيات viewport → مساحة العنصر ──────────────
   // getBoundingClientRect() يُعيد قيماً في مساحة viewport (بعد scale).
@@ -547,9 +570,16 @@ function centerItem(el) {
   // تجاهل إذا كنا في الموضع الصحيح بالفعل
   if (Math.abs(area.scrollTop - clamped) < 4) return;
 
+  // المسافات الطويلة جداً (مثل العودة من آخر القائمة لأولها) تُنفَّذ فوراً
+  // بدل تمرير ناعم طويل يستغرق ثوانٍ ويبدو كتعليق على الآيباد
+  const far = Math.abs(area.scrollTop - clamped) > visH * 3;
+
   progScroll = true;
-  area.scrollTo({ top: clamped, behavior: 'smooth' });
-  setTimeout(() => { progScroll = false; }, 650);
+  area.scrollTo({ top: clamped, behavior: far ? 'auto' : 'smooth' });
+  // يُنهى progScroll عند توقّف أحداث scroll (انظر مستمع scroll) —
+  // وهذا حدّ أقصى احتياطي في حال لم يصدر أي حدث
+  clearTimeout(_progEndTimer);
+  _progEndTimer = setTimeout(() => { progScroll = false; }, 1500);
 }
 
 /**
@@ -632,64 +662,94 @@ function startAutoScroll() {
    PRODUCT DETAIL OVERLAY
 ════════════════════════════════════════════════════════ */
 let productOverlayTimer    = null;
+let _ovChangeTimer         = null;
 let productOverlayItemIdx  = -1;
 let overlayChanging        = false;
 let _overlayHasImage       = false;   // هل الـ overlay يعرض صورة حالياً؟
 let _imgCrossfadeTimer     = null;
+let _imgCrossfadeHideTimer = null;
+let _ovCloseTimer          = null;    // مؤقت إخفاء الـ overlay بعد حركة الإغلاق
 const PRODUCT_OVERLAY_DURATION = 8000;
 const OVERLAY_CHANGE_DURATION  = 260;   // ms — تلاشي النص قبل التبديل
 const OVERLAY_CLOSE_DURATION   = 430;
 const CROSSFADE_DURATION       = 520;   // ms — مدة التبديل بين الصورتين
+
+/* ── تحميل وفكّ ترميز الصورة قبل عرضها — يمنع ظهور إطار فارغ/أسود ── */
+let _imgLoadToken = 0;
+function _preloadImage(src) {
+  return new Promise(resolve => {
+    const im = new Image();
+    im.onload  = () => {
+      if (typeof im.decode === 'function') im.decode().then(() => resolve(true), () => resolve(true));
+      else resolve(true);
+    };
+    im.onerror = () => resolve(false);
+    im.src = src;
+  });
+}
+
+function _showOverlayPlaceholder() {
+  $('product-overlay-img').style.display  = 'none';
+  $('product-overlay-img2').style.display = 'none';
+  $('product-overlay-img-ph').style.display = 'flex';
+  _overlayHasImage = false;
+}
 
 /* ── Crossfade بين صورتين دون إظهار الخلفية ── */
 function _crossfadeOverlayImage(newSrc) {
   const img1  = $('product-overlay-img');
   const img2  = $('product-overlay-img2');
   const imgPh = $('product-overlay-img-ph');
+  const token = ++_imgLoadToken;   // أي طلب أحدث يُلغي نتيجة الطلبات السابقة
 
-  if (!newSrc) {
-    img1.style.display = 'none';
-    img2.style.display = 'none';
-    imgPh.style.display = 'flex';
-    _overlayHasImage = false;
-    return;
-  }
+  clearTimeout(_imgCrossfadeTimer);
+  clearTimeout(_imgCrossfadeHideTimer);
 
-  imgPh.style.display = 'none';
+  if (!newSrc) { _showOverlayPlaceholder(); return; }
 
   if (!_overlayHasImage) {
-    // فتح أول مرة — تعيين مباشر بدون crossfade
+    // فتح أول مرة — تعيين مباشر بدون crossfade (الصورة غالباً في الكاش)
+    img1.onerror = () => { if (token === _imgLoadToken) _showOverlayPlaceholder(); };
     img1.src           = newSrc;
     img1.style.display = 'block';
     img1.style.opacity = '1';
     img2.style.display = 'none';
     img2.style.opacity = '0';
+    imgPh.style.display = 'none';
     _overlayHasImage   = true;
     return;
   }
 
-  // التبديل بين منتجين — crossfade: img2 تتلاشى فوق img1 ثم تصبح هي img1
-  clearTimeout(_imgCrossfadeTimer);
+  // التبديل بين منتجين — ننتظر تحميل الصورة الجديدة أولاً ثم crossfade:
+  // img2 تتلاشى فوق img1 ثم تصبح هي img1
+  _preloadImage(newSrc).then(ok => {
+    if (token !== _imgLoadToken) return;           // طلب أحدث وصل أثناء التحميل
+    if (!ok) { _showOverlayPlaceholder(); return; }
 
-  img2.src = newSrc;
-  img2.style.display     = 'block';
-  img2.style.transition  = 'none';
-  img2.style.opacity     = '0';
+    imgPh.style.display    = 'none';
+    img2.src               = newSrc;
+    img2.style.display     = 'block';
+    img2.style.transition  = 'none';
+    img2.style.opacity     = '0';
 
-  const _cfd = _getCrossfadeDur();
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    img2.style.transition = `opacity ${_cfd}ms ease`;
-    img2.style.opacity    = '1';
-  }));
+    const _cfd = _getCrossfadeDur();
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (token !== _imgLoadToken) return;
+      img2.style.transition = `opacity ${_cfd}ms ease`;
+      img2.style.opacity    = '1';
+    }));
 
-  _imgCrossfadeTimer = setTimeout(() => {
-    img1.src           = newSrc;
-    img1.style.display = 'block';
-    img1.style.opacity = '1';
-    img2.style.transition = 'none';
-    img2.style.opacity    = '0';
-    setTimeout(() => { img2.style.display = 'none'; }, 50);
-  }, _cfd + 30);
+    _imgCrossfadeTimer = setTimeout(() => {
+      img1.src           = newSrc;
+      img1.style.display = 'block';
+      img1.style.opacity = '1';
+      _imgCrossfadeHideTimer = setTimeout(() => {
+        img2.style.transition = 'none';
+        img2.style.opacity    = '0';
+        img2.style.display    = 'none';
+      }, 50);
+    }, _cfd + 30);
+  });
 }
 
 /* ── تعبئة بيانات المنتج (نصوص + صورة) ── */
@@ -829,13 +889,21 @@ function showProductOverlay(item, idx) {
   clearTimeout(productOverlayTimer);
   productOverlayTimer = setTimeout(hideProductOverlay, _getOverlayDuration());
 
+  // إن كان الإغلاق جارياً (حركة 430ms) ألغِ مؤقته — وإلا سيُخفي النافذة
+  // التي فُتحت للتو، فتبقى "مفتوحة" منطقياً ومخفية فعلياً ويبدو المنيو معلّقاً
+  if (_ovCloseTimer) {
+    clearTimeout(_ovCloseTimer);
+    _ovCloseTimer = null;
+    overlay.classList.remove('closing');
+  }
+
   if (overlay.classList.contains('active')) {
     /* الـ overlay مفتوح — تبديل سلس بين منتجين */
     if (overlayChanging) return;          // تجاهل النقر السريع جداً
     overlayChanging = true;
     overlay.classList.add('changing');
 
-    setTimeout(() => {
+    _ovChangeTimer = setTimeout(() => {
       _fillOverlayContent(item, idx);
       overlay.classList.remove('changing');
       overlayChanging = false;
@@ -852,10 +920,18 @@ function showProductOverlay(item, idx) {
 
 /* ── إغلاق الـ overlay والعودة للتلقائي ── */
 function hideProductOverlay() {
+  const overlay = $('product-overlay');
+  // غير مفتوحة (أو تُغلق حالياً) — لا شيء نفعله، ولا نعيد تشغيل السكرول بلا داعٍ
+  if (!overlay || !overlay.classList.contains('active')) return;
+
   clearTimeout(productOverlayTimer);
   clearTimeout(_imgCrossfadeTimer);
+  clearTimeout(_imgCrossfadeHideTimer);
+  clearTimeout(_ovChangeTimer);
+  _imgLoadToken++;              // تجاهل أي صورة ما زالت تُحمَّل
   overlayChanging    = false;
   _overlayHasImage   = false;   // إعادة تعيين لفتح سلس في المرة القادمة
+  _currentOverlayItem = null;
 
   // إلغاء تحديد المنتج
   if (productOverlayItemIdx >= 0) {
@@ -863,11 +939,12 @@ function hideProductOverlay() {
     productOverlayItemIdx = -1;
   }
 
-  const overlay = $('product-overlay');
   overlay.classList.remove('active', 'changing');
   overlay.classList.add('closing');
 
-  setTimeout(() => {
+  clearTimeout(_ovCloseTimer);
+  _ovCloseTimer = setTimeout(() => {
+    _ovCloseTimer = null;
     overlay.style.display = 'none';
     overlay.classList.remove('closing');
     // العودة للتمرير التلقائي بعد اكتمال الانتقال
@@ -881,6 +958,7 @@ window.hideProductOverlay = hideProductOverlay;
 ════════════════════════════════════════════════════════ */
 const REVIEW_OVERLAY_DURATION = 16000;   // ms — يُغلق تلقائياً
 let   _reviewTimer = null;
+let   _reviewCloseTimer = null;
 
 function showReviewOverlay() {
   const overlay = $('review-overlay');
@@ -906,8 +984,9 @@ function showReviewOverlay() {
     }
   }
 
-  // إيقاف عداد سابق
+  // إيقاف عداد سابق + إلغاء إغلاق جارٍ (وإلا يُخفي النافذة المفتوحة للتو)
   clearTimeout(_reviewTimer);
+  clearTimeout(_reviewCloseTimer);
 
   // إظهار — block يكفي لأن التخطيط الداخلي يعتمد على position:absolute
   overlay.style.display = 'block';
@@ -929,12 +1008,13 @@ function showReviewOverlay() {
 function hideReviewOverlay() {
   clearTimeout(_reviewTimer);
   const overlay = $('review-overlay');
-  if (!overlay) return;
+  if (!overlay || !overlay.classList.contains('active')) return;
 
   overlay.classList.remove('active');
   overlay.classList.add('closing');
 
-  setTimeout(() => {
+  clearTimeout(_reviewCloseTimer);
+  _reviewCloseTimer = setTimeout(() => {
     overlay.style.display = 'none';
     overlay.classList.remove('closing');
     resumeAutoScroll();
@@ -948,6 +1028,7 @@ window.showReviewOverlay  = showReviewOverlay;
 ════════════════════════════════════════════════════════ */
 const QRMENU_OVERLAY_DURATION = 30000;  // 30 ثانية إغلاق تلقائي
 let   _qrmenuTimer = null;
+let   _qrmenuCloseTimer = null;
 
 function showQRMenuOverlay() {
   const overlay = $('qrmenu-overlay');
@@ -976,6 +1057,7 @@ function showQRMenuOverlay() {
   if (taxEl) taxEl.textContent = restaurantInfo.taxNote || '';
 
   clearTimeout(_qrmenuTimer);
+  clearTimeout(_qrmenuCloseTimer);
   overlay.style.display = 'block';
   requestAnimationFrame(() => requestAnimationFrame(() => {
     overlay.classList.remove('closing');
@@ -990,10 +1072,11 @@ function showQRMenuOverlay() {
 function hideQRMenuOverlay() {
   clearTimeout(_qrmenuTimer);
   const overlay = $('qrmenu-overlay');
-  if (!overlay) return;
+  if (!overlay || !overlay.classList.contains('active')) return;
   overlay.classList.remove('active');
   overlay.classList.add('closing');
-  setTimeout(() => {
+  clearTimeout(_qrmenuCloseTimer);
+  _qrmenuCloseTimer = setTimeout(() => {
     overlay.style.display = 'none';
     overlay.classList.remove('closing');
     resumeAutoScroll();
@@ -1065,7 +1148,7 @@ function renderSlides() {
         </div>`;
     } else {
       el.innerHTML = `
-        <img class="slide-img" src="${slide.image}" alt="${slide.titleAr}"
+        <img class="slide-img" src="${slide.image}" alt="${slide.titleAr}" decoding="async"
              onerror="this.style.background='#0a0001'">
         <div class="slide-content">
           ${slide.badge
@@ -1301,24 +1384,24 @@ function _badgeHTML(badge) {
 
 function _devItemKey(catId, nameAr) { return catId + '||' + nameAr; }
 
-/* تحميل الإعدادات من sessionStorage */
+/* تحميل الإعدادات من localStorage (كانت sessionStorage وتُمسح عندما يغلق iOS التطبيق في الخلفية) */
 function _devLoadSettings() {
   try {
-    _devHiddenItems    = new Set(JSON.parse(sessionStorage.getItem(SS_ITEMS)    || '[]'));
-    _devHiddenSlides   = new Set(JSON.parse(sessionStorage.getItem(SS_SLIDES)   || '[]').map(String));
-    _devHiddenVariants = new Set(JSON.parse(sessionStorage.getItem(SS_VARIANTS) || '[]'));
+    _devHiddenItems    = new Set(JSON.parse(localStorage.getItem(SS_ITEMS)    || '[]'));
+    _devHiddenSlides   = new Set(JSON.parse(localStorage.getItem(SS_SLIDES)   || '[]').map(String));
+    _devHiddenVariants = new Set(JSON.parse(localStorage.getItem(SS_VARIANTS) || '[]'));
     // الزر والهاتف يظهران دائماً بشكل افتراضي — القيمة false إلا إذا خُصِّصت صراحةً
-    const discRaw = sessionStorage.getItem(SS_DISCOUNT);
-    const phoneRaw = sessionStorage.getItem(SS_PHONE);
+    const discRaw = localStorage.getItem(SS_DISCOUNT);
+    const phoneRaw = localStorage.getItem(SS_PHONE);
     _devDiscountHidden = discRaw  === 'true';
     _devPhoneHidden    = phoneRaw === 'true';
-    _devGamesHidden    = sessionStorage.getItem(SS_GAMES)  === 'true';
-    _devQRMenuHidden   = sessionStorage.getItem(SS_QRMENU) === 'true';
-    _devLangBtnHidden  = sessionStorage.getItem(SS_LANGBTN) === 'true';
-    _devMealPriceHidden = sessionStorage.getItem(SS_MEALPRICE) === 'true';
+    _devGamesHidden    = localStorage.getItem(SS_GAMES)  === 'true';
+    _devQRMenuHidden   = localStorage.getItem(SS_QRMENU) === 'true';
+    _devLangBtnHidden  = localStorage.getItem(SS_LANGBTN) === 'true';
+    _devMealPriceHidden = localStorage.getItem(SS_MEALPRICE) === 'true';
     // ضمان: إذا لم تُحدَّد بعد، تأكّد من وضعها كـ "ظاهر"
-    if (discRaw  === null) { sessionStorage.setItem(SS_DISCOUNT, 'false'); _devDiscountHidden = false; }
-    if (phoneRaw === null) { sessionStorage.setItem(SS_PHONE,    'false'); _devPhoneHidden    = false; }
+    if (discRaw  === null) { localStorage.setItem(SS_DISCOUNT, 'false'); _devDiscountHidden = false; }
+    if (phoneRaw === null) { localStorage.setItem(SS_PHONE,    'false'); _devPhoneHidden    = false; }
     _loadBadges();
     try { _devTempHide = JSON.parse(localStorage.getItem(LS_TEMP_HIDE) || '{}'); } catch { _devTempHide = {}; }
     _devScrollSkip = new Set(JSON.parse(localStorage.getItem(LS_SCROLL_SKIP) || '[]'));
@@ -1334,9 +1417,16 @@ function _devLoadSettings() {
   }
 }
 
+/* الوقت الموحّد (ساعة خادم Firebase إن توفّرت) — أوقات الإخفاء المؤقت تُكتب
+   من جهاز آخر، فالمقارنة بساعة هذا الجهاز وحده تُظهر المنتجات مبكراً/متأخراً */
+function _syncNow() {
+  return (window.DuoSync && typeof window.DuoSync.serverNow === 'function')
+    ? window.DuoSync.serverNow() : Date.now();
+}
+
 /* تحقّق من انتهاء أوقات الإخفاء المؤقت وأظهر المنتجات تلقائياً */
 function _checkTempHides() {
-  const now = Date.now();
+  const now = _syncNow();
   let changed = false;
   Object.keys(_devTempHide).forEach(k => {
     if (_devTempHide[k] <= now) { delete _devTempHide[k]; changed = true; }
@@ -1353,15 +1443,15 @@ setInterval(_checkTempHides, 30000); // كل 30 ثانية
 function _forceShowHeaderButtons() {
   _devDiscountHidden = false;
   _devPhoneHidden    = false;
-  sessionStorage.setItem(SS_DISCOUNT, 'false');
-  sessionStorage.setItem(SS_PHONE,    'false');
+  localStorage.setItem(SS_DISCOUNT, 'false');
+  localStorage.setItem(SS_PHONE,    'false');
   applyDevSettings();
 }
 
 /* تطبيق الإعدادات على الـ DOM */
 function applyDevSettings() {
   // المنتجات — إخفاء دائم أو مؤقت، وتمييز المتخطَّى في السكرول
-  const _now = Date.now();
+  const _now = _syncNow();
   allItemEls.forEach(el => {
     const nameEl  = el.querySelector('.item-name-ar');
     const key     = _devItemKey(el.dataset.cat, nameEl?.textContent || '');
@@ -1465,15 +1555,15 @@ function applyRemoteSettings(v) {
     _devCatSkip        = new Set(v.catSkip    || []);
 
     // خزّن محلياً كنسخة احتياطية
-    sessionStorage.setItem(SS_ITEMS,    JSON.stringify([..._devHiddenItems]));
-    sessionStorage.setItem(SS_SLIDES,   JSON.stringify([..._devHiddenSlides]));
-    sessionStorage.setItem(SS_VARIANTS, JSON.stringify([..._devHiddenVariants]));
-    sessionStorage.setItem(SS_DISCOUNT, String(_devDiscountHidden));
-    sessionStorage.setItem(SS_PHONE,    String(_devPhoneHidden));
-    sessionStorage.setItem(SS_GAMES,    String(_devGamesHidden));
-    sessionStorage.setItem(SS_QRMENU,  String(_devQRMenuHidden));
-    sessionStorage.setItem(SS_LANGBTN, String(_devLangBtnHidden));
-    sessionStorage.setItem(SS_MEALPRICE, String(_devMealPriceHidden));
+    localStorage.setItem(SS_ITEMS,    JSON.stringify([..._devHiddenItems]));
+    localStorage.setItem(SS_SLIDES,   JSON.stringify([..._devHiddenSlides]));
+    localStorage.setItem(SS_VARIANTS, JSON.stringify([..._devHiddenVariants]));
+    localStorage.setItem(SS_DISCOUNT, String(_devDiscountHidden));
+    localStorage.setItem(SS_PHONE,    String(_devPhoneHidden));
+    localStorage.setItem(SS_GAMES,    String(_devGamesHidden));
+    localStorage.setItem(SS_QRMENU,  String(_devQRMenuHidden));
+    localStorage.setItem(SS_LANGBTN, String(_devLangBtnHidden));
+    localStorage.setItem(SS_MEALPRICE, String(_devMealPriceHidden));
     localStorage.setItem(LS_BADGES,     JSON.stringify(_devBadges));
     localStorage.setItem(LS_TEMP_HIDE,  JSON.stringify(_devTempHide));
     localStorage.setItem(LS_SCROLL_SKIP,JSON.stringify([..._devScrollSkip]));
@@ -1888,11 +1978,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Detect user interaction on the menu area
     const menuArea = $('menu-items-area');
     if (menuArea) {
-      menuArea.addEventListener('touchstart', pauseAutoScroll, { passive: true });
+      menuArea.addEventListener('touchstart', () => {
+        _userTouching = true;
+        progScroll = false;   // أي تمرير بعد لمس العميل هو تمرير يدوي
+        pauseAutoScroll();
+      }, { passive: true });
+      const _touchDone = () => { _userTouching = false; pauseAutoScroll(); };
+      menuArea.addEventListener('touchend',    _touchDone, { passive: true });
+      menuArea.addEventListener('touchcancel', _touchDone, { passive: true });
       menuArea.addEventListener('touchmove',  pauseAutoScroll, { passive: true });
       menuArea.addEventListener('wheel',      pauseAutoScroll, { passive: true });
       menuArea.addEventListener('scroll', () => {
-        if (!progScroll) pauseAutoScroll();
+        if (progScroll) {
+          // التمرير البرمجي ما زال جارياً — أنهِه بعد 150ms من آخر حدث scroll
+          clearTimeout(_progEndTimer);
+          _progEndTimer = setTimeout(() => { progScroll = false; }, 150);
+          return;
+        }
+        pauseAutoScroll();
       }, { passive: true });
     }
 
@@ -1919,6 +2022,11 @@ document.addEventListener('DOMContentLoaded', () => {
         else        goToSlide((curSlide - 1 + slides.length) % slides.length);
       }, { passive: true });
     }
+
+    // أعد حساب مسافة نهاية القائمة بعد تحميل الخطوط والصور — الحساب الأول
+    // يتم قبلها فيتغيّر ارتفاع البطاقات لاحقاً وتنحرف مواضع السكرول
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fixScrollablePadding);
+    window.addEventListener('load', fixScrollablePadding, { once: true });
 
     // Start auto-scroll
     setTimeout(startAutoScroll, 900);

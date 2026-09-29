@@ -705,6 +705,24 @@
 
 <!-- ══ PWA Service Worker Registration ══ -->
 <script>
+  /* إعادة التحميل بعد 60 ثانية بلا أي لمس، وبلا نافذة/لعبة مفتوحة */
+  var _lastUserActivity = Date.now();
+  ['touchstart', 'pointerdown', 'wheel', 'keydown'].forEach(function (ev) {
+    window.addEventListener(ev, function () { _lastUserActivity = Date.now(); }, { passive: true, capture: true });
+  });
+  function _reloadWhenIdle() {
+    var IDLE_MS = 60000;
+    var t = setInterval(function () {
+      var busy = document.querySelector(
+        '#product-overlay.active, #review-overlay.active, #qrmenu-overlay.active, ' +
+        '#games-hub.active, #game-overlay.active, #xo-overlay.active');
+      if (!busy && Date.now() - _lastUserActivity >= IDLE_MS) {
+        clearInterval(t);
+        window.location.reload();
+      }
+    }, 5000);
+  }
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
@@ -717,12 +735,11 @@
             const worker = reg.installing;
             worker.addEventListener('statechange', () => {
               if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('[PWA] New version available — reload to update.');
-                // For a kiosk/signage display, auto-reload after a delay
-                setTimeout(() => {
-                  worker.postMessage('SKIP_WAITING');
-                  window.location.reload();
-                }, 5000);
+                console.log('[PWA] New version available — reload when idle.');
+                worker.postMessage('SKIP_WAITING');
+                // شاشة عرض: أعد التحميل لتطبيق التحديث — لكن فقط عندما لا يستخدمها
+                // أحد (كانت تُعاد بعد 5 ثوانٍ حتى لو كان العميل يتصفح المنيو)
+                _reloadWhenIdle();
               }
             });
           });

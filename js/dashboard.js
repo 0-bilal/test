@@ -90,15 +90,15 @@ const _key = (catId, nameAr) => catId + '||' + nameAr;
 ════════════════════════════════════════════════ */
 function loadSettings() {
   try {
-    _hiddenItems    = new Set(JSON.parse(sessionStorage.getItem(SS_ITEMS)    || '[]'));
-    _hiddenSlides   = new Set(JSON.parse(sessionStorage.getItem(SS_SLIDES)   || '[]').map(String));
-    _hiddenVariants = new Set(JSON.parse(sessionStorage.getItem(SS_VARIANTS) || '[]'));
-    _discountHidden = sessionStorage.getItem(SS_DISCOUNT) === 'true';
-    _phoneHidden    = sessionStorage.getItem(SS_PHONE)    === 'true';
-    _gamesHidden    = sessionStorage.getItem(SS_GAMES)   === 'true';
-    _qrmenuHidden   = sessionStorage.getItem(SS_QRMENU) === 'true';
-    _langBtnHidden  = sessionStorage.getItem(SS_LANGBTN) === 'true';
-    _mealPriceHidden = sessionStorage.getItem(SS_MEALPRICE) === 'true';
+    _hiddenItems    = new Set(JSON.parse(localStorage.getItem(SS_ITEMS)    || '[]'));
+    _hiddenSlides   = new Set(JSON.parse(localStorage.getItem(SS_SLIDES)   || '[]').map(String));
+    _hiddenVariants = new Set(JSON.parse(localStorage.getItem(SS_VARIANTS) || '[]'));
+    _discountHidden = localStorage.getItem(SS_DISCOUNT) === 'true';
+    _phoneHidden    = localStorage.getItem(SS_PHONE)    === 'true';
+    _gamesHidden    = localStorage.getItem(SS_GAMES)   === 'true';
+    _qrmenuHidden   = localStorage.getItem(SS_QRMENU) === 'true';
+    _langBtnHidden  = localStorage.getItem(SS_LANGBTN) === 'true';
+    _mealPriceHidden = localStorage.getItem(SS_MEALPRICE) === 'true';
     _badges         = JSON.parse(localStorage.getItem(LS_BADGES) || '{}');
     try { _tempHide = JSON.parse(localStorage.getItem(LS_TEMP_HIDE) || '{}'); } catch { _tempHide = {}; }
     _scrollSkip = new Set(JSON.parse(localStorage.getItem(LS_SCROLL_SKIP) || '[]'));
@@ -339,8 +339,14 @@ window.togglePinnedSlide = togglePinnedSlide;
 /* ════════════════════════════════════════════════
    تبويب: المنتجات
 ════════════════════════════════════════════════ */
+/* الوقت بساعة خادم Firebase (موحّد بين الأجهزة) إن توفّر */
+function _dashNow() {
+  return (window.DuoSync && typeof window.DuoSync.serverNow === 'function')
+    ? window.DuoSync.serverNow() : Date.now();
+}
+
 function renderProductsTab(body) {
-  const now = Date.now();
+  const now = _dashNow();
   let html = '';
   menuCategories.forEach(cat => {
     const visCount  = cat.items.filter(it => !_hiddenItems.has(_key(cat.id, it.nameAr))).length;
@@ -1056,8 +1062,7 @@ function exportSettings() {
     const k = localStorage.key(i);
     if (k?.startsWith('duo_')) data.ls[k] = localStorage.getItem(k);
   }
-  const ssKeys = [SS_ITEMS, SS_SLIDES, SS_DISCOUNT, SS_PHONE, SS_GAMES, SS_QRMENU, SS_LANGBTN, SS_MEALPRICE, SS_VARIANTS];
-  ssKeys.forEach(k => { const v = sessionStorage.getItem(k); if (v !== null) data.ss[k] = v; });
+  // (مفاتيح الإخفاء أصبحت في localStorage — تُصدَّر ضمن data.ls أعلاه)
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
@@ -1076,7 +1081,7 @@ function importSettings(input) {
       const data = JSON.parse(e.target.result);
       if (!data.ls && !data.ss) { toast('ملف غير صالح'); return; }
       Object.entries(data.ls  || {}).forEach(([k, v]) => localStorage.setItem(k, v));
-      Object.entries(data.ss  || {}).forEach(([k, v]) => sessionStorage.setItem(k, v));
+      Object.entries(data.ss  || {}).forEach(([k, v]) => localStorage.setItem(k, v));   // توافق مع ملفات التصدير القديمة
       toast('تم الاستيراد — جارٍ إعادة التحميل…');
       setTimeout(() => window.location.reload(), 1400);
     } catch { toast('خطأ في قراءة الملف'); }
@@ -1283,51 +1288,51 @@ function _syncPush() {
 
 function togglePhone(checked) {
   _phoneHidden = !checked;
-  sessionStorage.setItem(SS_PHONE, String(_phoneHidden));
+  localStorage.setItem(SS_PHONE, String(_phoneHidden));
   _syncPush();
   toast(checked ? 'تم إظهار رقم الهاتف' : 'تم إخفاء رقم الهاتف');
 }
 function toggleDiscount(checked) {
   _discountHidden = !checked;
-  sessionStorage.setItem(SS_DISCOUNT, String(_discountHidden));
+  localStorage.setItem(SS_DISCOUNT, String(_discountHidden));
   _syncPush();
   toast(checked ? 'تم إظهار زر الخصم' : 'تم إخفاء زر الخصم');
 }
 function toggleGames(checked) {
   _gamesHidden = !checked;
-  sessionStorage.setItem(SS_GAMES, String(_gamesHidden));
+  localStorage.setItem(SS_GAMES, String(_gamesHidden));
   _syncPush();
   toast(checked ? 'تم إظهار زر الألعاب' : 'تم إخفاء زر الألعاب');
 }
 function toggleQRMenu(checked) {
   _qrmenuHidden = !checked;
-  sessionStorage.setItem(SS_QRMENU, String(_qrmenuHidden));
+  localStorage.setItem(SS_QRMENU, String(_qrmenuHidden));
   _syncPush();
   toast(checked ? 'تم إظهار زر منيو الجوال' : 'تم إخفاء زر منيو الجوال');
 }
 function toggleLangBtn(checked) {
   _langBtnHidden = !checked;
-  sessionStorage.setItem(SS_LANGBTN, String(_langBtnHidden));
+  localStorage.setItem(SS_LANGBTN, String(_langBtnHidden));
   _syncPush();
   toast(checked ? 'تم إظهار زر ترجمة المنيو' : 'تم إخفاء زر ترجمة المنيو');
 }
 function toggleMealPrice(checked) {
   _mealPriceHidden = !checked;
-  sessionStorage.setItem(SS_MEALPRICE, String(_mealPriceHidden));
+  localStorage.setItem(SS_MEALPRICE, String(_mealPriceHidden));
   _syncPush();
   toast(checked ? 'تم إظهار سعر الوجبة' : 'تم إخفاء سعر الوجبة');
 }
 function toggleSlide(idx, checked) {
   if (checked) _hiddenSlides.delete(String(idx));
   else         _hiddenSlides.add(String(idx));
-  sessionStorage.setItem(SS_SLIDES, JSON.stringify([..._hiddenSlides]));
+  localStorage.setItem(SS_SLIDES, JSON.stringify([..._hiddenSlides]));
   _syncPush();
   renderSlidesTab($('dash-body'));
 }
 function toggleItem(key, checked) {
   if (checked) _hiddenItems.delete(key);
   else         _hiddenItems.add(key);
-  sessionStorage.setItem(SS_ITEMS, JSON.stringify([..._hiddenItems]));
+  localStorage.setItem(SS_ITEMS, JSON.stringify([..._hiddenItems]));
   _syncPush();
   // تحديث العداد
   const cat = menuCategories.find(c => c.items.some(it => _key(c.id, it.nameAr) === key));
@@ -1340,7 +1345,7 @@ function toggleItem(key, checked) {
 function toggleVariant(vkey, checked) {
   if (checked) _hiddenVariants.delete(vkey);
   else         _hiddenVariants.add(vkey);
-  sessionStorage.setItem(SS_VARIANTS, JSON.stringify([..._hiddenVariants]));
+  localStorage.setItem(SS_VARIANTS, JSON.stringify([..._hiddenVariants]));
   _syncPush();
 }
 function setBadge(key, badge, btn) {
@@ -1354,7 +1359,7 @@ function setBadge(key, badge, btn) {
 }
 /* ── إخفاء مؤقت ── */
 function setTempHide(key, hours) {
-  _tempHide[key] = Date.now() + hours * 3600000;
+  _tempHide[key] = _dashNow() + hours * 3600000;   // بساعة الخادم الموحّدة
   localStorage.setItem(LS_TEMP_HIDE, JSON.stringify(_tempHide));
   _syncPush();
   renderProductsTab($('dash-body'));
@@ -1958,8 +1963,9 @@ function toast(msg) {
 }
 
 /* تطبيق الإعدادات المشتركة (القادمة من الجهاز الآخر) على لوحة التحكم */
-function _applyRemoteToDashboard(v) {
+function _applyRemoteToDashboard(v, opts) {
   if (!v || typeof v !== 'object') return;
+  const skipRender = !!(opts && opts.skipRender);
   try {
     _hiddenItems    = new Set(v.hiddenItems    || []);
     _hiddenSlides   = new Set((v.hiddenSlides  || []).map(String));
@@ -1978,15 +1984,15 @@ function _applyRemoteToDashboard(v) {
     if (v.itemDuration    !== undefined) _itemDuration    = parseInt(v.itemDuration,    10) || 3500;
     if (v.pauseDuration   !== undefined) _pauseDuration   = parseInt(v.pauseDuration,   10) || 12000;
     if (v.overlayDuration !== undefined) _overlayDuration = parseInt(v.overlayDuration, 10) || 8000;
-    sessionStorage.setItem(SS_ITEMS,    JSON.stringify([..._hiddenItems]));
-    sessionStorage.setItem(SS_SLIDES,   JSON.stringify([..._hiddenSlides]));
-    sessionStorage.setItem(SS_VARIANTS, JSON.stringify([..._hiddenVariants]));
-    sessionStorage.setItem(SS_DISCOUNT, String(_discountHidden));
-    sessionStorage.setItem(SS_PHONE,    String(_phoneHidden));
-    sessionStorage.setItem(SS_GAMES,    String(_gamesHidden));
-    sessionStorage.setItem(SS_QRMENU,  String(_qrmenuHidden));
-    sessionStorage.setItem(SS_LANGBTN, String(_langBtnHidden));
-    sessionStorage.setItem(SS_MEALPRICE, String(_mealPriceHidden));
+    localStorage.setItem(SS_ITEMS,    JSON.stringify([..._hiddenItems]));
+    localStorage.setItem(SS_SLIDES,   JSON.stringify([..._hiddenSlides]));
+    localStorage.setItem(SS_VARIANTS, JSON.stringify([..._hiddenVariants]));
+    localStorage.setItem(SS_DISCOUNT, String(_discountHidden));
+    localStorage.setItem(SS_PHONE,    String(_phoneHidden));
+    localStorage.setItem(SS_GAMES,    String(_gamesHidden));
+    localStorage.setItem(SS_QRMENU,  String(_qrmenuHidden));
+    localStorage.setItem(SS_LANGBTN, String(_langBtnHidden));
+    localStorage.setItem(SS_MEALPRICE, String(_mealPriceHidden));
     localStorage.setItem(LS_BADGES,            JSON.stringify(_badges));
     localStorage.setItem(LS_TEMP_HIDE,         JSON.stringify(_tempHide));
     localStorage.setItem(LS_SCROLL_SKIP,       JSON.stringify([..._scrollSkip]));
@@ -2006,7 +2012,13 @@ function _applyRemoteToDashboard(v) {
       if (_pinnedSlide !== null) localStorage.setItem(LS_PINNED_SLIDE, String(_pinnedSlide));
       else localStorage.removeItem(LS_PINNED_SLIDE);
     }
-    showTab(_activeTab);   // أعد رسم التبويب الحالي بالقيم الجديدة
+    if (!skipRender) {
+      // أعد رسم التبويب الحالي بالقيم الجديدة مع الحفاظ على موضع السكرول
+      const body = $('dash-body');
+      const st = body ? body.scrollTop : 0;
+      showTab(_activeTab);
+      if (body) body.scrollTop = st;
+    }
   } catch (e) {}
 }
 
@@ -2022,8 +2034,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // تفعيل القفل التلقائي إن كان مضبوطاً
   _setupAutoLock();
 
-  // اجلب الإعدادات المشتركة من الجهاز الآخر (إن كان الربط مفعّلاً)
-  if (window.DuoSync && typeof window.DuoSync.readOnce === 'function') {
-    window.DuoSync.readOnce(v => { if (v) _applyRemoteToDashboard(v); });
+  // استمع باستمرار للإعدادات المشتركة (وليس قراءة واحدة فقط): إن غيّر الكاشير
+  // أو جهاز آخر شيئاً ولوحة التحكم مفتوحة، تبقى قيمها محدّثة — وإلا كانت
+  // تكتب لاحقاً حالة قديمة فوق التغيير وتُعيد المنتجات المخفية للظهور.
+  if (window.DuoSync && typeof window.DuoSync.listen === 'function') {
+    window.DuoSync.listen(v => {
+      // لا تُعِد رسم التبويب والمستخدم يكتب في حقل نصي (يضيع ما يكتبه)
+      const ae = document.activeElement;
+      const typing = ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && ae.type !== 'checkbox' && ae.type !== 'range';
+      _applyRemoteToDashboard(v, { skipRender: typing });
+    });
   }
 });

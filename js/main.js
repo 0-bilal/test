@@ -13,6 +13,15 @@
 document.addEventListener('gesturestart',  e => e.preventDefault(), { passive: false });
 document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
 document.addEventListener('gestureend',    e => e.preventDefault(), { passive: false });
+
+/* ══ منع قائمة الضغط المطوّل (نسخ / مشاركة / بحث جوجل / حفظ الصورة) ══ */
+document.addEventListener('contextmenu', e => {
+  if (!e.target.closest('input, textarea, [contenteditable="true"]')) e.preventDefault();
+});
+document.addEventListener('selectstart', e => {
+  if (!e.target.closest?.('input, textarea, [contenteditable="true"]')) e.preventDefault();
+});
+document.addEventListener('dragstart', e => e.preventDefault());
 /* ══════════════════════════════════════════ */
 
 /* ── Config ── */

@@ -1966,8 +1966,12 @@ let _statusDebounce = null;
 function _tvImgDefaults() {
   return {
     phone: true, hours: true, address: true, social: true, qr: true,
-    hoursText: restaurantInfo.workingHours || '',
-    daysText:  restaurantInfo.workingDays  || '',
+    hoursText:     restaurantInfo.workingHours || '',
+    daysText:      restaurantInfo.workingDays  || '',
+    phoneText:     restaurantInfo.phone        || '',
+    addressText:   restaurantInfo.address      || '',
+    instagramText: (restaurantInfo.instagram   || '').replace(/@/g, ''),
+    tiktokText:    (restaurantInfo.tiktok      || '').replace(/@/g, ''),
   };
 }
 function _tvImgSaved() {
@@ -2033,9 +2037,9 @@ function renderStatusImageTab(body) {
     <div class="card">
       <div class="card-title"><i class="fa-solid fa-sliders"></i> عناصر أسفل الصورة</div>
       ${_tvImgToggleRow('qr',      'fa-solid fa-qrcode',     'باركود منيو الجوال', 'يظهر أسفل يسار الصورة مع «امسح لمنيو الجوال»', o.qr)}
-      ${_tvImgToggleRow('phone',   'fa-solid fa-phone',      'رقم الهاتف',         `<bdi dir="ltr">${restaurantInfo.phone || ''}</bdi>`, o.phone)}
+      ${_tvImgToggleRow('phone',   'fa-solid fa-phone',      'رقم الهاتف',         'يُعدَّل من «معلومات التواصل» بالأسفل', o.phone)}
       ${_tvImgToggleRow('hours',   'fa-solid fa-clock',      'أوقات العمل',        'النص المكتوب بالأسفل', o.hours)}
-      ${_tvImgToggleRow('address', 'fa-solid fa-location-dot','عنوان المطعم',      restaurantInfo.address || '', o.address)}
+      ${_tvImgToggleRow('address', 'fa-solid fa-location-dot','عنوان المطعم',      'يُعدَّل من «معلومات التواصل» بالأسفل', o.address)}
       ${_tvImgToggleRow('social',  'fa-brands fa-instagram',  'حسابات التواصل',    'انستقرام وتيك توك', o.social)}
     </div>
     <div class="card">
@@ -2054,6 +2058,36 @@ function renderStatusImageTab(body) {
       </div>
       <button class="btn-reset tvimg-reset" onclick="tvImgResetHours()">
         <i class="fa-solid fa-rotate-left"></i> استرجاع الأوقات الافتراضية
+      </button>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-address-card"></i> معلومات التواصل في الصورة</div>
+      <div class="tvimg-fields">
+        <div class="field">
+          <label>رقم الهاتف</label>
+          <input type="text" class="tvimg-input tvimg-input--ltr" id="tvimg-phoneText" value="${esc(o.phoneText)}"
+                 inputmode="tel" placeholder="059 301 1999" oninput="tvImgSetText('phoneText', this.value)">
+        </div>
+        <div class="field">
+          <label>عنوان المطعم</label>
+          <input type="text" class="tvimg-input" id="tvimg-addressText" value="${esc(o.addressText)}"
+                 placeholder="مكه - حي الشوقية" oninput="tvImgSetText('addressText', this.value)">
+        </div>
+      </div>
+      <div class="tvimg-fields">
+        <div class="field">
+          <label>انستقرام</label>
+          <input type="text" class="tvimg-input tvimg-input--ltr" id="tvimg-instagramText" value="${esc(o.instagramText)}"
+                 placeholder="duo_burger1" oninput="tvImgSetText('instagramText', this.value)">
+        </div>
+        <div class="field">
+          <label>تيك توك</label>
+          <input type="text" class="tvimg-input tvimg-input--ltr" id="tvimg-tiktokText" value="${esc(o.tiktokText)}"
+                 placeholder="theduoburger" oninput="tvImgSetText('tiktokText', this.value)">
+        </div>
+      </div>
+      <button class="btn-reset tvimg-reset" onclick="tvImgResetContact()">
+        <i class="fa-solid fa-rotate-left"></i> استرجاع المعلومات الافتراضية
       </button>
     </div>`;
   statusImageGenerate();
@@ -2076,6 +2110,14 @@ function tvImgResetHours() {
   if (dy) dy.value = d.daysText;
   statusImageGenerate();
 }
+function tvImgResetContact() {
+  const keys = ['phoneText', 'addressText', 'instagramText', 'tiktokText'];
+  _tvImgSave(Object.fromEntries(keys.map(k => [k, undefined])));
+  const d = _tvImgDefaults();
+  keys.forEach(k => { const el = $('tvimg-' + k); if (el) el.value = d[k]; });
+  statusImageGenerate();
+}
+window.tvImgResetContact = tvImgResetContact;
 window.tvImgSet = tvImgSet;
 window.tvImgSetText = tvImgSetText;
 window.tvImgResetHours = tvImgResetHours;

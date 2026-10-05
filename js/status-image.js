@@ -329,19 +329,19 @@
 
   /* ── الهيدر — نفس .menu-header ── */
   function _drawHeader(ctx, info, logo) {
-    const hh = 258;
+    const hh = 168;               // هيدر مضغوط — مساحة أكبر للمنتجات
     const g = ctx.createLinearGradient(W, 0, 0, hh);
     g.addColorStop(0, '#1c0005'); g.addColorStop(.5, '#0d0000'); g.addColorStop(1, '#000');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, hh);
 
-    const rg = ctx.createRadialGradient(W - 40, 30, 0, W - 40, 30, 380);
+    const rg = ctx.createRadialGradient(W - 40, 20, 0, W - 40, 20, 280);
     rg.addColorStop(0, C.redGlow); rg.addColorStop(1, 'rgba(190,30,45,0)');
     ctx.fillStyle = rg; ctx.fillRect(0, 0, W, hh);
 
     // الشعار في دائرة بإطار أحمر
-    const d = 164, cx = W - PAD - d / 2, cy = 128;
+    const d = 112, cx = W - PAD - d / 2, cy = hh / 2 - 1;
     ctx.save();
-    ctx.shadowColor = C.redGlow; ctx.shadowBlur = 40;
+    ctx.shadowColor = C.redGlow; ctx.shadowBlur = 28;
     ctx.beginPath(); ctx.arc(cx, cy, d / 2 + 4, 0, Math.PI * 2);
     ctx.fillStyle = C.red; ctx.fill();
     ctx.restore();
@@ -349,22 +349,22 @@
     ctx.beginPath(); ctx.arc(cx, cy, d / 2 - 1, 0, Math.PI * 2); ctx.clip();
     ctx.fillStyle = C.s3; ctx.fillRect(cx - d / 2, cy - d / 2, d, d);
     if (logo) ctx.drawImage(logo, cx - d / 2, cy - d / 2, d, d);
-    else _icon(ctx, 'fa-burger', cx, cy, 70, C.red);
+    else _icon(ctx, 'fa-burger', cx, cy, 48, C.red);
     ctx.restore();
 
-    const tr = W - PAD - d - 34;
-    _text(ctx, info.nameAr || '', tr, 112, { weight: 900, size: 66 });
-    _text(ctx, (info.nameEn || '').toUpperCase(), tr, 156, { weight: 400, size: 22, fam: EN, color: C.gray, dir: 'ltr', spacing: 6 });
-    _text(ctx, info.taglineAr || '', tr, 204, { weight: 500, size: 28, color: C.redLt });
+    const tr = W - PAD - d - 26;
+    _text(ctx, info.nameAr || '', tr, 70, { weight: 900, size: 48 });
+    _text(ctx, (info.nameEn || '').toUpperCase(), tr, 100, { weight: 400, size: 16, fam: EN, color: C.gray, dir: 'ltr', spacing: 5 });
+    _text(ctx, info.taglineAr || '', tr, 136, { weight: 500, size: 21, color: C.redLt });
 
     // شارة "المنيو" على اليسار
-    const bw = 170, bh = 64, bx = PAD, by = 74;
+    const bw = 132, bh = 50, bx = PAD, by = hh / 2 - 38;
     ctx.save();
     ctx.shadowColor = C.redGlow; ctx.shadowBlur = 18; ctx.shadowOffsetY = 4;
     _rr(ctx, bx, by, bw, bh, bh / 2); ctx.fillStyle = C.red; ctx.fill();
     ctx.restore();
-    _text(ctx, 'المنيو', bx + bw / 2, by + bh / 2 + 2, { weight: 900, size: 32, align: 'center', base: 'middle' });
-    _text(ctx, 'MENU', bx + bw / 2, by + bh + 32, { weight: 600, size: 18, fam: EN, color: C.gray, align: 'center', dir: 'ltr', spacing: 8 });
+    _text(ctx, 'المنيو', bx + bw / 2, by + bh / 2 + 2, { weight: 900, size: 25, align: 'center', base: 'middle' });
+    _text(ctx, 'MENU', bx + bw / 2, by + bh + 26, { weight: 600, size: 14, fam: EN, color: C.gray, align: 'center', dir: 'ltr', spacing: 8 });
 
     // الحد الأحمر + الشريط المتدرّج
     ctx.fillStyle = C.red; ctx.fillRect(0, hh - 2, W, 2);
@@ -378,17 +378,23 @@
      كل عنصر يمكن إخفاؤه من لوحة التحكم، وارتفاع الفوتر يتبع ما هو ظاهر */
   const QR_BOX = 200, QR_LABEL = 40;
 
+  /* قيمة معدّلة من لوحة التحكم إن وُجدت (حتى لو فارغة)، وإلا قيمة products.js */
+  const _val = (v, def) => (v != null ? String(v) : (def || '')).trim();
+
   function _footerRows(info, f) {
     const rows = [];
-    const phone = f.phoneText || info.phone;
+    const phone = _val(f.phoneText, info.phone);
     if (f.phone && phone) rows.push({ type: 'phone', h: 62, text: phone });
     const hours = (f.hoursText != null ? f.hoursText : info.workingHours) || '';
     const days  = (f.daysText  != null ? f.daysText  : info.workingDays)  || '';
     if (f.hours && (hours || days)) rows.push({ type: 'hours', h: 44, text: [hours, days].filter(Boolean).join(' · ') });
-    if (f.address && info.address) rows.push({ type: 'address', h: 44, text: info.address });
+    const address = _val(f.addressText, info.address);
+    if (f.address && address) rows.push({ type: 'address', h: 44, text: address });
+    const ig = _val(f.instagramText, info.instagram).replace(/@/g, '');
+    const tt = _val(f.tiktokText,    info.tiktok).replace(/@/g, '');
     const social = [];
-    if (f.social && info.instagram) social.push(['instagram', info.instagram.replace(/@/g, '')]);
-    if (f.social && info.tiktok)    social.push(['tiktok',    info.tiktok.replace(/@/g, '')]);
+    if (f.social && ig) social.push(['instagram', ig]);
+    if (f.social && tt) social.push(['tiktok',    tt]);
     if (social.length) rows.push({ type: 'social', h: 44, items: social });
     if (info.taxNote) rows.push({ type: 'tax', h: 30, text: info.taxNote });
     return rows;

@@ -910,4 +910,6 @@ html, body {
 /* حقول أوقات العمل — نص عربي بمحاذاة يمين */
 .tvimg-fields { display:flex; gap:12px; flex-wrap:wrap; padding-top:8px; }
 .field input.tvimg-input { font-family:var(--ar); font-size:18px; text-align:right; }
+.field input.tvimg-input--ltr { font-family:var(--en); direction:ltr; text-align:left; }
+.tvimg-fields + .tvimg-fields { padding-top:12px; }
 .tvimg-reset { margin-top:14px; }

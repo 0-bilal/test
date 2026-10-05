@@ -1039,9 +1039,16 @@ const QRMENU_OVERLAY_DURATION = 30000;  // 30 ثانية إغلاق تلقائي
 let   _qrmenuTimer = null;
 let   _qrmenuCloseTimer = null;
 
+/* باركود منيو الجوال الخاص بالفرع الحالي (js/branch.js) — فارغ = لا يوجد */
+function _branchQR() {
+  return window.DUO_BRANCH ? (window.DUO_BRANCH.qr || '') : 'images/mobile-menu-qr.png';
+}
+
 function showQRMenuOverlay() {
   const overlay = $('qrmenu-overlay');
-  if (!overlay) return;
+  if (!overlay || !_branchQR()) return;
+  const qrImg = $('qrmenu-qr-img');
+  if (qrImg && qrImg.getAttribute('src') !== _branchQR()) qrImg.src = _branchQR();
 
   // أغلق overlays أخرى إن كانت مفتوحة
   const productOverlay = $('product-overlay');
@@ -1521,7 +1528,7 @@ function applyDevSettings() {
 
   // زر منيو الجوال
   const qrMenuBtn = $('header-qrmenu-btn');
-  if (qrMenuBtn) qrMenuBtn.style.display = _devQRMenuHidden ? 'none' : '';
+  if (qrMenuBtn) qrMenuBtn.style.display = (_devQRMenuHidden || !_branchQR()) ? 'none' : '';
 
   // زر ترجمة المنيو
   const langBtn = $('header-lang-btn');

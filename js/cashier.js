@@ -2056,7 +2056,7 @@ function _renderSettings() {
   </div>`;
 
   /* معلومات الجهاز */
-  const branch   = localStorage.getItem('duo_pair_branch') || 'Branch01';
+  const branch   = localStorage.getItem('duo_pair_branch') || (window.DUO_SYNC_DEFAULT || 'Branch01');
   const platform = navigator.platform || navigator.userAgentData?.platform || '—';
   const ua       = /iPad|iPhone|Android/i.test(navigator.userAgent)
     ? /iPad/i.test(navigator.userAgent) ? 'iPad'
@@ -2346,7 +2346,7 @@ function _updateStats() {
   if (spMaintEl) spMaintEl.classList.toggle('is-on', _maintenanceOn);
 
   /* branch */
-  const branch = localStorage.getItem('duo_pair_branch') || 'Branch01';
+  const branch = localStorage.getItem('duo_pair_branch') || (window.DUO_SYNC_DEFAULT || 'Branch01');
   _setText('sp-branch-txt', branch);
 
   /* sync time */
@@ -2407,7 +2407,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* تفعيل المزامنة */
   if (!localStorage.getItem('duo_pair_branch'))
-    localStorage.setItem('duo_pair_branch', 'Branch01');
+    localStorage.setItem('duo_pair_branch', (window.DUO_SYNC_DEFAULT || 'Branch01'));
   localStorage.setItem('duo_pair_enabled', 'true');
 
   /* تحميل الحالة من Firebase */

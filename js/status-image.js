@@ -497,7 +497,10 @@
 
     // خيارات الفوتر (من لوحة التحكم) — الافتراضي: كل شيء ظاهر
     const f = Object.assign({ phone: true, hours: true, address: true, social: true, qr: true }, opts.footer || {});
-    const qr = f.qr ? await _loadImg(f.qrSrc || 'images/mobile-menu-qr.png') : null;
+    // باركود منيو الجوال الخاص بالفرع (js/branch.js) — فرع بلا باركود لا يظهر له
+    const branchQr = window.DUO_BRANCH ? (window.DUO_BRANCH.qr || '') : 'images/mobile-menu-qr.png';
+    const qrSrc = f.qrSrc || branchQr;
+    const qr = (f.qr && qrSrc) ? await _loadImg(qrSrc) : null;
     const rows = _footerRows(info, f);
     const fh = _footerHeight(rows, qr);
 

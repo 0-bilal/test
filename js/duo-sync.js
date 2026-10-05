@@ -19,7 +19,7 @@ window.DuoSync = (function () {
 
   const fbConfig = window.DUO_FIREBASE_CONFIG || null;
 
-  function branch()  { return (localStorage.getItem('duo_pair_branch') || 'Branch01').trim() || 'Branch01'; }
+  function branch()  { const d = (window.DUO_SYNC_DEFAULT || 'Branch01'); return (localStorage.getItem('duo_pair_branch') || d).trim() || d; }
   function enabled() { return localStorage.getItem('duo_pair_enabled') === 'true'; }
 
   let db = null, ready = false;

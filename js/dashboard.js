@@ -1490,7 +1490,7 @@ function _pairCfg() {
   // احتياطي: الإعداد المضمّن في duo-config.js
   if ((!fb || !fb.databaseURL) && window.DUO_FIREBASE_CONFIG) fb = window.DUO_FIREBASE_CONFIG;
   return {
-    branch:  localStorage.getItem(PAIR.branch)  || 'Branch01',
+    branch:  localStorage.getItem(PAIR.branch)  || (window.DUO_SYNC_DEFAULT || 'Branch01'),
     role:    localStorage.getItem(PAIR.role)    || 'left',
     enabled: localStorage.getItem(PAIR.enabled) === 'true',
     fb:      fb,
@@ -1682,7 +1682,7 @@ function renderPairingTab(body) {
 
 /* معاينة الغرفة/الدور فور التغيير */
 function pairPreview() {
-  const branch = ($('pair-branch')?.value || 'Branch01').trim() || 'Branch01';
+  const branch = ($('pair-branch')?.value || '').trim() || (window.DUO_SYNC_DEFAULT || 'Branch01');
   const role   = document.querySelector('.pair-role--active')?.dataset.role || 'left';
   const my = $('pair-my-id'), pt = $('pair-partner-id');
   if (my) my.textContent = `${branch} · ${_roleLabel(role)}`;
@@ -2036,7 +2036,8 @@ function renderStatusImageTab(body) {
     </div>
     <div class="card">
       <div class="card-title"><i class="fa-solid fa-sliders"></i> عناصر أسفل الصورة</div>
-      ${_tvImgToggleRow('qr',      'fa-solid fa-qrcode',     'باركود منيو الجوال', 'يظهر أسفل يسار الصورة مع «امسح لمنيو الجوال»', o.qr)}
+      ${_tvImgToggleRow('qr',      'fa-solid fa-qrcode',     'باركود منيو الجوال',
+        (window.DUO_BRANCH && !window.DUO_BRANCH.qr) ? 'لا يوجد باركود لهذا الفرع بعد — يُضاف في js/branch.js' : 'يظهر أسفل يسار الصورة مع «امسح لمنيو الجوال»', o.qr)}
       ${_tvImgToggleRow('phone',   'fa-solid fa-phone',      'رقم الهاتف',         'يُعدَّل من «معلومات التواصل» بالأسفل', o.phone)}
       ${_tvImgToggleRow('hours',   'fa-solid fa-clock',      'أوقات العمل',        'النص المكتوب بالأسفل', o.hours)}
       ${_tvImgToggleRow('address', 'fa-solid fa-location-dot','عنوان المطعم',      'يُعدَّل من «معلومات التواصل» بالأسفل', o.address)}
@@ -2264,7 +2265,10 @@ function _applyRemoteToDashboard(v, opts) {
 document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
   const rn = $('dash-rest-name');
-  if (rn && typeof restaurantInfo !== 'undefined') rn.textContent = restaurantInfo.nameEn || restaurantInfo.nameAr || 'DUO';
+  if (rn && typeof restaurantInfo !== 'undefined') {
+    const base = restaurantInfo.nameEn || restaurantInfo.nameAr || 'DUO';
+    rn.textContent = window.DUO_BRANCH ? `${base} — ${window.DUO_BRANCH.nameAr}` : base;
+  }
   showTab('header');
 
   // تفعيل القفل التلقائي إن كان مضبوطاً

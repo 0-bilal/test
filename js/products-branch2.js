@@ -1,7 +1,6 @@
 /**
- * products-branch2.js — منتجات وأسعار الفرع الثاني
- * يُحمَّل عند فتح الموقع بـ ?branch=2 (انظر js/branch.js).
- * عدّل الأسعار والمنتجات هنا فقط — لا يؤثّر على الفرع الأول (js/products.js).
+ * products.js — بيانات مطعم البرجر
+ * عدّل هذا الملف لإضافة منتجاتك الحقيقية
  */
 
 const restaurantInfo = {
@@ -73,7 +72,7 @@ const menuCategories = [
         nameAr:        'دبل ترافل برجر',
         nameEn:        'Double Truffle Burger',
         image:         'images/products/truffle-burger.jpg',
-        price:         26,
+        price:         28,
         mealPrice:     36,
         descriptionAr: 'برجر اسماش دبل 140 غرام لعشاق النكهات العميقة والفريدة، ليقدم مزيجاً لا يُقاوم من المكونات الفاخرة التي تذوب في الفم وتأخذ حواسك إلى مستوى آخر',
         descriptionEn: 'A double smash burger made with 140g of grilled beef for lovers of deep, distinctive flavors — an irresistible blend of premium ingredients that melts in your mouth and takes your senses to another level.',
@@ -106,10 +105,19 @@ const menuCategories = [
     icon: 'fa-bowl-food',
     items: [
       {
-        nameAr:        'بطاطس مبهرة',
+        nameAr:        'بطاطس عاديه',
         nameEn:        'Seasoned Potatoes',
         image:         'images/products/fries.jpg',
         price:         7,
+        calories:      311,
+        descriptionAr: 'بطاطس مقلية ذهبية ببهارات ديو',
+        descriptionEn: 'Golden fried potatoes seasoned with DUO\'s signature spice blend.',
+      },
+      {
+        nameAr:        'بطاطس مبهرة',
+        nameEn:        'Seasoned Potatoes',
+        image:         'images/products/fries.jpg',
+        price:         9,
         calories:      311,
         descriptionAr: 'بطاطس مقلية ذهبية ببهارات ديو',
         descriptionEn: 'Golden fried potatoes seasoned with DUO\'s signature spice blend.',
@@ -149,8 +157,8 @@ const menuCategories = [
         nameAr:        'مشروبات غازية',
         nameEn:        'Soft Drink',
         image:         '',
-        price:         3,
-        variants:      ['كولا', 'كولا دايت', 'كولا زيرو', 'سبرايت'],
+        price:         5,
+        variants:      ['كولا', 'كولا زيرو', 'سبرايت'],
         variantsEn:    ['Cola', 'Diet Cola', 'Zero Cola', 'Sprite'],
       },
       {

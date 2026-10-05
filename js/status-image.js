@@ -207,7 +207,8 @@
 
     if (featured) {
       withImg.forEach(it => blocks.push({ type: 'feat', item: it, h: H_FEAT }));
-      for (let i = 0; i < noImg.length; i += 2) blocks.push({ type: 'rows', items: noImg.slice(i, i + 2), h: H_ROW });
+      // الإضافات (بلا صورة) بعرض كامل مثل بطاقات البرجر فوقها
+      noImg.forEach(it => blocks.push({ type: 'rows', items: [it], cols: 1, h: H_ROW }));
     } else if (allImg && items.length <= 3) {
       blocks.push({ type: 'tiles', items, h: H_TILE });
     } else {
@@ -301,11 +302,11 @@
   }
 
   function _drawRows(ctx, b, x, y, w, imgs, opts) {
-    const g = 14, n = 2;
-    const rw = (w - g) / n, h = b.h;
+    const g = 14, n = b.cols || 2;
+    const rw = (w - g * (n - 1)) / n, h = b.h;
     b.items.forEach((it, i) => {
       const rx = x + w - (i + 1) * rw - i * g;
-      _card(ctx, rx, y, rw, h, false);
+      _card(ctx, rx, y, rw, h, n === 1);   // بعرض كامل: نفس الخط الأحمر لبطاقات البرجر
       let tr = rx + rw - 18;
       if (it.image) {
         const isz = h - 16;

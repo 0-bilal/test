@@ -150,7 +150,7 @@ const TAB_TITLES = {
   screen:   'ضبط الشاشة',
   pairing:  'ربط الأجهزة',
   newproducts: 'منتجات جديدة',
-  statusimg:   'صورة الحالة (9:16)',
+  statusimg:   'صورة التلفاز للمنيو (9:16)',
 };
 let _activeTab = 'header';
 
@@ -1954,47 +1954,131 @@ function pairTest(btn) {
 window.pairTest = pairTest;
 
 /* ════════════════════════════════════════════════
-   صورة الحالة 9:16 — كل المنتجات في صورة واحدة بهوية المنيو
+   صورة التلفاز للمنيو 9:16 — كل المنتجات في صورة واحدة بهوية المنيو
    (الرسم في js/status-image.js)
 ════════════════════════════════════════════════ */
+const LS_TVIMG_OPTS = 'duo_tvimg_opts';
 let _statusBlob = null;
 let _statusUrl  = null;
+let _statusSeq  = 0;      // آخر طلب توليد — يتجاهل النتائج القديمة عند التعديل السريع
+let _statusDebounce = null;
+
+function _tvImgDefaults() {
+  return {
+    phone: true, hours: true, address: true, social: true, qr: true,
+    hoursText: restaurantInfo.workingHours || '',
+    daysText:  restaurantInfo.workingDays  || '',
+  };
+}
+function _tvImgSaved() {
+  try { return JSON.parse(localStorage.getItem(LS_TVIMG_OPTS) || '{}') || {}; } catch (e) { return {}; }
+}
+function _tvImgOpts() {
+  return Object.assign(_tvImgDefaults(), _tvImgSaved());
+}
+/* يُخزَّن ما غيّره المستخدم فقط — القيم غير المعدّلة تتبع products.js دائماً */
+function _tvImgSave(patch) {
+  const saved = Object.assign(_tvImgSaved(), patch);
+  Object.keys(saved).forEach(k => { if (saved[k] === undefined) delete saved[k]; });
+  try { localStorage.setItem(LS_TVIMG_OPTS, JSON.stringify(saved)); } catch (e) {}
+}
+
+function _tvImgToggleRow(key, icon, label, hint, on) {
+  return `
+      <label class="row">
+        <div class="row-icon"><i class="${icon}"></i></div>
+        <div class="row-label">${label}<small>${hint}</small></div>
+        <span class="toggle">
+          <input type="checkbox" ${on ? 'checked' : ''} onchange="tvImgSet('${key}', this.checked)">
+          <span class="slider"></span>
+        </span>
+      </label>`;
+}
 
 function renderStatusImageTab(body) {
+  const o = _tvImgOpts();
+  const esc = v => String(v || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   body.innerHTML = `
     <div class="screen-note">
       <i class="fa-solid fa-circle-info"></i>
       <div>
-        <strong>صورة لحالة الواتساب / الستوري بمقاس 9:16 <bdi dir="ltr">(1080×1920)</bdi></strong>
-        تُولَّد تلقائياً من منتجات المنيو وأسعارها الحالية بنفس ألوان وخطوط المنيو.
-        المنتجات المخفية من تبويب «المنتجات» لا تظهر في الصورة، وسعر الوجبة يتبع إعداد إخفائه.
+        <strong>صورة التلفاز للمنيو بمقاس 9:16 <bdi dir="ltr">(1080×1920)</bdi></strong>
+        تُولَّد تلقائياً من منتجات المنيو وأسعارها الحالية بنفس ألوان وخطوط المنيو — للتلفاز العمودي
+        أو حالة الواتساب. المنتجات المخفية من تبويب «المنتجات» لا تظهر، وسعر الوجبة يتبع إعداد إخفائه.
       </div>
     </div>
     <div class="card">
-      <div class="card-title"><i class="fa-solid fa-mobile-screen"></i> معاينة الصورة</div>
+      <div class="card-title"><i class="fa-solid fa-tv"></i> معاينة الصورة</div>
       <div class="status-img-wrap">
         <div class="status-img-preview" id="status-img-preview">
           <div class="status-img-loading"><i class="fa-solid fa-spinner fa-spin"></i> جاري تجهيز الصورة…</div>
         </div>
         <div class="status-img-actions">
-          <button class="btn-auto status-img-share" id="status-img-share" onclick="statusImageShare()" disabled>
-            <i class="fa-brands fa-whatsapp"></i> مشاركة الصورة
-          </button>
           <button class="btn-apply" id="status-img-save" onclick="statusImageDownload()" disabled>
-            <i class="fa-solid fa-download"></i> حفظ الصورة
+            <i class="fa-solid fa-download"></i> تحميل الصورة
+          </button>
+          <button class="btn-auto status-img-share" id="status-img-share" onclick="statusImageShare()" disabled>
+            <i class="fa-solid fa-share-from-square"></i> مشاركة الصورة
           </button>
           <button class="btn-reset" onclick="statusImageGenerate()">
             <i class="fa-solid fa-rotate"></i> تحديث
           </button>
           <p class="pair-adv-note">
-            على الآيباد: اضغط «مشاركة الصورة» ثم اختر واتساب ← حالتي، أو «حفظ الصورة» لحفظها في الصور.
-            يمكنك أيضاً الضغط مطوّلاً على المعاينة واختيار «حفظ في الصور».
+            «تحميل الصورة» يحفظها بصيغة PNG بدقة 1080×1920. على الآيباد يمكنك أيضاً الضغط مطوّلاً
+            على المعاينة واختيار «حفظ في الصور»، أو «مشاركة الصورة» لإرسالها لواتساب أو غيره.
           </p>
         </div>
       </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-sliders"></i> عناصر أسفل الصورة</div>
+      ${_tvImgToggleRow('qr',      'fa-solid fa-qrcode',     'باركود منيو الجوال', 'يظهر أسفل يسار الصورة مع «امسح لمنيو الجوال»', o.qr)}
+      ${_tvImgToggleRow('phone',   'fa-solid fa-phone',      'رقم الهاتف',         `<bdi dir="ltr">${restaurantInfo.phone || ''}</bdi>`, o.phone)}
+      ${_tvImgToggleRow('hours',   'fa-solid fa-clock',      'أوقات العمل',        'النص المكتوب بالأسفل', o.hours)}
+      ${_tvImgToggleRow('address', 'fa-solid fa-location-dot','عنوان المطعم',      restaurantInfo.address || '', o.address)}
+      ${_tvImgToggleRow('social',  'fa-brands fa-instagram',  'حسابات التواصل',    'انستقرام وتيك توك', o.social)}
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-clock"></i> أوقات العمل في الصورة</div>
+      <div class="tvimg-fields">
+        <div class="field">
+          <label>الساعات</label>
+          <input type="text" class="tvimg-input" id="tvimg-hours" value="${esc(o.hoursText)}"
+                 placeholder="02:00 م – 03:00 ص" oninput="tvImgSetText('hoursText', this.value)">
+        </div>
+        <div class="field">
+          <label>الأيام</label>
+          <input type="text" class="tvimg-input" id="tvimg-days" value="${esc(o.daysText)}"
+                 placeholder="طوال أيام الأسبوع" oninput="tvImgSetText('daysText', this.value)">
+        </div>
+      </div>
+      <button class="btn-reset tvimg-reset" onclick="tvImgResetHours()">
+        <i class="fa-solid fa-rotate-left"></i> استرجاع الأوقات الافتراضية
+      </button>
     </div>`;
   statusImageGenerate();
 }
+
+function tvImgSet(key, on) {
+  _tvImgSave({ [key]: !!on });
+  statusImageGenerate();
+}
+function tvImgSetText(key, val) {
+  _tvImgSave({ [key]: val });
+  clearTimeout(_statusDebounce);
+  _statusDebounce = setTimeout(statusImageGenerate, 400);
+}
+function tvImgResetHours() {
+  const d = _tvImgDefaults();
+  _tvImgSave({ hoursText: undefined, daysText: undefined });
+  const h = $('tvimg-hours'), dy = $('tvimg-days');
+  if (h) h.value = d.hoursText;
+  if (dy) dy.value = d.daysText;
+  statusImageGenerate();
+}
+window.tvImgSet = tvImgSet;
+window.tvImgSetText = tvImgSetText;
+window.tvImgResetHours = tvImgResetHours;
 
 function _statusIsHidden(catId, item, variant) {
   const k = _key(catId, item.nameAr);
@@ -2007,27 +2091,33 @@ function _statusIsHidden(catId, item, variant) {
 async function statusImageGenerate() {
   const prev = $('status-img-preview');
   if (!prev || !window.DuoStatusImage) return;
+  const seq = ++_statusSeq;
   ['status-img-share', 'status-img-save'].forEach(id => { const b = $(id); if (b) b.disabled = true; });
   try {
+    const o = _tvImgOpts();
     const canvas = await DuoStatusImage.render({
       isHidden: _statusIsHidden,
       mealPriceHidden: _mealPriceHidden,
+      footer: o,
     });
-    _statusBlob = await DuoStatusImage.toBlob(canvas);
-    if (!_statusBlob) throw new Error('toBlob');
+    const blob = await DuoStatusImage.toBlob(canvas);
+    if (!blob) throw new Error('toBlob');
+    if (seq !== _statusSeq) return;          // طلب أحدث قيد التنفيذ
+    _statusBlob = blob;
     if (_statusUrl) URL.revokeObjectURL(_statusUrl);
     _statusUrl = URL.createObjectURL(_statusBlob);
     if (_activeTab !== 'statusimg') return;
-    prev.innerHTML = `<img src="${_statusUrl}" alt="صورة الحالة">`;
+    prev.innerHTML = `<img src="${_statusUrl}" alt="صورة التلفاز للمنيو">`;
     ['status-img-share', 'status-img-save'].forEach(id => { const b = $(id); if (b) b.disabled = false; });
   } catch (e) {
+    if (seq !== _statusSeq) return;
     console.warn('[status-image]', e);
     prev.innerHTML = `<div class="status-img-loading">تعذّر تجهيز الصورة — اضغط «تحديث»</div>`;
   }
 }
 
 function _statusFileName() {
-  return `duo-menu-status-${new Date().toISOString().slice(0, 10)}.png`;
+  return `duo-tv-menu-${new Date().toISOString().slice(0, 10)}.png`;
 }
 
 async function statusImageShare() {

@@ -906,3 +906,8 @@ html, body {
 .status-img-actions button:disabled { opacity:.45; pointer-events:none; }
 .status-img-share { background:#16a34a; }
 .status-img-share:hover { background:#15803d; }
+
+/* حقول أوقات العمل — نص عربي بمحاذاة يمين */
+.tvimg-fields { display:flex; gap:12px; flex-wrap:wrap; padding-top:8px; }
+.field input.tvimg-input { font-family:var(--ar); font-size:18px; text-align:right; }
+.tvimg-reset { margin-top:14px; }

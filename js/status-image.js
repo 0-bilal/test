@@ -1,5 +1,5 @@
 /**
- * status-image.js — توليد صورة "حالة واتساب" بمقاس 9:16 (1080×1920)
+ * status-image.js — «صورة التلفاز للمنيو» بمقاس 9:16 (1080×1920)
  * تعرض كل منتجات المنيو في صورة واحدة بنفس هوية المنيو (أسود + #be1e2d،
  * خط Tajawal/Poppins، بطاقات وشارات أسعار المنيو).
  *
@@ -50,6 +50,7 @@
     clock:    '\uf017',
     location: '\uf3c5',
     info:     '\uf05a',
+    mobile:   '\uf3cf',
     instagram:'\uf16d',
     tiktok:   '\ue07b',
   };
@@ -372,9 +373,33 @@
     return hh + 4;
   }
 
-  /* ── الفوتر: الضريبة + التواصل ── */
-  function _drawFooter(ctx, info) {
-    const fh = 176, fy = H - fh;
+  /* ── الفوتر: التواصل + باركود منيو الجوال ──
+     كل عنصر يمكن إخفاؤه من لوحة التحكم، وارتفاع الفوتر يتبع ما هو ظاهر */
+  const QR_BOX = 200, QR_LABEL = 40;
+
+  function _footerRows(info, f) {
+    const rows = [];
+    const phone = f.phoneText || info.phone;
+    if (f.phone && phone) rows.push({ type: 'phone', h: 62, text: phone });
+    const hours = (f.hoursText != null ? f.hoursText : info.workingHours) || '';
+    const days  = (f.daysText  != null ? f.daysText  : info.workingDays)  || '';
+    if (f.hours && (hours || days)) rows.push({ type: 'hours', h: 44, text: [hours, days].filter(Boolean).join(' · ') });
+    if (f.address && info.address) rows.push({ type: 'address', h: 44, text: info.address });
+    const social = [];
+    if (f.social && info.instagram) social.push(['instagram', info.instagram.replace(/@/g, '')]);
+    if (f.social && info.tiktok)    social.push(['tiktok',    info.tiktok.replace(/@/g, '')]);
+    if (social.length) rows.push({ type: 'social', h: 44, items: social });
+    if (info.taxNote) rows.push({ type: 'tax', h: 30, text: info.taxNote });
+    return rows;
+  }
+
+  function _footerHeight(rows, qr) {
+    const rowsH = rows.reduce((s, r) => s + r.h, 0) + Math.max(0, rows.length - 1) * 10;
+    return Math.max(rowsH, qr ? QR_BOX + QR_LABEL : 0) + 52;
+  }
+
+  function _drawFooter(ctx, rows, qr, fh) {
+    const fy = H - fh;
     const g = ctx.createLinearGradient(0, fy, 0, H);
     g.addColorStop(0, C.bg); g.addColorStop(1, '#140003');
     ctx.fillStyle = g; ctx.fillRect(0, fy, W, fh);
@@ -382,46 +407,60 @@
     lg.addColorStop(0, 'rgba(190,30,45,0)'); lg.addColorStop(.15, C.red); lg.addColorStop(.85, C.red); lg.addColorStop(1, 'rgba(190,30,45,0)');
     ctx.fillStyle = lg; ctx.fillRect(0, fy, W, 2);
 
-    // الصف الأول: الهاتف (شارة) + ساعات العمل
-    const r1 = fy + 50;
-    if (info.phone) {
-      _font(ctx, 700, 30, EN);
-      const pw = ctx.measureText(info.phone).width + (_iconsOk ? 82 : 48), ph = 58;
-      const px = W - PAD - pw;
-      _rr(ctx, px, r1 - ph / 2, pw, ph, ph / 2);
-      ctx.fillStyle = C.redSoft; ctx.fill();
-      ctx.strokeStyle = C.redEdge; ctx.lineWidth = 1.5; ctx.stroke();
-      if (_iconsOk) _icon(ctx, 'phone', W - PAD - 34, r1, 24, C.red);
-      _text(ctx, info.phone, W - PAD - (_iconsOk ? 58 : 24), r1 + 2, { weight: 700, size: 30, fam: EN, dir: 'ltr', base: 'middle' });
-    }
-    if (info.workingHours) {
-      const days = info.workingDays ? ` · ${info.workingDays}` : '';
-      const tw = _text(ctx, info.workingHours + days, PAD, r1 + 2, { weight: 700, size: 24, color: C.white, align: 'left', base: 'middle' });
-      if (_iconsOk) _icon(ctx, 'clock', PAD + tw + 12, r1, 24, C.red, 'left');
+    // باركود منيو الجوال — يسار الفوتر داخل إطار أبيض بحد أحمر
+    let left = PAD;
+    if (qr) {
+      const qx = PAD, qy = fy + 26;
+      ctx.save();
+      ctx.shadowColor = C.redGlow; ctx.shadowBlur = 24;
+      _rr(ctx, qx, qy, QR_BOX, QR_BOX, 20); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = C.red; ctx.lineWidth = 4;
+      _rr(ctx, qx, qy, QR_BOX, QR_BOX, 20); ctx.stroke();
+      const ip = 14;
+      ctx.imageSmoothingEnabled = false;            // حواف الباركود حادة لسهولة المسح
+      ctx.drawImage(qr, qx + ip, qy + ip, QR_BOX - ip * 2, QR_BOX - ip * 2);
+      ctx.imageSmoothingEnabled = true;
+      const ly = qy + QR_BOX + 26;
+      const shift = _iconsOk ? 14 : 0;           // مساحة أيقونة الجوال يمين النص
+      const lw = _text(ctx, 'امسح لمنيو الجوال', qx + QR_BOX / 2 - shift, ly, { weight: 800, size: 21, align: 'center', base: 'middle' });
+      if (_iconsOk) _icon(ctx, 'mobile', qx + QR_BOX / 2 - shift + lw / 2 + 16, ly, 20, C.red);
+      left = PAD + QR_BOX + 36;
     }
 
-    // الصف الثاني: انستقرام / تيك توك / العنوان
-    const r2 = fy + 112;
-    const parts = [];
-    if (info.instagram) parts.push(['instagram', info.instagram.replace(/@/g, '')]);
-    if (info.tiktok)    parts.push(['tiktok',    info.tiktok.replace(/@/g, '')]);
-    if (info.address)   parts.push(['location',  info.address]);
-    const colW = (W - PAD * 2) / Math.max(parts.length, 1);
-    parts.forEach(([ico, label], i) => {
-      const r = W - PAD - colW * i;
-      let tx = r;
-      if (_iconsOk) { _icon(ctx, ico, r - 12, r2, 24, C.red); tx = r - 34; }
-      const isEn = ico !== 'location';
-      _text(ctx, isEn ? '@' + label : label, tx, r2 + 2, {
-        weight: isEn ? 500 : 700, size: isEn ? 20 : 22, fam: isEn ? EN : AR,
-        color: C.lite, dir: isEn ? 'ltr' : 'rtl', base: 'middle', maxW: colW - 50,
-      });
+    // صفوف المعلومات — يمين الفوتر
+    const rowsH = rows.reduce((s, r) => s + r.h, 0) + Math.max(0, rows.length - 1) * 10;
+    const contentH = Math.max(rowsH, qr ? QR_BOX + QR_LABEL : 0);
+    let y = fy + 26 + (contentH - rowsH) / 2;
+    const R = W - PAD, maxW = R - left;
+    rows.forEach(r => {
+      const cy = y + r.h / 2;
+      if (r.type === 'phone') {
+        _font(ctx, 700, 32, EN);
+        const pw = ctx.measureText(r.text).width + (_iconsOk ? 86 : 50);
+        _rr(ctx, R - pw, y, pw, r.h, r.h / 2);
+        ctx.fillStyle = C.redSoft; ctx.fill();
+        ctx.strokeStyle = C.redEdge; ctx.lineWidth = 1.5; ctx.stroke();
+        if (_iconsOk) _icon(ctx, 'phone', R - 36, cy, 25, C.red);
+        _text(ctx, r.text, R - (_iconsOk ? 62 : 25), cy + 2, { weight: 700, size: 32, fam: EN, dir: 'ltr', base: 'middle' });
+      } else if (r.type === 'hours' || r.type === 'address') {
+        let tx = R;
+        if (_iconsOk) { _icon(ctx, r.type === 'hours' ? 'clock' : 'location', R - 14, cy, 24, C.red); tx = R - 40; }
+        _text(ctx, r.text, tx, cy + 2, { weight: 700, size: 25, base: 'middle', maxW: tx - left });
+      } else if (r.type === 'social') {
+        let tx = R;
+        r.items.forEach(([ico, label]) => {
+          if (_iconsOk) { _icon(ctx, ico, tx - 14, cy, 24, C.red); tx -= 40; }
+          const tw = _text(ctx, '@' + label, tx, cy + 2, { weight: 500, size: 21, fam: EN, color: C.lite, dir: 'ltr', base: 'middle', maxW: (maxW / r.items.length) - 50 });
+          tx -= tw + 34;
+        });
+      } else if (r.type === 'tax') {
+        let tx = R;
+        if (_iconsOk) { _icon(ctx, 'info', R - 10, cy, 16, C.gray); tx = R - 28; }
+        _text(ctx, r.text, tx, cy + 1, { weight: 500, size: 18, color: C.gray, base: 'middle', maxW: tx - left });
+      }
+      y += r.h + 10;
     });
-
-    // ملاحظة الضريبة
-    if (info.taxNote) {
-      _text(ctx, info.taxNote, W / 2, H - 22, { weight: 500, size: 18, color: C.gray, align: 'center', base: 'alphabetic' });
-    }
   }
 
   /* ════════════════════════════════════════════════
@@ -449,6 +488,12 @@
     await Promise.all([...srcs].map(async s => imgs.set(s, await _loadImg(s))));
     const logo = (await _loadImg(info.logo || 'images/logo.ico')) || (await _loadImg('icons/icon-512.png'));
 
+    // خيارات الفوتر (من لوحة التحكم) — الافتراضي: كل شيء ظاهر
+    const f = Object.assign({ phone: true, hours: true, address: true, social: true, qr: true }, opts.footer || {});
+    const qr = f.qr ? await _loadImg(f.qrSrc || 'images/mobile-menu-qr.png') : null;
+    const rows = _footerRows(info, f);
+    const fh = _footerHeight(rows, qr);
+
     const canvas = opts.canvas || document.createElement('canvas');
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d');
@@ -460,7 +505,7 @@
     // تخطيط المحتوى ثم ملاءمته للمساحة المتاحة
     const blocks = [];
     visible.forEach(({ cat, items }) => blocks.push(..._planCategory(cat, items)));
-    const areaTop = top + 22, areaBot = H - 176 - 18;
+    const areaTop = top + 22, areaBot = H - fh - 18;
     const avail = areaBot - areaTop;
     const need = _blocksHeight(blocks) - GAP;
     const scale = Math.min(1, avail / need);
@@ -482,7 +527,7 @@
     });
     ctx.restore();
 
-    _drawFooter(ctx, info);
+    _drawFooter(ctx, rows, qr, fh);
     return canvas;
   }
 

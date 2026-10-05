@@ -150,6 +150,7 @@ const TAB_TITLES = {
   screen:   'ضبط الشاشة',
   pairing:  'ربط الأجهزة',
   newproducts: 'منتجات جديدة',
+  statusimg:   'صورة الحالة (9:16)',
 };
 let _activeTab = 'header';
 
@@ -178,6 +179,7 @@ function showTab(tab) {
     case 'screen':   renderScreenTab(body);   break;
     case 'pairing':  renderPairingTab(body);  break;
     case 'newproducts': renderNewProductsTab(body); break;
+    case 'statusimg':   renderStatusImageTab(body); break;
   }
 }
 window.showTab = showTab;
@@ -1950,6 +1952,108 @@ function pairTest(btn) {
   }
 }
 window.pairTest = pairTest;
+
+/* ════════════════════════════════════════════════
+   صورة الحالة 9:16 — كل المنتجات في صورة واحدة بهوية المنيو
+   (الرسم في js/status-image.js)
+════════════════════════════════════════════════ */
+let _statusBlob = null;
+let _statusUrl  = null;
+
+function renderStatusImageTab(body) {
+  body.innerHTML = `
+    <div class="screen-note">
+      <i class="fa-solid fa-circle-info"></i>
+      <div>
+        <strong>صورة لحالة الواتساب / الستوري بمقاس 9:16 <bdi dir="ltr">(1080×1920)</bdi></strong>
+        تُولَّد تلقائياً من منتجات المنيو وأسعارها الحالية بنفس ألوان وخطوط المنيو.
+        المنتجات المخفية من تبويب «المنتجات» لا تظهر في الصورة، وسعر الوجبة يتبع إعداد إخفائه.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-mobile-screen"></i> معاينة الصورة</div>
+      <div class="status-img-wrap">
+        <div class="status-img-preview" id="status-img-preview">
+          <div class="status-img-loading"><i class="fa-solid fa-spinner fa-spin"></i> جاري تجهيز الصورة…</div>
+        </div>
+        <div class="status-img-actions">
+          <button class="btn-auto status-img-share" id="status-img-share" onclick="statusImageShare()" disabled>
+            <i class="fa-brands fa-whatsapp"></i> مشاركة الصورة
+          </button>
+          <button class="btn-apply" id="status-img-save" onclick="statusImageDownload()" disabled>
+            <i class="fa-solid fa-download"></i> حفظ الصورة
+          </button>
+          <button class="btn-reset" onclick="statusImageGenerate()">
+            <i class="fa-solid fa-rotate"></i> تحديث
+          </button>
+          <p class="pair-adv-note">
+            على الآيباد: اضغط «مشاركة الصورة» ثم اختر واتساب ← حالتي، أو «حفظ الصورة» لحفظها في الصور.
+            يمكنك أيضاً الضغط مطوّلاً على المعاينة واختيار «حفظ في الصور».
+          </p>
+        </div>
+      </div>
+    </div>`;
+  statusImageGenerate();
+}
+
+function _statusIsHidden(catId, item, variant) {
+  const k = _key(catId, item.nameAr);
+  if (variant != null) return _hiddenVariants.has(k + '||' + variant);
+  if (_hiddenItems.has(k)) return true;
+  const exp = _tempHide[k];
+  return !!(exp && exp > Date.now());
+}
+
+async function statusImageGenerate() {
+  const prev = $('status-img-preview');
+  if (!prev || !window.DuoStatusImage) return;
+  ['status-img-share', 'status-img-save'].forEach(id => { const b = $(id); if (b) b.disabled = true; });
+  try {
+    const canvas = await DuoStatusImage.render({
+      isHidden: _statusIsHidden,
+      mealPriceHidden: _mealPriceHidden,
+    });
+    _statusBlob = await DuoStatusImage.toBlob(canvas);
+    if (!_statusBlob) throw new Error('toBlob');
+    if (_statusUrl) URL.revokeObjectURL(_statusUrl);
+    _statusUrl = URL.createObjectURL(_statusBlob);
+    if (_activeTab !== 'statusimg') return;
+    prev.innerHTML = `<img src="${_statusUrl}" alt="صورة الحالة">`;
+    ['status-img-share', 'status-img-save'].forEach(id => { const b = $(id); if (b) b.disabled = false; });
+  } catch (e) {
+    console.warn('[status-image]', e);
+    prev.innerHTML = `<div class="status-img-loading">تعذّر تجهيز الصورة — اضغط «تحديث»</div>`;
+  }
+}
+
+function _statusFileName() {
+  return `duo-menu-status-${new Date().toISOString().slice(0, 10)}.png`;
+}
+
+async function statusImageShare() {
+  if (!_statusBlob) return;
+  const file = new File([_statusBlob], _statusFileName(), { type: 'image/png' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file] }); }
+    catch (e) { if (e && e.name !== 'AbortError') toast('تعذّرت المشاركة — استخدم «حفظ الصورة»'); }
+  } else {
+    statusImageDownload();
+  }
+}
+
+function statusImageDownload() {
+  if (!_statusUrl) return;
+  const a = document.createElement('a');
+  a.href = _statusUrl;
+  a.download = _statusFileName();
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  toast('تم حفظ الصورة');
+}
+window.statusImageGenerate = statusImageGenerate;
+window.statusImageShare    = statusImageShare;
+window.statusImageDownload = statusImageDownload;
 
 /* ── توست ── */
 let _toastTimer = null;

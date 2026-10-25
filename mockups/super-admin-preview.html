@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المسؤول الأساسي — معاينة</title>
+<!--
+  ════════════════════════════════════════════════════════════════
+  نموذج أولي (Mockup) لشاشة «المسؤول الأساسي» — للمعاينة فقط.
+  لا يتصل بـ Firebase ولا يغيّر شيئاً في الموقع؛ كل التبديلات هنا
+  محلية لتوضيح الشكل والهيكلية قبل التضمين الفعلي في المشروع.
+  ════════════════════════════════════════════════════════════════
+-->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#d4a24c; --gold-dk:#9a7330; --gold-soft:rgba(212,162,76,.12); --gold-edge:rgba(212,162,76,.32);
+  --red:#be1e2d; --red-soft:rgba(190,30,45,.14); --green:#22c55e; --green-soft:rgba(34,197,94,.13);
+  --bg:#08080a; --bg2:#0d0d10; --card:#131316; --card2:#1a1a1e; --line:rgba(255,255,255,.07);
+  --white:#fff; --muted:rgba(255,255,255,.45); --dim:rgba(255,255,255,.28);
+  --ar:'Tajawal',sans-serif; --en:'Poppins',sans-serif; --side-w:260px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+button{border:none;outline:none;cursor:pointer;font-family:inherit;background:none;color:inherit}
+input,textarea,select{font-family:inherit}
+html,body{background:var(--bg);color:var(--white);font-family:var(--ar);-webkit-font-smoothing:antialiased}
+body{min-height:100vh}
+
+/* ── Layout ── */
+.sa{display:flex;min-height:100vh}
+.sa-side{width:var(--side-w);flex-shrink:0;background:linear-gradient(180deg,#151005 0%,var(--bg2) 28%);
+  border-left:1px solid var(--line);padding:22px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.sa-brand{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.sa-brand-ic{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--gold-dk),var(--gold));
+  display:flex;align-items:center;justify-content:center;font-size:19px;color:#1a1204;box-shadow:0 6px 22px rgba(212,162,76,.3)}
+.sa-brand b{display:block;font-size:16px;font-weight:900}
+.sa-brand small{font-size:11.5px;color:var(--muted)}
+.sa-nav{display:flex;flex-direction:column;gap:4px;flex:1;overflow:auto}
+.sa-nav button{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;font-size:14px;font-weight:700;
+  color:var(--muted);text-align:right;transition:.15s}
+.sa-nav button i{width:18px;text-align:center}
+.sa-nav button:hover{background:rgba(255,255,255,.04);color:#fff}
+.sa-nav button.active{background:var(--gold-soft);color:var(--gold);box-shadow:inset -3px 0 0 var(--gold)}
+.sa-nav .cnt{margin-inline-start:auto;font-size:11px;background:var(--red);color:#fff;border-radius:20px;padding:1px 7px;font-family:var(--en)}
+.sa-side-foot{border-top:1px solid var(--line);padding-top:14px;font-size:11.5px;color:var(--dim);line-height:1.7}
+
+.sa-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.sa-top{display:flex;align-items:center;gap:12px;padding:16px 26px;border-bottom:1px solid var(--line);background:rgba(8,8,10,.85);
+  backdrop-filter:blur(10px);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.sa-top h1{font-size:19px;font-weight:900}
+.sa-menu-t{display:none;width:38px;height:38px;border-radius:10px;background:var(--card2)}
+.sa-top-r{margin-inline-start:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.branch-sel{background:var(--card2);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700}
+.live{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--green);background:var(--green-soft);
+  padding:7px 12px;border-radius:20px}
+.live::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 var(--green);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+
+.sa-body{padding:24px 26px 60px;max-width:1150px;width:100%}
+.tab{display:none}.tab.show{display:block;animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── Cards ── */
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.card h3{font-size:15px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:9px}
+.card h3 i{color:var(--gold)}
+.card .sub{font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6}
+.sec-title{font-size:13px;font-weight:800;color:var(--dim);margin:26px 0 12px;letter-spacing:.3px}
+.stat{display:flex;flex-direction:column;gap:6px}
+.stat .k{font-size:12px;color:var(--muted);font-weight:700}
+.stat .v{font-size:26px;font-weight:900;font-family:var(--en)}
+.stat .v.ok{color:var(--green)}.stat .v.bad{color:#f87171}
+.stat .h{font-size:11.5px;color:var(--dim)}
+
+/* ── Toggle rows ── */
+.rows{display:flex;flex-direction:column}
+.row{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:none}
+.row .ic{width:36px;height:36px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0}
+.row .tx{flex:1;min-width:0}
+.row .tx b{display:block;font-size:14px;font-weight:700}
+.row .tx small{font-size:11.5px;color:var(--dim)}
+.row.off .tx b{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(248,113,113,.6)}
+.row.off .ic{color:#f87171;background:var(--red-soft)}
+.sw{position:relative;width:46px;height:26px;flex-shrink:0}
+.sw input{opacity:0;width:0;height:0}
+.sw span{position:absolute;inset:0;border-radius:20px;background:#333;transition:.2s}
+.sw span::before{content:'';position:absolute;width:20px;height:20px;top:3px;right:3px;border-radius:50%;background:#fff;transition:.2s}
+.sw input:checked+span{background:var(--green)}
+.sw input:checked+span::before{transform:translateX(-20px)}
+.pill{font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px}
+.pill.on{background:var(--green-soft);color:var(--green)}.pill.off{background:var(--red-soft);color:#f87171}
+.pill.lock{background:var(--gold-soft);color:var(--gold)}
+
+/* ── Kill switch ── */
+.kill{display:grid;grid-template-columns:1.1fr 1fr;gap:16px}
+.screen-tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.tile{border:1px solid var(--line);background:var(--card2);border-radius:13px;padding:13px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:.15s}
+.tile i{font-size:17px;color:var(--muted)}
+.tile b{font-size:13.5px;font-weight:700;flex:1}
+.tile.off{border-color:rgba(248,113,113,.45);background:var(--red-soft)}
+.tile.off i{color:#f87171}
+label.fl{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:12px 0 6px}
+.inp{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:#fff;padding:10px 12px;font-size:14px}
+textarea.inp{resize:vertical;min-height:70px;line-height:1.6}
+.inp:focus{border-color:var(--gold-edge);outline:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border-radius:11px;font-size:14px;font-weight:800;transition:.15s}
+.btn-gold{background:linear-gradient(135deg,var(--gold-dk),var(--gold));color:#1a1204}
+.btn-red{background:linear-gradient(135deg,#8f1521,var(--red));color:#fff;box-shadow:0 6px 20px rgba(190,30,45,.3)}
+.btn-ghost{background:var(--card2);border:1px solid var(--line);color:#fff}
+.btn:active{transform:scale(.97)}
+.btn-row{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+
+/* معاينة شاشة الإطفاء */
+.preview{border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#000;aspect-ratio:16/10;position:relative}
+.preview-lbl{position:absolute;top:10px;left:10px;font-size:10.5px;background:rgba(255,255,255,.08);padding:3px 9px;border-radius:20px;color:var(--muted);z-index:2}
+.off-screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+  background:radial-gradient(ellipse at center,#1d0508 0%,#050505 70%)}
+.off-screen .lg{width:62px;height:62px;border-radius:18px;background:linear-gradient(135deg,#8f1521,#be1e2d);display:flex;align-items:center;justify-content:center;
+  font-family:var(--en);font-weight:800;font-size:16px;margin-bottom:16px;box-shadow:0 8px 30px rgba(190,30,45,.45)}
+.off-screen h2{font-size:20px;font-weight:900;margin-bottom:8px}
+.off-screen p{font-size:13px;color:var(--muted);max-width:340px;line-height:1.7}
+.off-screen .eta{margin-top:14px;font-size:12px;color:var(--gold);background:var(--gold-soft);padding:5px 12px;border-radius:20px}
+
+/* ── Products ── */
+.toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.toolbar .inp{flex:1;min-width:200px}
+.cat-h{font-size:13px;font-weight:800;color:var(--gold);margin:18px 0 8px;display:flex;align-items:center;gap:8px}
+.cat-h::after{content:'';flex:1;height:1px;background:var(--line)}
+.prods{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.prod{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:10px}
+.prod .th{width:44px;height:44px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;color:var(--dim);flex-shrink:0}
+.prod .tx{flex:1;min-width:0}.prod .tx b{font-size:13.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prod .tx small{font-size:11px;color:var(--dim)}
+.prod.off{opacity:.55;border-color:rgba(248,113,113,.35)}
+
+/* ── Version ── */
+.ver{display:flex;align-items:center;gap:14px;padding:14px;border-radius:13px;background:var(--card2);margin-bottom:10px}
+.ver .vn{font-family:var(--en);font-weight:700;font-size:18px;color:var(--gold)}
+.dev-list .row .tx small{font-family:var(--en)}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.dot.g{background:var(--green)}.dot.y{background:#facc15}.dot.r{background:#f87171}
+
+/* ── Log ── */
+.log .row{align-items:flex-start}
+.log time{font-size:11px;color:var(--dim);font-family:var(--en);white-space:nowrap}
+
+/* ── Note banner ── */
+.note{display:flex;gap:10px;align-items:flex-start;background:var(--gold-soft);border:1px solid var(--gold-edge);border-radius:13px;padding:12px 14px;
+  font-size:12.5px;line-height:1.7;color:#e9d3a6;margin-bottom:18px}
+.note i{color:var(--gold);margin-top:3px}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,30px);opacity:0;background:#1f1f23;border:1px solid var(--line);
+  padding:11px 18px;border-radius:12px;font-size:13.5px;font-weight:700;transition:.25s;z-index:50;display:flex;gap:9px;align-items:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast i{color:var(--green)}
+
+/* ── Responsive ── */
+@media (max-width:980px){.g4{grid-template-columns:repeat(2,1fr)}.kill{grid-template-columns:1fr}.g3{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){
+  .sa-side{position:fixed;right:0;top:0;z-index:20;transform:translateX(100%);transition:.25s;box-shadow:-10px 0 40px rgba(0,0,0,.6)}
+  body.side-open .sa-side{transform:none}
+  .sa-menu-t{display:flex;align-items:center;justify-content:center}
+  .sa-top{padding:12px 16px}.sa-body{padding:18px 16px 50px}
+  .g2,.g3{grid-template-columns:1fr}
+}
+@media (max-width:480px){.g4{grid-template-columns:1fr 1fr}.screen-tiles{grid-template-columns:1fr}.stat .v{font-size:21px}}
+</style>
+</head>
+<body>
+
+<div class="sa">
+  <!-- ══ القائمة الجانبية ══ -->
+  <aside class="sa-side">
+    <div class="sa-brand">
+      <div class="sa-brand-ic"><i class="fa-solid fa-crown"></i></div>
+      <div><b>المسؤول الأساسي</b><small>تحكم كامل بالموقع</small></div>
+    </div>
+    <nav class="sa-nav" id="nav">
+      <button class="active" data-tab="overview"><i class="fa-solid fa-gauge-high"></i>نظرة عامة</button>
+      <button data-tab="power"><i class="fa-solid fa-power-off"></i>تشغيل / إطفاء<span class="cnt" id="cnt-off" hidden>0</span></button>
+      <button data-tab="cashier"><i class="fa-solid fa-cash-register"></i>ميزات الكاشير</button>
+      <button data-tab="dashboard"><i class="fa-solid fa-sliders"></i>إعدادات المنيو</button>
+      <button data-tab="menu"><i class="fa-solid fa-mobile-screen"></i>عناصر المنيو</button>
+      <button data-tab="products"><i class="fa-solid fa-burger"></i>المنتجات</button>
+      <button data-tab="updates"><i class="fa-solid fa-rotate"></i>التحديثات والأجهزة</button>
+      <button data-tab="security"><i class="fa-solid fa-key"></i>الرمز والأمان</button>
+      <button data-tab="log"><i class="fa-solid fa-clock-rotate-left"></i>سجل التغييرات</button>
+    </nav>
+    <div class="sa-side-foot">
+      كل تغيير يُطبَّق <b style="color:var(--green)">فوراً</b> على كل الأجهزة المتصلة دون إعادة تحميل.<br>
+      الجلسة تُقفل تلقائياً بعد ١٠ دقائق خمول.
+    </div>
+  </aside>
+
+  <!-- ══ المحتوى ══ -->
+  <main class="sa-main">
+    <header class="sa-top">
+      <button class="sa-menu-t" onclick="document.body.classList.toggle('side-open')"><i class="fa-solid fa-bars"></i></button>
+      <h1 id="title">نظرة عامة</h1>
+      <div class="sa-top-r">
+        <select class="branch-sel" id="branch">
+          <option value="all">كل الفروع</option>
+          <option value="1">الفرع الأول</option>
+          <option value="2">الفرع الثاني</option>
+        </select>
+        <span class="live">مباشر · متصل</span>
+      </div>
+    </header>
+
+    <div class="sa-body">
+
+      <!-- ═════════ نظرة عامة ═════════ -->
+      <section class="tab show" id="tab-overview">
+        <div class="grid g4">
+          <div class="card stat"><span class="k">حالة الموقع</span><span class="v ok" id="ov-status">يعمل</span><span class="h">كل الشاشات مفعّلة</span></div>
+          <div class="card stat"><span class="k">أجهزة متصلة الآن</span><span class="v">6</span><span class="h">٤ منيو · ٢ كاشير</span></div>
+          <div class="card stat"><span class="k">ميزات مُطفأة</span><span class="v" id="ov-feat">0</span><span class="h">كاشير + لوحة تحكم + منيو</span></div>
+          <div class="card stat"><span class="k">منتجات مخفية</span><span class="v" id="ov-prod">0</span><span class="h">مقفلة من المسؤول</span></div>
+        </div>
+
+        <div class="sec-title">إجراءات سريعة</div>
+        <div class="grid g3">
+          <div class="card">
+            <h3><i class="fa-solid fa-power-off"></i>إطفاء الموقع بالكامل</h3>
+            <p class="sub">يعرض رسالة الإطفاء على كل الشاشات فوراً.</p>
+            <button class="btn btn-red" onclick="go('power')"><i class="fa-solid fa-power-off"></i>الذهاب للإطفاء</button>
+          </div>
+          <div class="card">
+            <h3><i class="fa-solid fa-rotate"></i>فرض تحديث كل الأجهزة</h3>
+            <p class="sub">يجعل كل الأجهزة تحمّل آخر نسخة من الموقع تلقائياً.</p>
+            <button class="btn btn-gold" onclick="forceUpdate()"><i class="fa-solid fa-rotate"></i>تحديث الآن</button>
+          </div>
+          <div class="card">
+            <h3><i class="fa-solid fa-eye-slash"></i>إخفاء منتج</h3>
+            <p class="sub">إخفاء نهائي لا يستطيع الفرع إظهاره من لوحته.</p>
+            <button class="btn btn-ghost" onclick="go('products')"><i class="fa-solid fa-burger"></i>إدارة المنتجات</button>
+          </div>
+        </div>
+
+        <div class="sec-title">آخر التغييرات</div>
+        <div class="card"><div class="rows log" id="log-mini"></div></div>
+      </section>
+
+      <!-- ═════════ تشغيل / إطفاء ═════════ -->
+      <section class="tab" id="tab-power">
+        <div class="note"><i class="fa-solid fa-circle-info"></i>
+          <div>عند إطفاء أي شاشة تظهر عليها رسالة الإطفاء فوراً (بدون تحديث يدوي). عند إعادة التشغيل تعود الشاشة لعملها تلقائياً.
+          هذه الشاشة نفسها (المسؤول الأساسي) لا تُطفأ أبداً.</div></div>
+        <div class="kill">
+          <div class="card">
+            <h3><i class="fa-solid fa-display"></i>الشاشات</h3>
+            <p class="sub">اضغط على الشاشة لإطفائها أو تشغيلها.</p>
+            <div class="screen-tiles" id="tiles"></div>
+
+            <label class="fl">عنوان رسالة الإطفاء</label>
+            <input class="inp" id="msg-title" value="الموقع متوقف مؤقتاً">
+            <label class="fl">نص الرسالة</label>
+            <textarea class="inp" id="msg-body">نعتذر، نقوم حالياً ببعض أعمال الصيانة. سنعود قريباً جداً.</textarea>
+            <label class="fl">موعد العودة (اختياري)</label>
+            <input class="inp" id="msg-eta" placeholder="مثال: الساعة ٤ عصراً" value="">
+            <label class="fl" style="display:flex;align-items:center;gap:10px">
+              <label class="sw"><input type="checkbox" id="auto-on"><span></span></label>
+              تشغيل تلقائي عند موعد محدد
+            </label>
+
+            <div class="btn-row">
+              <button class="btn btn-red" onclick="killAll(true)"><i class="fa-solid fa-power-off"></i>إطفاء الكل</button>
+              <button class="btn btn-ghost" onclick="killAll(false)"><i class="fa-solid fa-play"></i>تشغيل الكل</button>
+            </div>
+          </div>
+          <div>
+            <div class="preview">
+              <span class="preview-lbl">معاينة ما يراه الزبون</span>
+              <div class="off-screen">
+                <div class="lg">DUO</div>
+                <h2 id="pv-title"></h2>
+                <p id="pv-body"></p>
+                <span class="eta" id="pv-eta" hidden></span>
+              </div>
+            </div>
+            <div class="card" style="margin-top:14px">
+              <h3><i class="fa-solid fa-bolt"></i>كيف يصل الإطفاء للأجهزة؟</h3>
+              <p class="sub" style="margin:0">كل شاشة تستمع لمسار <code style="font-family:var(--en);color:var(--gold)">duo/admin/power</code> في Firebase.
+              أي تغيير هنا يصل خلال أقل من ثانية، وتُغطّى الشاشة برسالة الإطفاء. وإذا كان الجهاز غير متصل بالإنترنت يُطبَّق الإطفاء فور عودة الاتصال.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════════ ميزات الكاشير ═════════ -->
+      <section class="tab" id="tab-cashier">
+        <div class="note"><i class="fa-solid fa-circle-info"></i>
+          <div>الميزة المُطفأة تختفي من القائمة الجانبية في شاشة الكاشير ولا يمكن فتحها حتى بالرابط المباشر.</div></div>
+        <div class="grid g2">
+          <div class="card"><h3><i class="fa-solid fa-table-list"></i>تبويبات الكاشير</h3><p class="sub">الأقسام الظاهرة في القائمة الجانبية.</p>
+            <div class="rows" data-group="cashier-tabs"></div></div>
+          <div class="card"><h3><i class="fa-solid fa-hand-pointer"></i>إجراءات داخلية</h3><p class="sub">صلاحيات داخل الأقسام.</p>
+            <div class="rows" data-group="cashier-actions"></div></div>
+        </div>
+      </section>
+
+      <!-- ═════════ إعدادات المنيو (لوحة التحكم) ═════════ -->
+      <section class="tab" id="tab-dashboard">
+        <div class="note"><i class="fa-solid fa-circle-info"></i>
+          <div>هنا تخفي أقسام من <b>لوحة التحكم الخاصة بالمنيو</b> (dashboard). القسم المخفي لا يظهر لمسؤول الفرع.</div></div>
+        <div class="card"><h3><i class="fa-solid fa-sliders"></i>أقسام لوحة التحكم</h3><p class="sub">أطفئ ما لا تريد أن يعدّله الفرع.</p>
+          <div class="rows" data-group="dash-tabs"></div></div>
+      </section>
+
+      <!-- ═════════ عناصر المنيو ═════════ -->
+      <section class="tab" id="tab-menu">
+        <div class="note"><i class="fa-solid fa-lock"></i>
+          <div>العنصر المُطفأ هنا <b>يُقفل</b>: يختفي من شاشة المنيو، ويظهر في لوحة تحكم الفرع رمادياً مع قفل ولا يمكن تفعيله.</div></div>
+        <div class="card"><h3><i class="fa-solid fa-mobile-screen"></i>أزرار وعناصر شاشة المنيو</h3><p class="sub">تُطبَّق على المنيو في التلفاز ومنيو الجوال.</p>
+          <div class="rows" data-group="menu-items"></div></div>
+      </section>
+
+      <!-- ═════════ المنتجات ═════════ -->
+      <section class="tab" id="tab-products">
+        <div class="toolbar">
+          <input class="inp" id="p-search" placeholder="ابحث عن منتج…">
+          <button class="btn btn-ghost" onclick="setAllProds(true)"><i class="fa-solid fa-eye"></i>إظهار الكل</button>
+        </div>
+        <div id="prods"></div>
+      </section>
+
+      <!-- ═════════ التحديثات والأجهزة ═════════ -->
+      <section class="tab" id="tab-updates">
+        <div class="grid g2">
+          <div class="card">
+            <h3><i class="fa-solid fa-code-branch"></i>نسخة الموقع</h3>
+            <p class="sub">عند رفع كود جديد، تكتشف الأجهزة النسخة الجديدة تلقائياً وتتحدّث بهدوء في أول لحظة خمول — بدون ضغط ولا تحديث يدوي.</p>
+            <div class="ver"><i class="fa-solid fa-cloud-arrow-up" style="color:var(--gold);font-size:20px"></i>
+              <div style="flex:1"><small style="color:var(--muted);font-size:11.5px">آخر نسخة منشورة</small><div class="vn" id="ver-now">v45</div></div>
+              <span class="pill on">منشورة</span></div>
+            <label class="fl" style="display:flex;align-items:center;gap:10px">
+              <label class="sw"><input type="checkbox" checked><span></span></label>تحديث تلقائي للأجهزة عند وجود نسخة جديدة</label>
+            <label class="fl" style="display:flex;align-items:center;gap:10px">
+              <label class="sw"><input type="checkbox" checked><span></span></label>انتظار انتهاء الطلب الحالي قبل تحديث الكاشير</label>
+            <div class="btn-row"><button class="btn btn-gold" onclick="forceUpdate()"><i class="fa-solid fa-rotate"></i>فرض التحديث على كل الأجهزة الآن</button></div>
+          </div>
+          <div class="card dev-list">
+            <h3><i class="fa-solid fa-tower-broadcast"></i>الأجهزة المتصلة</h3>
+            <p class="sub">النسخة التي يعمل بها كل جهاز وآخر ظهور.</p>
+            <div class="rows" id="devs"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════════ الأمان ═════════ -->
+      <section class="tab" id="tab-security">
+        <div class="grid g2">
+          <div class="card">
+            <h3><i class="fa-solid fa-crown"></i>رمز المسؤول الأساسي</h3>
+            <p class="sub">رمز منفصل عن رمز لوحة التحكم والكاشير. لا يُحفظ داخل الكود.</p>
+            <label class="fl">الرمز الحالي</label><input class="inp" type="password" placeholder="••••••••">
+            <label class="fl">الرمز الجديد</label><input class="inp" type="password" placeholder="٨ أرقام على الأقل">
+            <div class="btn-row"><button class="btn btn-gold" onclick="toast('تم تغيير رمز المسؤول')"><i class="fa-solid fa-check"></i>حفظ</button></div>
+          </div>
+          <div class="card">
+            <h3><i class="fa-solid fa-key"></i>رمز لوحة التحكم والكاشير</h3>
+            <p class="sub">تغييره من هنا يُطبَّق فوراً على كل الأجهزة، ويُطلب من الجميع إدخال الرمز الجديد.</p>
+            <label class="fl">الرمز الجديد</label><input class="inp" type="password" placeholder="••••••">
+            <div class="btn-row">
+              <button class="btn btn-gold" onclick="toast('تم تحديث الرمز على كل الأجهزة')"><i class="fa-solid fa-check"></i>حفظ وتطبيق</button>
+              <button class="btn btn-ghost" onclick="toast('تم تسجيل خروج كل الأجهزة')"><i class="fa-solid fa-right-from-bracket"></i>تسجيل خروج الجميع</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════════ السجل ═════════ -->
+      <section class="tab" id="tab-log">
+        <div class="card"><div class="rows log" id="log-full"></div></div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span></span></div>
+
+<script>
+/* بيانات المعاينة — مأخوذة من أقسام المشروع الحالية */
+const GROUPS = {
+  'cashier-tabs': [
+    ['products','fa-burger','المنتجات','إظهار/إخفاء المنتجات من الكاشير'],
+    ['slides','fa-images','الشرائح','تثبيت وإخفاء الشرائح'],
+    ['actions','fa-hand-pointer','إجراءات','أوامر فورية لشاشة المنيو'],
+    ['split','fa-scale-balanced','تقسيم الفاتورة',''],
+    ['balance','fa-cash-register','الموازنة',''],
+    ['printing','fa-print','الطباعة','الطابعة الحرارية'],
+    ['devices','fa-tv','الأجهزة','ربط الشاشات'],
+    ['settings','fa-gear','إعدادات',''],
+  ],
+  'cashier-actions': [
+    ['c-hide-prod','fa-eye-slash','إخفاء منتج مؤقتاً',''],
+    ['c-games','fa-gamepad','تشغيل الألعاب على الشاشة',''],
+    ['c-discount','fa-percent','تطبيق خصم',''],
+    ['c-reprint','fa-receipt','إعادة طباعة فاتورة',''],
+    ['c-clear','fa-trash','مسح البيانات المحلية','زر الإعادة لضبط المصنع'],
+    ['c-lang','fa-earth-americas','تغيير اللغة',''],
+  ],
+  'dash-tabs': [
+    ['header','fa-sliders','الهيدر',''],
+    ['slides','fa-images','الشرائح',''],
+    ['products','fa-burger','المنتجات','إظهار وإخفاء وشارات المنتجات'],
+    ['stats','fa-chart-bar','الإحصائيات',''],
+    ['scroll','fa-forward','السكرول','مدة التمرير التلقائي'],
+    ['device','fa-mobile-screen-button','الجهاز',''],
+    ['screen','fa-display','ضبط الشاشة',''],
+    ['pairing','fa-link','ربط الأجهزة','قناة Firebase'],
+    ['newproducts','fa-image','منتجات جديدة',''],
+    ['statusimg','fa-tv','صورة التلفاز',''],
+  ],
+  'menu-items': [
+    ['discount','fa-percent','زر الخصم',''],
+    ['phone','fa-phone','رقم الهاتف',''],
+    ['games','fa-gamepad','الألعاب',''],
+    ['qrmenu','fa-qrcode','باركود منيو الجوال',''],
+    ['langbtn','fa-language','زر تغيير اللغة',''],
+    ['mealprice','fa-tags','سعر الوجبة',''],
+    ['mobile','fa-mobile','منيو الجوال (الموقع كامل)',''],
+  ],
+};
+const PRODUCTS = {
+  'الأطباق الرئيسية': ['دبل ديو برجر','دبل اوريقا برجر','دبل ترافل برجر','إضافة شريحة لحم'],
+  'الأطباق الجانبية': ['بطاطس مبهرة','أضلاع الذرة','تكساس فرايز'],
+  'المشروبات': ['مشروبات غازية','مياه'],
+  'الصوصات': ['صوص ديو','صوص اوريقا','صوص ترافل','صوص جبنه','قطع مخلل','قطع هلابينو'],
+};
+const SCREENS = [
+  ['menu','fa-tv','شاشة المنيو'],['mobile','fa-mobile-screen','منيو الجوال'],
+  ['cashier','fa-cash-register','الكاشير'],['dashboard','fa-sliders','لوحة التحكم'],
+];
+
+const state = { off:new Set(), screensOff:new Set(), prodsOff:new Set(), log:[] };
+const $ = s => document.querySelector(s);
+const branchName = () => $('#branch').selectedOptions[0].text;
+
+/* تبويبات */
+const TITLES = {};
+document.querySelectorAll('#nav button').forEach(b=>{
+  TITLES[b.dataset.tab]=b.childNodes[1].textContent.trim();
+  b.onclick=()=>go(b.dataset.tab);
+});
+function go(t){
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('show',s.id==='tab-'+t));
+  $('#title').textContent=TITLES[t]; document.body.classList.remove('side-open'); scrollTo(0,0);
+}
+
+/* صفوف التبديل */
+function renderGroups(){
+  document.querySelectorAll('[data-group]').forEach(el=>{
+    const g=el.dataset.group;
+    el.innerHTML=GROUPS[g].map(([id,ic,name,hint])=>{
+      const key=g+':'+id, on=!state.off.has(key);
+      return `<div class="row ${on?'':'off'}"><div class="ic"><i class="fa-solid ${ic}"></i></div>
+        <div class="tx"><b>${name}</b>${hint?`<small>${hint}</small>`:''}</div>
+        <span class="pill ${on?'on':'off'}">${on?'مفعّل':'مُطفأ'}</span>
+        <label class="sw"><input type="checkbox" ${on?'checked':''} onchange="toggleFeat('${key}','${name}',this.checked)"><span></span></label></div>`;
+    }).join('');
+  });
+}
+function toggleFeat(key,name,on){ on?state.off.delete(key):state.off.add(key); log(`${on?'تفعيل':'إطفاء'} «${name}»`); renderGroups(); stats(); }
+
+/* الشاشات والإطفاء */
+function renderTiles(){
+  $('#tiles').innerHTML=SCREENS.map(([id,ic,n])=>{const off=state.screensOff.has(id);
+    return `<div class="tile ${off?'off':''}" onclick="toggleScreen('${id}','${n}')"><i class="fa-solid ${ic}"></i><b>${n}</b>
+      <span class="pill ${off?'off':'on'}">${off?'مُطفأة':'تعمل'}</span></div>`}).join('');
+  const n=state.screensOff.size, c=$('#cnt-off'); c.hidden=!n; c.textContent=n;
+}
+function toggleScreen(id,n){ state.screensOff.has(id)?state.screensOff.delete(id):state.screensOff.add(id);
+  log(`${state.screensOff.has(id)?'إطفاء':'تشغيل'} ${n}`); renderTiles(); stats(); }
+function killAll(off){ SCREENS.forEach(([id])=>off?state.screensOff.add(id):state.screensOff.delete(id));
+  log(off?'إطفاء كل الشاشات':'تشغيل كل الشاشات'); renderTiles(); stats(); }
+function preview(){ $('#pv-title').textContent=$('#msg-title').value; $('#pv-body').textContent=$('#msg-body').value;
+  const e=$('#msg-eta').value.trim(); $('#pv-eta').hidden=!e; $('#pv-eta').textContent='نعود '+e; }
+['#msg-title','#msg-body','#msg-eta'].forEach(s=>$(s).addEventListener('input',preview));
+
+/* المنتجات */
+function renderProds(){
+  const q=$('#p-search').value.trim();
+  $('#prods').innerHTML=Object.entries(PRODUCTS).map(([cat,list])=>{
+    const items=list.filter(p=>!q||p.includes(q)); if(!items.length) return '';
+    return `<div class="cat-h">${cat}</div><div class="prods">`+items.map(p=>{const off=state.prodsOff.has(p);
+      return `<div class="prod ${off?'off':''}"><div class="th"><i class="fa-solid fa-utensils"></i></div>
+        <div class="tx"><b>${p}</b><small>${off?'<span class="pill lock"><i class="fa-solid fa-lock"></i> مخفي ومقفل</span>':'ظاهر'}</small></div>
+        <label class="sw"><input type="checkbox" ${off?'':'checked'} onchange="toggleProd('${p}',this.checked)"><span></span></label></div>`}).join('')+'</div>';
+  }).join('');
+}
+function toggleProd(p,on){ on?state.prodsOff.delete(p):state.prodsOff.add(p); log(`${on?'إظهار':'إخفاء'} منتج «${p}»`); renderProds(); stats(); }
+function setAllProds(){ state.prodsOff.clear(); log('إظهار كل المنتجات'); renderProds(); stats(); }
+$('#p-search').addEventListener('input',renderProds);
+
+/* الأجهزة والتحديث */
+const DEVS=[['g','تلفاز المنيو — يسار','الفرع الأول','v45 · الآن'],['g','تلفاز المنيو — يمين','الفرع الأول','v45 · الآن'],
+  ['g','الكاشير','الفرع الأول','v45 · الآن'],['y','تلفاز المنيو','الفرع الثاني','v44 · بانتظار التحديث'],
+  ['g','الكاشير','الفرع الثاني','v45 · قبل دقيقة'],['r','تلفاز احتياطي','الفرع الثاني','v43 · غير متصل منذ ٣ ساعات']];
+function renderDevs(){ $('#devs').innerHTML=DEVS.map(([d,n,b,v])=>`<div class="row"><span class="dot ${d}"></span>
+  <div class="tx"><b>${n}</b><small>${b} · ${v}</small></div></div>`).join(''); }
+function forceUpdate(){ DEVS.forEach(d=>{ if(d[0]==='y'){d[0]='g';d[3]='v45 · الآن';} }); renderDevs(); log('فرض تحديث كل الأجهزة'); toast('تم إرسال أمر التحديث لكل الأجهزة'); }
+
+/* السجل والإحصائيات */
+function log(msg){ const t=new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
+  state.log.unshift({msg,t,b:branchName()}); renderLog(); toast('تم التطبيق على '+branchName()); }
+function renderLog(){
+  const html=l=>l.length?l.map(x=>`<div class="row"><div class="ic"><i class="fa-solid fa-pen"></i></div>
+    <div class="tx"><b>${x.msg}</b><small>${x.b}</small></div><time>${x.t}</time></div>`).join('')
+    :'<div class="row"><div class="tx"><small>لا توجد تغييرات بعد في هذه الجلسة.</small></div></div>';
+  $('#log-mini').innerHTML=html(state.log.slice(0,4)); $('#log-full').innerHTML=html(state.log);
+}
+function stats(){
+  $('#ov-feat').textContent=state.off.size; $('#ov-prod').textContent=state.prodsOff.size;
+  const n=state.screensOff.size, s=$('#ov-status');
+  s.textContent=!n?'يعمل':n===SCREENS.length?'مُطفأ':'جزئي'; s.className='v '+(n?'bad':'ok');
+  s.nextElementSibling.textContent=!n?'كل الشاشات مفعّلة':`${n} من ${SCREENS.length} شاشات مُطفأة`;
+}
+let tt; function toast(m){ const el=$('#toast'); el.querySelector('span').textContent=m; el.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),1800); }
+
+renderGroups(); renderTiles(); renderProds(); renderDevs(); renderLog(); preview(); stats();
+</script>
+</body>
+</html>

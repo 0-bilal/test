@@ -4,7 +4,7 @@
  * Bump CACHE_NAME to force an update on all clients.
  */
 
-const CACHE_NAME = 'duo-menu-v45';
+const CACHE_NAME = 'duo-menu-v46';
 
 /* Core assets cached on install — مسارات نسبية (بلا "/" بادئة) عمداً:
    تُحسَب داخل Service Worker بالنسبة لموقع sw.js نفسه، فتعمل صحيحة سواء
@@ -40,6 +40,7 @@ const PRECACHE = [
   './js/duo-connect.js',
   './js/duo-sync.js',
   './js/duo-auth.js',
+  './js/duo-admin.js',
   './icons/logo.ico',
   './icons/icon.svg',
   './icons/icon-72.png',
@@ -115,6 +116,9 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(request.url);
   const isSameOrigin = url.origin === self.location.origin;
+
+  /* شاشة المسؤول الأساسي لا تُخزَّن أبداً — تُحمَّل من الشبكة دائماً بأحدث نسخة */
+  if (isSameOrigin && /\/(admin\.html|js\/admin\.js|css\/admin\.css)$/.test(url.pathname)) return;
 
   if (isSameOrigin) {
     /* Same-origin: Cache-first (stale-while-revalidate) → Network fallback */

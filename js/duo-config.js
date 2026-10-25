@@ -17,3 +17,8 @@ window.DUO_FIREBASE_CONFIG = {
   appId:             "1:403226496636:web:183fbbb04a0aaa0c4bc3f9",
   measurementId:     "G-S231CYJV4D"
 };
+
+/* حساب «المسؤول الأساسي» في Firebase Authentication (admin.html).
+   الرمز الذي يُكتب في شاشة الدخول هو كلمة مرور هذا الحساب — لا يُحفظ في الكود.
+   خطوات الإعداد: ملف ADMIN-SETUP.md */
+window.DUO_ADMIN_EMAIL = 'admin@duo-burger.app';

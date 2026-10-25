@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "duo": {
+      "admin": {
+        "scopes":       { ".read": true },
+        "update":       { ".read": true },
+        "sessionEpoch": { ".read": true },
+        "log":          { ".read": "auth != null && auth.uid === 'ADMIN_UID'" },
+        ".write": "auth != null && auth.uid === 'ADMIN_UID'"
+      },
+      "$other": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}

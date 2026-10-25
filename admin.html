@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>المسؤول الأساسي — DUO Burger</title>
+  <!--
+    شاشة المسؤول الأساسي — تحكم كامل بالموقع (إطفاء الشاشات، ميزات الكاشير،
+    أقسام لوحة التحكم، عناصر المنيو، المنتجات، التحديثات).
+    لا يوجد رابط لها من أي صفحة أخرى. الدخول عبر Firebase Authentication —
+    خطوات الإعداد في ADMIN-SETUP.md
+  -->
+  <link rel="icon" type="image/svg+xml" href="icons/logo.ico">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<!-- ══ الدخول ══ -->
+<div class="login" id="login">
+  <form class="login-box" id="login-form" autocomplete="off">
+    <div class="sa-brand-ic"><i class="fa-solid fa-crown"></i></div>
+    <h1>المسؤول الأساسي</h1>
+    <p>أدخل رمز المسؤول للمتابعة</p>
+    <input class="inp" id="login-code" type="password" inputmode="numeric" placeholder="••••••••" autocomplete="current-password">
+    <button class="btn btn-gold" id="login-btn" type="submit"><i class="fa-solid fa-right-to-bracket"></i>دخول</button>
+    <div class="login-err" id="login-err"></div>
+  </form>
+</div>
+
+<div class="sa hidden" id="app">
+  <!-- ══ القائمة الجانبية ══ -->
+  <aside class="sa-side">
+    <div class="sa-brand">
+      <div class="sa-brand-ic"><i class="fa-solid fa-crown"></i></div>
+      <div><b>المسؤول الأساسي</b><small>تحكم كامل بالموقع</small></div>
+    </div>
+    <nav class="sa-nav" id="nav">
+      <button class="active" data-tab="overview"><i class="fa-solid fa-gauge-high"></i><span>نظرة عامة</span></button>
+      <button data-tab="power"><i class="fa-solid fa-power-off"></i><span>تشغيل / إطفاء</span><span class="cnt" id="cnt-off" hidden>0</span></button>
+      <button data-tab="cashier"><i class="fa-solid fa-cash-register"></i><span>ميزات الكاشير</span></button>
+      <button data-tab="dashboard"><i class="fa-solid fa-sliders"></i><span>إعدادات المنيو</span></button>
+      <button data-tab="menu"><i class="fa-solid fa-mobile-screen"></i><span>عناصر المنيو</span></button>
+      <button data-tab="products"><i class="fa-solid fa-burger"></i><span>المنتجات</span></button>
+      <button data-tab="updates"><i class="fa-solid fa-rotate"></i><span>التحديثات والأجهزة</span></button>
+      <button data-tab="security"><i class="fa-solid fa-key"></i><span>الرمز والأمان</span></button>
+      <button data-tab="log"><i class="fa-solid fa-clock-rotate-left"></i><span>سجل التغييرات</span></button>
+    </nav>
+    <div class="sa-side-foot">
+      كل تغيير يُطبَّق <b style="color:var(--green)">فوراً</b> على كل الأجهزة المتصلة دون إعادة تحميل.<br>
+      الجلسة تُقفل تلقائياً بعد ١٠ دقائق خمول.
+      <button class="btn btn-ghost sa-logout" id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i>خروج</button>
+    </div>
+  </aside>
+
+  <!-- ══ المحتوى ══ -->
+  <main class="sa-main">
+    <header class="sa-top">
+      <button class="sa-menu-t" id="menu-toggle"><i class="fa-solid fa-bars"></i></button>
+      <h1 id="title">نظرة عامة</h1>
+      <div class="sa-top-r">
+        <select class="branch-sel" id="scope"></select>
+        <span class="live" id="live">متصل</span>
+      </div>
+    </header>
+
+    <div class="sa-body">
+
+      <!-- ═════════ نظرة عامة ═════════ -->
+      <section class="tab show" id="tab-overview">
+        <div class="grid g4">
+          <div class="card stat"><span class="k">حالة الموقع</span><span class="v ok" id="ov-status">يعمل</span><span class="h" id="ov-status-h">كل الشاشات مفعّلة</span></div>
+          <div class="card stat"><span class="k">أجهزة متصلة الآن</span><span class="v" id="ov-devs">0</span><span class="h" id="ov-devs-h">—</span></div>
+          <div class="card stat"><span class="k">ميزات مُطفأة</span><span class="v" id="ov-feat">0</span><span class="h">كاشير + لوحة تحكم + منيو</span></div>
+          <div class="card stat"><span class="k">منتجات مخفية</span><span class="v" id="ov-prod">0</span><span class="h">مقفلة من المسؤول</span></div>
+        </div>
+
+        <div class="sec-title">إجراءات سريعة</div>
+        <div class="grid g3">
+          <div class="card">
+            <h3><i class="fa-solid fa-power-off"></i>إطفاء الموقع</h3>
+            <p class="sub">يعرض رسالة الإطفاء على الشاشات فوراً.</p>
+            <button class="btn btn-red" data-go="power"><i class="fa-solid fa-power-off"></i>الذهاب للإطفاء</button>
+          </div>
+          <div class="card">
+            <h3><i class="fa-solid fa-rotate"></i>فرض تحديث كل الأجهزة</h3>
+            <p class="sub">يجعل كل الأجهزة تحمّل آخر نسخة من الموقع تلقائياً.</p>
+            <button class="btn btn-gold" data-action="force-update"><i class="fa-solid fa-rotate"></i>تحديث الآن</button>
+          </div>
+          <div class="card">
+            <h3><i class="fa-solid fa-eye-slash"></i>إخفاء منتج</h3>
+            <p class="sub">إخفاء مقفل لا يستطيع الفرع إظهاره من لوحته.</p>
+            <button class="btn btn-ghost" data-go="products"><i class="fa-solid fa-burger"></i>إدارة المنتجات</button>
+          </div>
+        </div>
+
+        <div class="sec-title">آخر التغييرات</div>
+        <div class="card"><div class="rows log" id="log-mini"></div></div>
+      </section>
+
+      <!-- ═════════ تشغيل / إطفاء ═════════ -->
+      <section class="tab" id="tab-power">
+        <div class="note"><i class="fa-solid fa-circle-info"></i>
+          <div>عند إطفاء أي شاشة تظهر عليها رسالة الإطفاء فوراً (بدون تحديث يدوي). عند إعادة التشغيل تعود الشاشة لعملها تلقائياً.
+          هذه الشاشة نفسها (المسؤول الأساسي) لا تُطفأ أبداً.</div></div>
+        <div class="kill">
+          <div class="card">
+            <h3><i class="fa-solid fa-display"></i>الشاشات</h3>
+            <p class="sub">اضغط على الشاشة لإطفائها أو تشغيلها.</p>
+            <div class="screen-tiles" id="tiles"></div>
+
+            <label class="fl" for="msg-title">عنوان رسالة الإطفاء</label>
+            <input class="inp" id="msg-title" placeholder="الموقع متوقف مؤقتاً">
+            <label class="fl" for="msg-body">نص الرسالة</label>
+            <textarea class="inp" id="msg-body" placeholder="نعتذر، سنعود قريباً."></textarea>
+            <label class="fl" for="msg-eta">موعد العودة (اختياري — يظهر للزبون)</label>
+            <input class="inp" id="msg-eta" placeholder="مثال: الساعة ٤ عصراً">
+            <label class="fl" for="msg-until">تشغيل تلقائي في (اختياري)</label>
+            <input class="inp" id="msg-until" type="datetime-local">
+
+            <div class="btn-row">
+              <button class="btn btn-red" data-action="kill-all"><i class="fa-solid fa-power-off"></i>إطفاء الكل</button>
+              <button class="btn btn-ghost" data-action="start-all"><i class="fa-solid fa-play"></i>تشغيل الكل</button>
+            </div>
+          </div>
+          <div>
+            <div class="preview">
+              <span class="preview-lbl">معاينة ما يراه الزبون</span>
+              <div class="off-screen">
+                <div class="lg">DUO</div>
+                <h2 id="pv-title"></h2>
+                <p id="pv-body"></p>
+                <span class="eta" id="pv-eta" hidden></span>
+              </div>
+            </div>
+            <div class="card" style="margin-top:14px">
+              <h3><i class="fa-solid fa-bolt"></i>كيف يصل الإطفاء للأجهزة؟</h3>
+              <p class="sub" style="margin:0">كل شاشة تستمع لقرارات المسؤول في Firebase، فيصل أي تغيير خلال أقل من ثانية.
+              وإذا كان الجهاز غير متصل بالإنترنت يُطبَّق القرار فور عودة الاتصال، ويبقى محفوظاً عليه حتى بعد إعادة التشغيل.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════════ ميزات الكاشير ═════════ -->
+      <section class="tab" id="tab-cashier">
+        <div class="note"><i class="fa-solid fa-circle-info"></i>
+          <div>الميزة المُطفأة تختفي من شاشة الكاشير فوراً ولا يمكن فتحها.</div></div>
+        <div class="grid g2">
+          <div class="card"><h3><i class="fa-solid fa-table-list"></i>تبويبات الكاشير</h3><p class="sub">الأقسام الظاهرة في القائمة الجانبية.</p>
+            <div class="rows" data-group="cashier" data-set="tabs"></div></div>
+          <div class="card"><h3><i class="fa-solid fa-hand-pointer"></i>إجراءات داخلية</h3><p class="sub">أزرار داخل الأقسام.</p>
+            <div class="rows" data-group="cashier" data-set="inner"></div></div>
+        </div>
+      </section>
+
+      <!-- ═════════ إعدادات المنيو (لوحة التحكم) ═════════ -->
+      <section class="tab" id="tab-dashboard">
+        <div class="note"><i class="fa-solid fa-circle-info"></i>
+          <div>هنا تخفي أقسام من <b>لوحة التحكم الخاصة بالمنيو</b>. القسم المخفي لا يظهر لمسؤول الفرع.</div></div>
+        <div class="card"><h3><i class="fa-solid fa-sliders"></i>أقسام لوحة التحكم</h3><p class="sub">أطفئ ما لا تريد أن يعدّله الفرع.</p>
+          <div class="rows" data-group="dashboard" data-set="tabs"></div></div>
+      </section>
+
+      <!-- ═════════ عناصر المنيو ═════════ -->
+      <section class="tab" id="tab-menu">
+        <div class="note"><i class="fa-solid fa-lock"></i>
+          <div>العنصر المُطفأ هنا <b>يُقفل</b>: يختفي من شاشة المنيو، ويظهر في لوحة التحكم والكاشير مقفلاً ولا يمكن تفعيله.</div></div>
+        <div class="card"><h3><i class="fa-solid fa-mobile-screen"></i>أزرار وعناصر شاشة المنيو</h3><p class="sub">تُطبَّق على شاشات المنيو في المطعم.</p>
+          <div class="rows" data-group="menu" data-set="items"></div></div>
+      </section>
+
+      <!-- ═════════ المنتجات ═════════ -->
+      <section class="tab" id="tab-products">
+        <div class="note"><i class="fa-solid fa-lock"></i>
+          <div>المنتج المخفي هنا يختفي من المنيو ومنيو الجوال وصورة التلفاز، ويظهر في لوحة التحكم والكاشير مقفلاً.</div></div>
+        <div class="toolbar">
+          <input class="inp" id="p-search" placeholder="ابحث عن منتج…">
+          <button class="btn btn-ghost" data-action="show-all-prods"><i class="fa-solid fa-eye"></i>إظهار الكل</button>
+        </div>
+        <div id="prods"><div class="loading">جارِ تحميل المنتجات…</div></div>
+      </section>
+
+      <!-- ═════════ التحديثات والأجهزة ═════════ -->
+      <section class="tab" id="tab-updates">
+        <div class="grid g2">
+          <div class="card">
+            <h3><i class="fa-solid fa-code-branch"></i>نسخة الموقع</h3>
+            <p class="sub">عند رفع كود جديد (مع رفع رقم النسخة في sw.js)، تكتشفه الأجهزة تلقائياً خلال ٥ دقائق وتتحدّث في أول لحظة خمول — بدون ضغط ولا تحديث يدوي.</p>
+            <div class="ver"><i class="fa-solid fa-cloud-arrow-up" style="color:var(--gold);font-size:20px"></i>
+              <div style="flex:1"><small style="color:var(--muted);font-size:11.5px">آخر نسخة منشورة</small><div class="vn" id="ver-now">—</div></div>
+              <span class="pill on">منشورة</span></div>
+            <p class="sub" style="margin:12px 0 0">«فرض التحديث» يمسح الكاش من كل الأجهزة ويعيد تحميلها بأحدث كود، حتى لو لم يُرفع رقم النسخة. الشاشة المشغولة (زبون يتصفّح) تنتظر حتى تتوقف دقيقة.</p>
+            <div class="btn-row"><button class="btn btn-gold" data-action="force-update"><i class="fa-solid fa-rotate"></i>فرض التحديث على كل الأجهزة الآن</button></div>
+          </div>
+          <div class="card dev-list">
+            <h3><i class="fa-solid fa-tower-broadcast"></i>الأجهزة</h3>
+            <p class="sub">النسخة التي يعمل بها كل جهاز وآخر ظهور.</p>
+            <div class="rows" id="devs"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════════ الأمان ═════════ -->
+      <section class="tab" id="tab-security">
+        <div class="grid g2">
+          <form class="card" id="pw-form" autocomplete="off">
+            <h3><i class="fa-solid fa-crown"></i>رمز المسؤول الأساسي</h3>
+            <p class="sub">رمز منفصل عن رمز لوحة التحكم والكاشير، ومحفوظ في Firebase وليس داخل الكود.</p>
+            <label class="fl" for="pw-cur">الرمز الحالي</label><input class="inp" id="pw-cur" type="password" autocomplete="current-password">
+            <label class="fl" for="pw-new">الرمز الجديد</label><input class="inp" id="pw-new" type="password" placeholder="٨ أحرف/أرقام على الأقل" autocomplete="new-password">
+            <label class="fl" for="pw-new2">تأكيد الرمز الجديد</label><input class="inp" id="pw-new2" type="password" autocomplete="new-password">
+            <div class="btn-row"><button class="btn btn-gold" type="submit"><i class="fa-solid fa-check"></i>حفظ</button></div>
+          </form>
+          <div class="card">
+            <h3><i class="fa-solid fa-users-slash"></i>تسجيل خروج الجميع</h3>
+            <p class="sub">يُلغي فوراً دخول كل من فتح الكاشير أو لوحة التحكم بالرقم السري، ويُطلب منهم إدخاله من جديد.</p>
+            <div class="btn-row">
+              <button class="btn btn-ghost" data-action="logout-all"><i class="fa-solid fa-right-from-bracket"></i>تسجيل خروج كل الأجهزة</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════════ السجل ═════════ -->
+      <section class="tab" id="tab-log">
+        <div class="card"><div class="rows log" id="log-full"></div></div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span></span></div>
+
+<script src="js/branch.js"></script>   <!-- قائمة الفروع (DUO_BRANCHES) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="js/duo-config.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

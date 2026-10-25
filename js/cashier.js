@@ -103,6 +103,9 @@ let _balField    = BAL_FIELD_DEFAULT;  /* معرّف الحقل النشط لل�
 
 const _ikey = (catId, nameAr) => catId + '||' + nameAr;
 
+/* قرارات «المسؤول الأساسي» (duo-admin.js): ما أطفأه يُخفى من هنا أو يظهر مقفلاً */
+const _adm = (group, id) => !!(window.DuoAdmin && window.DuoAdmin.isOff(group, id));
+
 /* ══════════ i18n ══════════ */
 const T = {
   ar: {
@@ -112,7 +115,7 @@ const T = {
     settingsSubtitle: 'أزرار الشاشة، الصيانة، ومعلومات الجهاز',
     itemsCount: n => `${n} منتج`, slidesCountStat: n => `${n} شريحة`,
     actionsGroupCustomer: 'تفاعل العميل', actionsGroupGames: 'ألعاب سريعة', actionsGroupControl: 'تحكم عام',
-    allCats: 'الكل', visible: 'ظاهر', hidden: 'مخفي',
+    allCats: 'الكل', visible: 'ظاهر', hidden: 'مخفي', adminLocked: 'مقفل من المسؤول',
     showCustomer: 'عرض للعميل', pinSlide: 'تثبيت', unpinSlide: 'إلغاء التثبيت',
     showSlide: 'تشغيل', pinnedBanner: 'الشريحة المثبّتة — السلايدشو متوقف',
     sar: 'ريال', slideNum: n => `شريحة ${n}`, cal: 'سعرة',
@@ -247,7 +250,7 @@ const T = {
     settingsSubtitle: 'Screen buttons, maintenance, and device info',
     itemsCount: n => `${n} items`, slidesCountStat: n => `${n} slides`,
     actionsGroupCustomer: 'Customer Engagement', actionsGroupGames: 'Quick Games', actionsGroupControl: 'General Control',
-    allCats: 'All', visible: 'Visible', hidden: 'Hidden',
+    allCats: 'All', visible: 'Visible', hidden: 'Hidden', adminLocked: 'Locked by admin',
     showCustomer: 'Show to Customer', pinSlide: 'Pin', unpinSlide: 'Unpin',
     showSlide: 'Play', pinnedBanner: 'Pinned slide — Slideshow paused',
     sar: 'SAR', slideNum: n => `Slide ${n}`, cal: 'kcal',
@@ -485,6 +488,10 @@ window.cToggleSidebar = cToggleSidebar;
 
 /* ══════════ التابات ══════════ */
 function cShowTab(name) {
+  if (_adm('cashier', name)) {
+    name = [...document.querySelectorAll('.snav-item')].map(b => b.dataset.tab).find(t => !_adm('cashier', t));
+    if (!name) return;
+  }
   _activeTab = name;
   document.querySelectorAll('.snav-item').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   document.querySelectorAll('.csection').forEach(s => s.classList.toggle('active', s.id === 'tab-' + name));
@@ -545,7 +552,7 @@ function _renderProductGrid() {
   </div>`;
   cats.forEach(cat => {
     const total  = cat.items.length;
-    const hidden = cat.items.filter(item => _hiddenItems.has(_ikey(cat.id, item.nameAr))).length;
+    const hidden = cat.items.filter(item => { const k = _ikey(cat.id, item.nameAr); return _hiddenItems.has(k) || _adm('products', k); }).length;
     html += `<div class="pcat-section">
       <div class="pcat-header">
         <div class="pcat-icon"><i class="fa-solid ${cat.icon}"></i></div>
@@ -555,14 +562,16 @@ function _renderProductGrid() {
       <div class="pcat-row">`;
     cat.items.forEach(item => {
       const key    = _ikey(cat.id, item.nameAr);
-      const isHid  = _hiddenItems.has(key);
+      const locked = _adm('products', key);
+      const isHid  = _hiddenItems.has(key) || locked;
       const name   = _lang === 'ar' ? item.nameAr : (item.nameEn || item.nameAr);
       const safe   = item.nameAr.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
       html += `<div class="pcard ${isHid ? 'pcard--hidden' : ''}">
         <div class="pcard-img ${!item.image ? 'pcard-img--empty' : ''}"
           ${item.image ? `style="background-image:url('${item.image}')"` : ''}>
           ${!item.image ? '<i class="fa-solid fa-burger"></i>' : ''}
-          ${isHid ? `<div class="pcard-hidden-badge"><i class="fa-solid fa-eye-slash"></i> ${t('hidden')}</div>` : ''}
+          ${locked ? `<div class="pcard-hidden-badge pcard-hidden-badge--locked"><i class="fa-solid fa-lock"></i> ${t('adminLocked')}</div>`
+            : isHid ? `<div class="pcard-hidden-badge"><i class="fa-solid fa-eye-slash"></i> ${t('hidden')}</div>` : ''}
         </div>
         <div class="pcard-body">
           <div class="pcard-name" title="${name}">${name}</div>
@@ -571,7 +580,7 @@ function _renderProductGrid() {
             ${item.calories ? `<span class="pcard-cal">${item.calories} ${t('cal')}</span>` : ''}
           </div>
         </div>
-        <div class="pcard-actions">
+        ${locked ? '' : `<div class="pcard-actions">
           <button class="btn-show-cust" onclick="cSendShowProduct('${cat.id}','${safe}')">
             <i class="fa-solid fa-eye"></i> ${t('showCustomer')}
           </button>
@@ -579,7 +588,7 @@ function _renderProductGrid() {
             <input type="checkbox" ${!isHid ? 'checked' : ''} onchange="cToggleItem('${cat.id}','${safe}')">
             <span class="mt-slider"></span>
           </label>
-        </div>
+        </div>`}
       </div>`;
     });
     html += `</div></div>`;
@@ -714,8 +723,10 @@ function _renderActions() {
   </div>`;
 
   groups.forEach(g => {
+    const items = g.items.filter(a => !_adm('cashier', 'act_' + a.key));
+    if (!items.length) return;
     html += `<div class="group-label">${t(g.labelKey)}</div><div class="action-cards">`;
-    g.items.forEach(a => {
+    items.forEach(a => {
       html += `<button class="acard acard--${a.color}" onclick="${a.fn}">
         <div class="acard-icon"><i class="fa-solid ${a.icon}"></i></div>
         <div class="acard-label">${t(a.key)}</div>
@@ -2039,21 +2050,25 @@ function _renderSettings() {
   const el = document.getElementById('settings-content');
   if (!el) return;
 
-  const chk = (val, fn) => `<label class="set-toggle">
-    <input type="checkbox" ${val ? 'checked' : ''} onchange="${fn}">
+  const chk = (val, fn, locked) => `<label class="set-toggle">
+    <input type="checkbox" ${locked ? 'disabled' : (val ? 'checked' : '')} onchange="${fn}">
     <span class="set-slider"></span>
   </label>`;
 
-  const row = (icon, label, sub, val, fn) => `<div class="set-row">
+  const row = (icon, label, sub, val, fn, lockId) => {
+    const locked = !!lockId && _adm('menu', lockId);
+    return `<div class="set-row${locked ? ' set-row--locked' : ''}">
     <div class="set-label">
       <i class="fa-solid ${icon}"></i>
       <div>
         <div>${label}</div>
-        ${sub ? `<div class="set-label-sub">${sub}</div>` : ''}
+        ${locked ? `<div class="set-label-sub set-label-sub--locked"><i class="fa-solid fa-lock"></i> ${t('adminLocked')}</div>`
+          : sub ? `<div class="set-label-sub">${sub}</div>` : ''}
       </div>
     </div>
-    ${chk(val, fn)}
+    ${chk(val, fn, locked)}
   </div>`;
+  };
 
   /* معلومات الجهاز */
   const branch   = localStorage.getItem('duo_pair_branch') || (window.DUO_SYNC_DEFAULT || 'Branch01');
@@ -2095,11 +2110,11 @@ function _renderSettings() {
   <!-- أزرار الشاشة -->
   <div class="set-card">
     <div class="set-card-title"><i class="fa-solid fa-toggle-on"></i> ${t('settingsBtns')}</div>
-    ${row('fa-percent', t('discountBtn'), '', !_discountHidden, 'cToggleDiscount()')}
-    ${row('fa-phone',   t('phoneBtn'),   '', !_phoneHidden,    'cTogglePhone()')}
-    ${row('fa-gamepad', t('gamesBtn'),   '', !_gamesHidden,    'cToggleGames()')}
-    ${row('fa-qrcode',  t('qrBtn'),      '', !_qrmenuHidden,   'cToggleQR()')}
-    ${row('fa-language', t('langBtn'),   '', !_langBtnHidden,  'cToggleLangBtn()')}
+    ${row('fa-percent', t('discountBtn'), '', !_discountHidden, 'cToggleDiscount()', 'discount')}
+    ${row('fa-phone',   t('phoneBtn'),   '', !_phoneHidden,    'cTogglePhone()',    'phone')}
+    ${row('fa-gamepad', t('gamesBtn'),   '', !_gamesHidden,    'cToggleGames()',    'games')}
+    ${row('fa-qrcode',  t('qrBtn'),      '', !_qrmenuHidden,   'cToggleQR()',       'qrmenu')}
+    ${row('fa-language', t('langBtn'),   '', !_langBtnHidden,  'cToggleLangBtn()',  'langbtn')}
   </div>
 
   <!-- التمرير -->
@@ -2109,7 +2124,7 @@ function _renderSettings() {
   </div>
 
   <!-- الصيانة -->
-  <div class="set-card">
+  ${_adm('cashier', 'set_maint') ? '' : `<div class="set-card">
     <div class="set-card-title"><i class="fa-solid fa-wrench"></i> ${t('settingsMaint')}</div>
     ${row('fa-wrench', t('maintLabel'), '', _maintenanceOn, 'cToggleMaintenance()')}
     <div class="set-row set-row--input">
@@ -2119,7 +2134,7 @@ function _renderSettings() {
         placeholder="${t('maintMsgPlaceholder')}"
         onblur="cUpdateMaintMsg(this.value)">
     </div>
-  </div>
+  </div>`}
 
   <!-- تحديث النظام -->
   <div class="set-card">
@@ -2134,11 +2149,11 @@ function _renderSettings() {
   </div>
 
   <!-- إعادة الضبط -->
-  <div class="set-card set-card--danger">
+  ${_adm('cashier', 'set_reset') ? '' : `<div class="set-card set-card--danger">
     <button class="btn-reset" id="reset-btn" onclick="cFactoryReset()">
       <i class="fa-solid fa-trash-can"></i> ${t('resetAll')}
     </button>
-  </div>`;
+  </div>`}`;
 
   el.innerHTML = html;
 }
@@ -2430,6 +2445,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   } else {
     _rerenderTab();
+  }
+
+  /* قرارات المسؤول الأساسي — أخفِ/أقفل ما أطفأه فوراً */
+  if (window.DuoAdmin) {
+    window.DuoAdmin.onChange(() => {
+      if (_adm('cashier', _activeTab)) { cShowTab(_activeTab); return; }
+      const ae = document.activeElement;
+      if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && ae.type !== 'checkbox') return;
+      _rerenderTab();
+    });
+    if (_adm('cashier', _activeTab)) cShowTab(_activeTab);   // التبويب الافتراضي مُطفأ
   }
 
   /* مراقبة Firebase */

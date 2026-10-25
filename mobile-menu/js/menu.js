@@ -44,6 +44,25 @@
     _buildFooter(info);
     _setupScrollTop();
     _setupModalClose();
+    _applyAdmin();
+    if (window.DuoAdmin) window.DuoAdmin.onChange(_applyAdmin);
+  }
+
+  /* ── منتجات أخفاها «المسؤول الأساسي» (duo-admin.js) — تُطبَّق فوراً ── */
+  function _applyAdmin() {
+    const off = k => !!(window.DuoAdmin && window.DuoAdmin.isOff('products', k));
+    document.querySelectorAll('.m-section').forEach(sec => {
+      const cards = sec.querySelectorAll('.m-card[data-key]');
+      let vis = 0;
+      cards.forEach(c => { const h = off(c.dataset.key); c.style.display = h ? 'none' : ''; if (!h) vis++; });
+      sec.style.display = vis ? '' : 'none';
+      const sep = sec.previousElementSibling;
+      if (sep && sep.classList.contains('m-separator')) sep.style.display = vis ? '' : 'none';
+      const cnt = sec.querySelector('.m-section-count');
+      if (cnt) cnt.textContent = vis;
+      const tab = document.querySelector(`.m-tab[data-cat="${sec.id.slice(4)}"]`);
+      if (tab) tab.style.display = vis ? '' : 'none';
+    });
   }
 
   /* ── الهيدر ── */
@@ -146,6 +165,7 @@
   function _buildCard(cat, item) {
     const card = document.createElement('div');
     card.className = 'm-card';
+    card.dataset.key = cat.id + '||' + item.nameAr;
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
     card.setAttribute('aria-label', item.nameAr);

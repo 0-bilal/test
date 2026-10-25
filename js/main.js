@@ -342,7 +342,7 @@ function renderAllCategories() {
         </div>
         <div class="item-price-wrap">
           ${item.mealPrice != null ? `
-            <div class="item-price-badge item-meal-badge"${_devMealPriceHidden ? ' style="display:none"' : ''}>
+            <div class="item-price-badge item-meal-badge"${_mealPriceOff() ? ' style="display:none"' : ''}>
               <span class="item-meal-label">
                 <span class="item-meal-ico">${MEAL_FRIES_SVG}</span>
                 <span class="item-meal-ico">${MEAL_DRINK_SVG}</span>
@@ -873,7 +873,7 @@ function _fillOverlayContent(item, idx) {
   // سعر الوجبة — بطاقة بنفس تصميم السعر مع أيقونتي البطاطس والمشروب
   const mealWrap = $('product-overlay-meal-wrap');
   if (mealWrap) {
-    if (item.mealPrice != null && !_devMealPriceHidden) {
+    if (item.mealPrice != null && !_mealPriceOff()) {
       _initMealIcons();
       setText('product-overlay-meal-label', _t('meal'));
       setText('product-overlay-meal-cur',   _t('currency'));
@@ -1400,6 +1400,11 @@ function _badgeHTML(badge) {
 
 function _devItemKey(catId, nameAr) { return catId + '||' + nameAr; }
 
+/* قرارات «المسؤول الأساسي» (duo-admin.js) — تُضاف فوق إعدادات لوحة التحكم ولا تُخزَّن معها */
+function _adminOff(id)         { return !!(window.DuoAdmin && window.DuoAdmin.isOff('menu', id)); }
+function _adminItemHidden(key) { return !!(window.DuoAdmin && window.DuoAdmin.isOff('products', key)); }
+function _mealPriceOff()       { return _devMealPriceHidden || _adminOff('mealprice'); }
+
 /* تحميل الإعدادات من localStorage (كانت sessionStorage وتُمسح عندما يغلق iOS التطبيق في الخلفية) */
 function _devLoadSettings() {
   try {
@@ -1471,7 +1476,7 @@ function applyDevSettings() {
   allItemEls.forEach(el => {
     const nameEl  = el.querySelector('.item-name-ar');
     const key     = _devItemKey(el.dataset.cat, nameEl?.textContent || '');
-    const permHid = _devHiddenItems.has(key);
+    const permHid = _devHiddenItems.has(key) || _adminItemHidden(key);
     const tempHid = _devTempHide[key] && _devTempHide[key] > _now;
     el.style.display = (permHid || tempHid) ? 'none' : '';
     el.classList.toggle('scroll-skipped', _devScrollSkip.has(key) || _devCatSkip.has(el.dataset.cat));
@@ -1510,38 +1515,38 @@ function applyDevSettings() {
 
   // زر الخصم (أفقي + عمودي)
   const discBtn = document.querySelector('.header-discount-btn');
-  if (discBtn) discBtn.style.display = _devDiscountHidden ? 'none' : '';
+  if (discBtn) discBtn.style.display = (_devDiscountHidden || _adminOff('discount')) ? 'none' : '';
   const discBtnV = $('vl-discount-btn');
-  if (discBtnV) discBtnV.style.display = _devDiscountHidden ? 'none' : '';
+  if (discBtnV) discBtnV.style.display = (_devDiscountHidden || _adminOff('discount')) ? 'none' : '';
 
   // زر الهاتف (أفقي + عمودي)
   const phoneRow = $('header-phone-row');
-  if (phoneRow) phoneRow.style.display = _devPhoneHidden ? 'none' : '';
+  if (phoneRow) phoneRow.style.display = (_devPhoneHidden || _adminOff('phone')) ? 'none' : '';
   const phoneRowV = $('vl-phone-row');
-  if (phoneRowV) phoneRowV.style.display = _devPhoneHidden ? 'none' : '';
+  if (phoneRowV) phoneRowV.style.display = (_devPhoneHidden || _adminOff('phone')) ? 'none' : '';
 
   // زر الألعاب "مَن يدفع؟" (أفقي + عمودي)
   const gamesBtn = $('header-games-btn');
-  if (gamesBtn) gamesBtn.style.display = _devGamesHidden ? 'none' : '';
+  if (gamesBtn) gamesBtn.style.display = (_devGamesHidden || _adminOff('games')) ? 'none' : '';
   const gamesBtnV = $('vl-games-btn');
-  if (gamesBtnV) gamesBtnV.style.display = _devGamesHidden ? 'none' : '';
+  if (gamesBtnV) gamesBtnV.style.display = (_devGamesHidden || _adminOff('games')) ? 'none' : '';
 
   // زر منيو الجوال
   const qrMenuBtn = $('header-qrmenu-btn');
-  if (qrMenuBtn) qrMenuBtn.style.display = (_devQRMenuHidden || !_branchQR()) ? 'none' : '';
+  if (qrMenuBtn) qrMenuBtn.style.display = (_devQRMenuHidden || _adminOff('qrmenu') || !_branchQR()) ? 'none' : '';
 
   // زر ترجمة المنيو
   const langBtn = $('header-lang-btn');
-  if (langBtn) langBtn.style.display = _devLangBtnHidden ? 'none' : '';
+  if (langBtn) langBtn.style.display = (_devLangBtnHidden || _adminOff('langbtn')) ? 'none' : '';
 
   // دائرة سعر الوجبة — في قائمة المنتجات وفي تفاصيل المنتج
   document.querySelectorAll('.item-meal-badge').forEach(el => {
-    el.style.display = _devMealPriceHidden ? 'none' : '';
+    el.style.display = _mealPriceOff() ? 'none' : '';
   });
   const ovMeal = $('product-overlay-meal-wrap');
   if (ovMeal) {
     const ovHasMeal = _currentOverlayItem && _currentOverlayItem.mealPrice != null;
-    ovMeal.style.display = (ovHasMeal && !_devMealPriceHidden) ? 'inline-flex' : 'none';
+    ovMeal.style.display = (ovHasMeal && !_mealPriceOff()) ? 'inline-flex' : 'none';
   }
 
   // عداد المنتجات
@@ -1649,7 +1654,7 @@ function _executeCashierAction(v) {
         // إظهار overlay تفاصيل منتج معيّن وتحديده في القائمة (كأن العميل ضغط عليه)
         const cat  = menuCategories.find(c => c.id === v.catId);
         const item = cat?.items.find(i => i.nameAr === v.nameAr);
-        if (item) {
+        if (item && !_adminItemHidden(_devItemKey(v.catId, v.nameAr))) {   // منتج أخفاه المسؤول لا يُعرض
           // احسب الفهرس الحقيقي للمنتج داخل allItemEls (نفس ترتيب بنائها في
           // renderAllCategories: تصنيف تلو الآخر، ثم منتجات كل تصنيف بالترتيب)
           let idx = -1;
@@ -2059,6 +2064,14 @@ document.addEventListener('DOMContentLoaded', () => {
     window.DuoSync.listen(v => {
       applyRemoteSettings(v);
       // تحديث العرض العمودي إن كان مفعّلاً
+      if (typeof window._vxRebuild === 'function') window._vxRebuild();
+    });
+  }
+
+  // قرارات المسؤول الأساسي — تُطبَّق فوراً عند تغييرها
+  if (window.DuoAdmin) {
+    window.DuoAdmin.onChange(() => {
+      applyDevSettings();
       if (typeof window._vxRebuild === 'function') window._vxRebuild();
     });
   }

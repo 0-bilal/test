@@ -116,6 +116,7 @@
   function check() {
     if (pin === PASSWORD) {
       sessionStorage.setItem(SS_KEY, '1');
+      sessionStorage.setItem('duo_admin_at', String(Date.now()));   // لـ «تسجيل خروج الجميع» من المسؤول
       const gate = document.getElementById('duo-auth-gate');
       if (gate) gate.remove();
       return;

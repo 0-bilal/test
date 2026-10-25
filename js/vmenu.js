@@ -80,7 +80,8 @@
       if (catSkip.has(cat.id)) return;   // تخطّى القسم كله
       const items = (cat.items || []).filter(it => {
         const k = key(cat.id, it.nameAr);
-        return !hidden.has(k) && !(tempHide[k] && tempHide[k] > now);
+        return !hidden.has(k) && !(tempHide[k] && tempHide[k] > now)
+          && !(typeof _adminItemHidden === 'function' && _adminItemHidden(k));
       });
       if (!items.length) return;
       _cats.push({

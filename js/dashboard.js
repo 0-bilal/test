@@ -85,6 +85,11 @@ const BADGE_META = {
 
 const _key = (catId, nameAr) => catId + '||' + nameAr;
 
+/* قرارات «المسؤول الأساسي» (duo-admin.js): ما أطفأه يظهر هنا مقفلاً ولا يمكن تفعيله */
+const _adm = (group, id) => !!(window.DuoAdmin && window.DuoAdmin.isOff(group, id));
+const _lockRow = (group, id) => _adm(group, id) ? ' row--locked' : '';
+const _lockInput = (group, id, on) => _adm(group, id) ? 'disabled' : (on ? 'checked' : '');
+
 /* ════════════════════════════════════════════════
    تحميل الإعدادات
 ════════════════════════════════════════════════ */
@@ -155,6 +160,15 @@ const TAB_TITLES = {
 let _activeTab = 'header';
 
 function showTab(tab) {
+  if (_adm('dashboard', tab)) {
+    const allowed = [...document.querySelectorAll('.dash-nav-btn')].map(b => b.dataset.tab).find(t => !_adm('dashboard', t));
+    if (!allowed) {
+      const b = $('dash-body');
+      if (b) b.innerHTML = `<div class="card admin-locked-note"><i class="fa-solid fa-lock"></i> أقسام لوحة التحكم مقفلة من المسؤول</div>`;
+      return;
+    }
+    tab = allowed;
+  }
   _activeTab = tab;
   document.querySelectorAll('.dash-nav-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.tab === tab)
@@ -191,69 +205,69 @@ function renderHeaderTab(body) {
   body.innerHTML = `
     <div class="card">
       <div class="card-title"><i class="fa-solid fa-mobile-screen-button"></i> عناصر الهيدر</div>
-      <label class="row">
+      <label class="row${_lockRow('menu', 'phone')}">
         <div class="row-icon"><i class="fa-solid fa-phone"></i></div>
         <div class="row-label">
           إظهار رقم الهاتف
           <small>يظهر رقم التواصل أعلى المنيو</small>
         </div>
         <span class="toggle">
-          <input type="checkbox" ${!_phoneHidden ? 'checked' : ''} onchange="togglePhone(this.checked)">
+          <input type="checkbox" ${_lockInput('menu', 'phone', !_phoneHidden)} onchange="togglePhone(this.checked)">
           <span class="slider"></span>
         </span>
       </label>
-      <label class="row">
+      <label class="row${_lockRow('menu', 'discount')}">
         <div class="row-icon row-icon--gold"><i class="fa-solid fa-tags"></i></div>
         <div class="row-label">
           إظهار زر الخصم 10%
           <small>الزر الذهبي الذي يفتح شاشة التقييم</small>
         </div>
         <span class="toggle">
-          <input type="checkbox" ${!_discountHidden ? 'checked' : ''} onchange="toggleDiscount(this.checked)">
+          <input type="checkbox" ${_lockInput('menu', 'discount', !_discountHidden)} onchange="toggleDiscount(this.checked)">
           <span class="slider"></span>
         </span>
       </label>
-      <label class="row">
+      <label class="row${_lockRow('menu', 'games')}">
         <div class="row-icon" style="background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.25);color:#3b82f6"><i class="fa-solid fa-gamepad"></i></div>
         <div class="row-label">
           إظهار زر الألعاب مَن يدفع؟
           <small>الزر الأزرق الذي يفتح شاشة الألعاب</small>
         </div>
         <span class="toggle">
-          <input type="checkbox" ${!_gamesHidden ? 'checked' : ''} onchange="toggleGames(this.checked)">
+          <input type="checkbox" ${_lockInput('menu', 'games', !_gamesHidden)} onchange="toggleGames(this.checked)">
           <span class="slider"></span>
         </span>
       </label>
-      <label class="row">
+      <label class="row${_lockRow('menu', 'qrmenu')}">
         <div class="row-icon" style="background:rgba(6,120,100,.15);border-color:rgba(20,184,166,.30);color:rgba(20,184,166,.90)"><i class="fa-solid fa-qrcode"></i></div>
         <div class="row-label">
          إظهار زر منيو الجوال
           <small>يعرض QR code على لوحة الشرائح ليمسحه العميل بهاتفه</small>
         </div>
         <span class="toggle">
-          <input type="checkbox" ${!_qrmenuHidden ? 'checked' : ''} onchange="toggleQRMenu(this.checked)">
+          <input type="checkbox" ${_lockInput('menu', 'qrmenu', !_qrmenuHidden)} onchange="toggleQRMenu(this.checked)">
           <span class="slider"></span>
         </span>
       </label>
-      <label class="row">
+      <label class="row${_lockRow('menu', 'langbtn')}">
         <div class="row-icon" style="background:rgba(124,58,237,.15);border-color:rgba(167,139,250,.35);color:rgba(196,181,253,.95)"><i class="fa-solid fa-language"></i></div>
         <div class="row-label">
          إظهار زر ترجمة المنيو
           <small>الزر البنفسجي الذي يترجم المنيو للعميل من العربي للإنجليزي</small>
         </div>
         <span class="toggle">
-          <input type="checkbox" ${!_langBtnHidden ? 'checked' : ''} onchange="toggleLangBtn(this.checked)">
+          <input type="checkbox" ${_lockInput('menu', 'langbtn', !_langBtnHidden)} onchange="toggleLangBtn(this.checked)">
           <span class="slider"></span>
         </span>
       </label>
-      <label class="row">
+      <label class="row${_lockRow('menu', 'mealprice')}">
         <div class="row-icon" style="background:rgba(190,30,45,.14);border-color:rgba(212,36,53,.32);color:#e05264"><i class="fa-solid fa-utensils"></i></div>
         <div class="row-label">
           إظهار سعر الوجبة
           <small>دائرة سعر الوجبة (برجر + بطاطس + مشروب) بجانب سعر البرجر في المنيو وفي تفاصيل المنتج</small>
         </div>
         <span class="toggle">
-          <input type="checkbox" ${!_mealPriceHidden ? 'checked' : ''} onchange="toggleMealPrice(this.checked)">
+          <input type="checkbox" ${_lockInput('menu', 'mealprice', !_mealPriceHidden)} onchange="toggleMealPrice(this.checked)">
           <span class="slider"></span>
         </span>
       </label>
@@ -369,13 +383,14 @@ function renderProductsTab(body) {
       const key        = _key(cat.id, item.nameAr);
       const badge      = _badges[key] || '';
       const hidden     = _hiddenItems.has(key);
+      const locked     = _adm('products', key);
       const tempExpiry = _tempHide[key];
       const isTempHid  = tempExpiry && tempExpiry > now;
       const remaining  = isTempHid ? _fmtRemaining(tempExpiry - now) : '';
       const isSkipped  = _scrollSkip.has(key);
 
       html += `
-      <label class="row ${(hidden || isTempHid) ? 'row--off' : ''}">
+      <label class="row ${(hidden || isTempHid || locked) ? 'row--off' : ''}${locked ? ' row--locked' : ''}">
         <div class="row-icon row-icon--img">
           <i class="fa-solid fa-burger" style="${item.image ? 'display:none' : ''}"></i>
           ${item.image
@@ -388,7 +403,7 @@ function renderProductsTab(body) {
           ${item.price != null ? `<small class="price-hint">${item.price} ريال</small>` : ''}
         </div>
         <span class="toggle">
-          <input type="checkbox" ${!hidden ? 'checked' : ''} onchange="toggleItem('${key}', this.checked)">
+          <input type="checkbox" ${locked ? 'disabled' : (!hidden ? 'checked' : '')} onchange="toggleItem('${key}', this.checked)">
           <span class="slider"></span>
         </span>
       </label>
@@ -2126,7 +2141,7 @@ window.tvImgResetHours = tvImgResetHours;
 function _statusIsHidden(catId, item, variant) {
   const k = _key(catId, item.nameAr);
   if (variant != null) return _hiddenVariants.has(k + '||' + variant);
-  if (_hiddenItems.has(k)) return true;
+  if (_hiddenItems.has(k) || _adm('products', k)) return true;
   const exp = _tempHide[k];
   return !!(exp && exp > Date.now());
 }
@@ -2140,7 +2155,7 @@ async function statusImageGenerate() {
     const o = _tvImgOpts();
     const canvas = await DuoStatusImage.render({
       isHidden: _statusIsHidden,
-      mealPriceHidden: _mealPriceHidden,
+      mealPriceHidden: _mealPriceHidden || _adm('menu', 'mealprice'),
       footer: o,
     });
     const blob = await DuoStatusImage.toBlob(canvas);
@@ -2270,6 +2285,18 @@ document.addEventListener('DOMContentLoaded', () => {
     rn.textContent = window.DUO_BRANCH ? `${base} — ${window.DUO_BRANCH.nameAr}` : base;
   }
   showTab('header');
+
+  // قرارات المسؤول الأساسي — أعد رسم التبويب فوراً (يُخفى/يُقفل ما أطفأه)
+  if (window.DuoAdmin) {
+    window.DuoAdmin.onChange(() => {
+      const ae = document.activeElement;
+      if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && ae.type !== 'checkbox' && ae.type !== 'range') return;
+      const body = $('dash-body');
+      const st = body ? body.scrollTop : 0;
+      showTab(_activeTab);
+      if (body) body.scrollTop = st;
+    });
+  }
 
   // تفعيل القفل التلقائي إن كان مضبوطاً
   _setupAutoLock();

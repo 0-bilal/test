@@ -10,7 +10,7 @@ const restaurantInfo = {
   taglineAr:    'نكهة لا تُنسى في كل قضمة',
   logo:         'images/logo.ico',
   phone:        '..قريبا',
-  workingHours: 'م12:00 - ص03:00',
+  workingHours: 'م02:00 - ص03:00',
   workingDays:  'طوال أيام الأسبوع',
 
   /* ─────────────────────────────────────────────────────────
@@ -93,14 +93,6 @@ const menuCategories = [
         price:         6,
         calories:      120,
         descriptionAr: 'كملها بإضافة شريحة لحم على البرجر ليصبح تريبل أو كوارتر — تصل شريحة اللحم الواحدة 70 غم',
-      },
-      {
-        nameAr:        'وجبة برجر',
-        nameEn:        'Burger Meal',
-        image:         'images/products/burger-meal.jpg',
-        price:         33,
-        isMeal:        true,
-        descriptionAr: 'وجبة من البرجر ديو أو أوريغا مع البطاطس المقلية المبهّرة والمشروب',
       },
     ],
   },
@@ -185,7 +177,6 @@ const menuCategories = [
       {
         nameAr:        'صوص ترافل',
         nameEn:        'Truffle Sauce',
-        image:         'images/products/truffle-sauce.jpg',
         price:         4,
         descriptionAr: 'صوص ترافل لعشاق النكهات العميقة والفريدة',
       },

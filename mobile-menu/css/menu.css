@@ -388,14 +388,15 @@ body {
   background: rgba(0,0,0,.72);
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   display: flex; align-items: flex-end;
-  opacity: 0; pointer-events: none;
-  transition: opacity .28s ease;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .34s ease, visibility 0s .34s;
 }
-.m-modal-overlay.open { opacity: 1; pointer-events: all; }
+.m-modal-overlay[inert] { visibility: hidden; transition: none; }
+.m-modal-overlay.open { opacity: 1; visibility: visible; pointer-events: all; transition-delay: 0s; }
 
 .m-modal {
   position: relative;
-  width: 100%; max-height: 92dvh;
+  width: 100%; max-height: 92vh; max-height: 92dvh;
   background: linear-gradient(180deg, #12080a 0%, #0a0607 100%);
   border-radius: 28px 28px 0 0;
   border: 1px solid var(--border-hi); border-bottom: none;
@@ -408,9 +409,13 @@ body {
 
 /* مقبض السحب */
 .m-modal-handle {
-  width: 44px; height: 4px;
-  background: rgba(255,255,255,.18); border-radius: 2px;
-  margin: 12px auto 0; flex-shrink: 0;
+  height: 28px; width: 100%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  touch-action: none;
+}
+.m-modal-handle::after {
+  content: ''; width: 44px; height: 4px;
+  background: rgba(255,255,255,.3); border-radius: 2px;
 }
 
 /* منطقة الصورة */
@@ -419,10 +424,11 @@ body {
   background: #0d0d0d;
 }
 .m-modal-img {
-  width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;
+  width: 100%; height: clamp(140px, 34dvh, 330px); object-fit: contain; display: block;
+  background: #fff;
 }
 .m-modal-img-ph {
-  width: 100%; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center;
+  width: 100%; height: clamp(140px, 34dvh, 330px); display: flex; align-items: center; justify-content: center;
   background: linear-gradient(150deg, #141414, #070707);
 }
 .m-modal-img-ph i { font-size: 72px; color: rgba(190,30,45,.20); }
@@ -430,14 +436,14 @@ body {
 /* تدرّج فوق الصورة */
 .m-modal-img-area::after {
   content: ''; position: absolute; inset: 0;
-  background: linear-gradient(to bottom, transparent 40%, rgba(18,8,10,.95) 100%);
+  background: none;
   pointer-events: none;
 }
 
 /* زر الإغلاق */
 .m-modal-close {
   position: absolute; top: 14px; left: 14px; z-index: 10;
-  width: 36px; height: 36px; border-radius: 50%;
+  width: 44px; height: 44px; border-radius: 50%;
   background: rgba(0,0,0,.60); border: 1px solid rgba(255,255,255,.18);
   display: flex; align-items: center; justify-content: center;
   color: var(--white); font-size: 16px;
@@ -448,7 +454,8 @@ body {
 /* جسم المودال */
 .m-modal-body {
   overflow-y: auto; -webkit-overflow-scrolling: touch;
-  flex: 1; padding: 18px 20px 44px;
+  flex: 1; min-height: 0; overscroll-behavior-y: contain;
+  padding: 18px 20px max(24px, env(safe-area-inset-bottom));
   display: flex; flex-direction: column; gap: 16px;
 }
 
@@ -674,4 +681,11 @@ body {
 }
 @media (min-width: 900px) {
   .m-cards { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+.m-modal-close svg { width: 20px; height: 20px; }
+button:focus-visible, .m-card:focus-visible { outline: 2px solid var(--white); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }

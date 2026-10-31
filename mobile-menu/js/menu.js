@@ -7,6 +7,16 @@
   'use strict';
 
   /* أيقونة افتراضية للبطاقات بلا صورة */
+  let modalPhase = 'closed';
+  let modalBackPending = false;
+  let navigationTarget = null;
+  let modalOpener = null;
+  let savedScrollY = 0;
+  let savedBodyStyle = null;
+  let closeTimer = null;
+  const backgroundState = new Map();
+  const modalHistoryKey = 'duoProductModal';
+
   const PH_ICON = {
     'fa-burger':         'fa-burger',
     'fa-bowl-food':      'fa-bowl-food',
@@ -44,25 +54,6 @@
     _buildFooter(info);
     _setupScrollTop();
     _setupModalClose();
-    _applyAdmin();
-    if (window.DuoAdmin) window.DuoAdmin.onChange(_applyAdmin);
-  }
-
-  /* ── منتجات أخفاها «المسؤول الأساسي» (duo-admin.js) — تُطبَّق فوراً ── */
-  function _applyAdmin() {
-    const off = k => !!(window.DuoAdmin && window.DuoAdmin.isOff('products', k));
-    document.querySelectorAll('.m-section').forEach(sec => {
-      const cards = sec.querySelectorAll('.m-card[data-key]');
-      let vis = 0;
-      cards.forEach(c => { const h = off(c.dataset.key); c.style.display = h ? 'none' : ''; if (!h) vis++; });
-      sec.style.display = vis ? '' : 'none';
-      const sep = sec.previousElementSibling;
-      if (sep && sep.classList.contains('m-separator')) sep.style.display = vis ? '' : 'none';
-      const cnt = sec.querySelector('.m-section-count');
-      if (cnt) cnt.textContent = vis;
-      const tab = document.querySelector(`.m-tab[data-cat="${sec.id.slice(4)}"]`);
-      if (tab) tab.style.display = vis ? '' : 'none';
-    });
   }
 
   /* ── الهيدر ── */
@@ -121,7 +112,8 @@
     const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 68;
     const tabsH   = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tabs-h'))   || 54;
     const top = sec.getBoundingClientRect().top + window.scrollY - headerH - tabsH - 10;
-    window.scrollTo({ top, behavior: 'smooth' });
+    navigationTarget = { id: catId, top: Math.max(0, Math.min(top, document.documentElement.scrollHeight - innerHeight)) };
+    window.scrollTo({ top: navigationTarget.top, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   }
 
   /* ── المحتوى ── */
@@ -165,7 +157,6 @@
   function _buildCard(cat, item) {
     const card = document.createElement('div');
     card.className = 'm-card';
-    card.dataset.key = cat.id + '||' + item.nameAr;
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
     card.setAttribute('aria-label', item.nameAr);
@@ -206,28 +197,38 @@
         </div>
       </div>`;
 
-    const open = () => _openModal(cat, item);
+    const open = () => _openModal(cat, item, card);
     card.addEventListener('click',   open);
-    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') open(); });
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
     return card;
   }
 
   /* ══════════════════════════════════════════
      MODAL
   ══════════════════════════════════════════ */
-  function _openModal(cat, item) {
+  function _openModal(cat, item, opener) {
     const overlay  = document.getElementById('m-modal-overlay');
     const modal    = document.getElementById('m-modal');
     const imgArea  = modal && modal.querySelector('.m-modal-img-area');
     const body     = modal && modal.querySelector('.m-modal-body');
     if (!overlay || !modal || !imgArea || !body) return;
 
+    if (modalPhase !== 'closed') return;
+    modalOpener = opener || document.activeElement;
+    modal.style.transform = '';
+    modal.style.transition = '';
+    body.scrollTop = 0;
     const hasImage = item.image && item.image.trim();
     const phIcon   = PH_ICON[cat.icon] || 'fa-utensils';
 
     imgArea.innerHTML = hasImage
       ? `<img class="m-modal-img" src="${item.image}" alt="${item.nameAr}">`
       : `<div class="m-modal-img-ph"><i class="fa-solid ${phIcon}"></i></div>`;
+
+    const productImage = imgArea.querySelector('img');
+    if (productImage) productImage.onerror = () => {
+      imgArea.innerHTML = '<div class="m-modal-img-ph" role="img" aria-label="الصورة غير متاحة">الصورة غير متاحة</div>';
+    };
 
     /* السعرات */
     const calEl = item.calories
@@ -299,7 +300,7 @@
 
     body.innerHTML = `
       <div>
-        <div class="m-modal-name-ar">${item.nameAr}</div>
+        <div class="m-modal-name-ar" id="m-modal-title">${item.nameAr}</div>
         ${item.nameEn ? `<div class="m-modal-name-en">${item.nameEn}</div>` : ''}
       </div>
       <div class="m-modal-price-row">
@@ -316,44 +317,111 @@
       ${item.descriptionAr ? `<p class="m-modal-desc">${item.descriptionAr}</p>` : ''}
       ${ingredientsHtml}${sauceHtml}${variantsHtml}`;
 
+    savedScrollY = window.scrollY;
+    savedBodyStyle = document.body.getAttribute('style');
+    Object.assign(document.body.style, {
+      position: 'fixed', top: `-${savedScrollY}px`, width: '100%', overflow: 'hidden',
+    });
+    for (const child of document.body.children) {
+      if (child === overlay || child.tagName === 'SCRIPT') continue;
+      backgroundState.set(child, child.inert);
+      child.inert = true;
+    }
+    modalPhase = 'open';
+    overlay.inert = false;
+    overlay.setAttribute('aria-hidden', 'false');
     overlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    document.getElementById('m-modal-close').focus({ preventScroll: true });
+    history.pushState({ ...history.state, [modalHistoryKey]: true }, '');
     _enableSwipeClose(overlay, modal);
   }
 
   function _closeModal() {
+    if (modalPhase !== 'open' || modalBackPending) return;
+    if (history.state && history.state[modalHistoryKey]) {
+      modalBackPending = true;
+      history.back();
+    }
+    else _beginClose();
+  }
+
+  function _beginClose() {
+    if (modalPhase !== 'open') return;
+    modalBackPending = false;
+    modalPhase = 'closing';
     const overlay = document.getElementById('m-modal-overlay');
-    if (!overlay) return;
+    const modal = document.getElementById('m-modal');
+    modal.style.transition = '';
+    // Remove the drag override so the CSS exit transition can reach the bottom.
+    modal.style.transform = '';
     overlay.classList.remove('open');
-    document.body.style.overflow = '';
+    const finish = () => {
+      clearTimeout(closeTimer);
+      modalPhase = 'closed';
+      overlay.inert = true;
+      overlay.setAttribute('aria-hidden', 'true');
+      if (savedBodyStyle === null) document.body.removeAttribute('style');
+      else document.body.setAttribute('style', savedBodyStyle);
+      window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+      for (const [child, inert] of backgroundState) child.inert = inert;
+      backgroundState.clear();
+      if (modalOpener && modalOpener.isConnected) modalOpener.focus({ preventScroll: true });
+    };
+    closeTimer = setTimeout(finish, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 350);
   }
 
   function _setupModalClose() {
-    const overlay  = document.getElementById('m-modal-overlay');
+    const overlay = document.getElementById('m-modal-overlay');
     const closeBtn = document.getElementById('m-modal-close');
-    if (overlay)  overlay.addEventListener('click', e => { if (e.target === overlay) _closeModal(); });
+    if (overlay) overlay.addEventListener('click', e => { if (e.target === overlay) _closeModal(); });
     if (closeBtn) closeBtn.addEventListener('click', _closeModal);
+    window.addEventListener('popstate', () => {
+      if (modalPhase === 'open') _beginClose();
+      // A forward navigation must not leave an invisible modal entry active.
+      else if (modalPhase === 'closed' && history.state && history.state[modalHistoryKey]) history.back();
+    });
+    document.addEventListener('keydown', e => {
+      if (modalPhase !== 'open') return;
+      if (e.key === 'Escape') { e.preventDefault(); _closeModal(); }
+      if (e.key !== 'Tab') return;
+      const controls = [...overlay.querySelectorAll('button, a[href], [tabindex="0"]')]
+        .filter(el => !el.disabled && el.getClientRects().length);
+      const first = controls[0], last = controls[controls.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus({ preventScroll: true }); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus({ preventScroll: true }); }
+    });
   }
 
-  /* سحب للإغلاق */
+  /* السحب من المقبض فقط، حتى لا يتعارض مع تمرير التفاصيل. */
   function _enableSwipeClose(overlay, modal) {
-    let startY = 0, dragging = false;
-    const onStart = e => { startY = e.touches[0].clientY; dragging = true; modal.style.transition = 'none'; };
-    const onMove  = e => { if (!dragging) return; const dy = e.touches[0].clientY - startY; if (dy > 0) modal.style.transform = `translateY(${dy}px)`; };
-    const onEnd   = e => {
-      if (!dragging) return; dragging = false; modal.style.transition = '';
-      if (e.changedTouches[0].clientY - startY > 100) { _closeModal(); }
-      else { modal.style.transform = ''; }
+    const handle = modal.querySelector('.m-modal-handle');
+    if (handle.dataset.swipeReady) return;
+    handle.dataset.swipeReady = 'true';
+    let startY = null, distance = 0;
+    const reset = () => {
+      startY = null;
+      distance = 0;
+      modal.style.transition = '';
+      modal.style.transform = '';
     };
-    if (modal._swipeStart) {
-      modal.removeEventListener('touchstart', modal._swipeStart);
-      modal.removeEventListener('touchmove',  modal._swipeMove);
-      modal.removeEventListener('touchend',   modal._swipeEnd);
-    }
-    modal._swipeStart = onStart; modal._swipeMove = onMove; modal._swipeEnd = onEnd;
-    modal.addEventListener('touchstart', onStart, { passive: true });
-    modal.addEventListener('touchmove',  onMove,  { passive: true });
-    modal.addEventListener('touchend',   onEnd);
+    handle.addEventListener('touchstart', e => {
+      if (modalPhase !== 'open' || e.touches.length !== 1) return;
+      startY = e.touches[0].clientY;
+      distance = 0;
+      modal.style.transition = 'none';
+    }, { passive: true });
+    handle.addEventListener('touchmove', e => {
+      if (startY === null) return;
+      distance = Math.max(0, e.touches[0].clientY - startY);
+      modal.style.transform = `translateY(${distance}px)`;
+      e.preventDefault();
+    }, { passive: false });
+    handle.addEventListener('touchend', () => {
+      const shouldClose = distance > 100;
+      reset();
+      if (shouldClose) _closeModal();
+    });
+    handle.addEventListener('touchcancel', reset);
   }
 
   /* ══════════════════════════════════════════
@@ -362,11 +430,21 @@
   function _setupScrollSpy(cats) {
     const offset = 68 + 54 + 24;
     let ticking  = false;
+    for (const event of ['wheel', 'touchstart', 'pointerdown', 'keydown', 'resize']) {
+      window.addEventListener(event, () => { navigationTarget = null; }, { passive: true });
+    }
     window.addEventListener('scroll', () => {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
         ticking = false;
+        if (modalPhase !== 'closed') return;
+        if (navigationTarget) {
+          _activateTab(navigationTarget.id);
+          _scrollTabIntoView(navigationTarget.id);
+          // Keep the clicked section selected at the scroll limit, until the next user gesture.
+          return;
+        }
         let activeCat = cats[0].id;
         cats.forEach(cat => {
           const sec = document.getElementById('sec-' + cat.id);
@@ -382,9 +460,11 @@
     const bar = document.getElementById('m-tabs');
     const btn = bar && bar.querySelector(`[data-cat="${catId}"]`);
     if (!btn || !bar) return;
-    const btnL = btn.offsetLeft, btnR = btnL + btn.offsetWidth, barW = bar.clientWidth, scrollL = bar.scrollLeft;
-    if (btnL < scrollL)            bar.scrollTo({ left: btnL - 12,         behavior: 'smooth' });
-    else if (btnR > scrollL + barW) bar.scrollTo({ left: btnR - barW + 12, behavior: 'smooth' });
+    const buttonRect = btn.getBoundingClientRect();
+    const barRect = bar.getBoundingClientRect();
+    const delta = buttonRect.left < barRect.left ? buttonRect.left - barRect.left - 12
+      : buttonRect.right > barRect.right ? buttonRect.right - barRect.right + 12 : 0;
+    if (delta) bar.scrollBy({ left: delta, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   }
 
   /* ══════════════════════════════════════════
@@ -409,7 +489,7 @@
     const btn = document.getElementById('m-scroll-top');
     if (!btn) return;
     window.addEventListener('scroll', () => btn.classList.toggle('visible', window.scrollY > 320), { passive: true });
-    btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }));
   }
 
   /* ══════════════════════════════════════════
